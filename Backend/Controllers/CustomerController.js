@@ -22,7 +22,7 @@ const shopify = shopifyApi({
   isCustomStoreApp: true,
   adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
   isEmbeddedApp: false,
-  hostName: process.env.hostName,
+  hostName: process.env.SHOPIFY_STORE_DOMAIN,
   scopes: ["read_customers"],
   logger: customLogger,
   restResources,
