@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import {Suggest} from "../Small comps/Types"
 import {  useDispatch } from 'react-redux';
+
 // import { Reseller, RootState } from "@/lib/Resellerstore";
 import {addItem,Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
-
+const Spinner = () => (
+  <div className="flex justify-center items-center h-full">
+    <div className="w-6 h-6 border-4 border-black border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 const RCard = ({item}:{item:Suggest}) => {
   const dispatch =useDispatch()
   
@@ -38,7 +43,7 @@ const RCard = ({item}:{item:Suggest}) => {
 };
 
 
-const Requestresult = ({suggesteddata}: {suggesteddata:Suggest[], 
+const Requestresult = ({suggesteddata,spin}: {suggesteddata:Suggest[], spin:boolean
 }) => {
 
   const [resutls,setresult]=useState<Suggest[]>([])
@@ -55,11 +60,12 @@ const Requestresult = ({suggesteddata}: {suggesteddata:Suggest[],
     <div className="w-full h-[10%] bg-back flex items-center px-4"> 
       <span>Result</span>
     </div>
-    {/* Scroll container */}
+    
     <div className="w-full h-[90%] overflow-y-auto flex flex-col gap-4 p-2">
     
-     
+    
       {
+        spin?<Spinner/>:
         resutls.map((item:Suggest,key:number)=>{
          return(
           <RCard key={key} item={item}  />

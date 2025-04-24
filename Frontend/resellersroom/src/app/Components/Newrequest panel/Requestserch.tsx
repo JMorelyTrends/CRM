@@ -5,7 +5,7 @@ import React,{useState} from "react";
 //   setsesetsearch:React.Dispatch<React.SetStateAction<string>>
 // };
 
-function Requestserch({Getdata}: {Getdata:(msg:string)=>void}) {
+function Requestserch({Getdata,prepopulate}: {Getdata:(msg:string)=>void,prepopulate:(msg:string)=>void}) {
   const [t,sett]=useState("");
   return (
     <div className="w-full   lg:h-[18%] md:[19%] h-[12%] flex flex-col items-center p-2">
@@ -18,7 +18,7 @@ function Requestserch({Getdata}: {Getdata:(msg:string)=>void}) {
         </div>
         <input
           type="text"
-          placeholder="Search by brand"
+          placeholder="Search by product"
           className="w-full h-full p-2 outline-none text-gray-700"
           value={t}
           onChange={(e)=>{
@@ -28,6 +28,9 @@ function Requestserch({Getdata}: {Getdata:(msg:string)=>void}) {
             if(event.key=='Enter')
             {
               Getdata(t)
+            }
+            else{
+              prepopulate(t)
             }
           }}
         />

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import axios from 'axios'
 import Requestserch from './Requestserch'
 import Requestresult from './Requestresult'
@@ -13,16 +13,25 @@ import {Suggest} from '../Small comps/Types'
 
 function Requestpanle({sideopen,suggesteddata,setsuggesteddata}: 
   {sideopen:boolean,suggesteddata:Suggest[],setsuggesteddata:React.Dispatch<React.SetStateAction<Suggest[]>>}) {
-  // const [search,setsearch]=useState<string>("")
+  const [spin,setspin]=useState<boolean>(false);
   const Getdata=async(msg:string)=>{
-    console.log("click",msg)
+    setspin(true);
    const data= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/getstockstore`,{
     search:msg
    })
  
    setsuggesteddata(data.data.message)
+   setspin(false)
   }
-  
+  const prepopulate=async(msg:string)=>{
+   
+    const data= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getprepopulate`,{
+      q:msg
+     });
+     console.log(data)
+      setsuggesteddata(data.data.message)
+     
+  }
  // const [mcom,setmcom]=useState<boolean>(false)
   // const Requestmade=()=>{
   // console.log("hello")
@@ -35,9 +44,9 @@ function Requestpanle({sideopen,suggesteddata,setsuggesteddata}:
    
     className={`${sideopen ? "lg:w-[80%]" : "lg:w-[70%]"} 
       h-[75vh] bg-[#EBEBEB] flex flex-col text-black`}>
-      <Requestserch   Getdata={Getdata}/>
+      <Requestserch   Getdata={Getdata} prepopulate={prepopulate}/>
      { 
-      <Requestresult suggesteddata={suggesteddata}
+      <Requestresult suggesteddata={suggesteddata} spin={spin}
       // Requestmade={Requestmade}
       />}
     </div>

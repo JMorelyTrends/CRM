@@ -32,7 +32,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels");
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",

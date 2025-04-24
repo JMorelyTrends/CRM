@@ -31,5 +31,8 @@ const StockxDatabaseSchema = new mongoose.Schema(
   { timestamps: true } 
 );
 StockxDatabaseSchema.index({ name: 'text' });  // This creates a text index on 'name'
+StockxDatabaseSchema.index({ brand: 'text', category: 'text', Colorway: 'text' });
+StockxDatabaseSchema.index({ Stockxid: 1 });
+
 const StockxDatabase = mongoose.model("StockxDatabase", StockxDatabaseSchema);
 module.exports = StockxDatabase;

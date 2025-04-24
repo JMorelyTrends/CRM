@@ -4,11 +4,11 @@ exports.Getdatastore=async (req,res)=>{
 try
 {
     const {search}=req.body;
- //  console.log(search)
+  //  console.log(search)
    const exactMatch = await StockxDatabase.find({ name: search });
 
    if (exactMatch.length>0) {
-   //  console.log("get the exact match",exactMatch)
+    //  console.log("get the exact match",exactMatch)
      return res.status(200).json({ message: exactMatch });
    }
 
@@ -18,13 +18,12 @@ try
      name: { $regex: `.*${search}.*`, $options: 'i' } 
    });
 
-   if (partialMatch.length > 0) {
-  //  console.log("get the partial match")
+  //  if (partialMatch.length > 0) {
+  // //  console.log("get the partial match")
 
-     return res.status(200).json({ message: partialMatch });
-   }
-    else
-    {
+  //    return res.status(200).json({ message: partialMatch });
+  //  }
+   
         const options = {
             method: 'GET',
             headers: {
@@ -37,15 +36,14 @@ try
         const data = await fetch(url, options)
         .then(res => res.json())
         .then(async(d) =>{
-            const newproduct = [];
-           // console.log("from api ",d)
+            const products = [];
+          
             d.length>0&&
             await Promise.all(
             d.map(async (item) => {
                 const exists = await StockxDatabase.findOne({ Stockxid: item.id });
             
-                if (!exists) {
-                 //   console.log("not getting in database", item)
+                if (!exists && item.image) {
                 const created = await StockxDatabase.create({
                     Stockxid: item.id,
                     sku: item.sku,
@@ -54,26 +52,28 @@ try
                     brand: item.brand,
                     image: item.image, 
                     category: item.category,
-                    colorway: item.colorway,
+                    Colorway: item.colorway,
                 });
-
-                newproduct.push(created); 
-            
+                products.push(created); 
                 }
                 else{
-                    newproduct.push(exists)
+                  products.push(exists)
                 }
-            
+               
+      
             })
             );
-            //console.log(newproduct)
+
+            const newproduct=[...partialMatch,...products]
+         
+            
             
             res.status(201).json({ message: newproduct });
         })
         .catch(err =>{ console.error('Fetch error:', err)
             return null
         });
-    }
+    
       
  
 
@@ -85,4 +85,34 @@ catch(err)
     res.status(500).json({ message: error.message });
 
 }
+}
+
+exports.Getprepopulate=async(req,res)=>{
+  
+        const { q } = req.body; 
+      
+       
+        
+        const regex = new RegExp(q, 'i'); 
+      
+        try {
+          const results = await StockxDatabase.find({
+            $or: [
+              { name: { $regex: regex } },
+              { brand: { $regex: regex } },
+              { Category: { $regex: regex } },
+              { Colorway: { $regex: regex } }
+            ]
+          }); 
+      
+         
+         return res.status(201).json({ message: results });
+          //res.json(results);
+        } 
+     
+    catch(err)
+    {
+        return res.status(500).json({ message: err.message });
+    
+    }
 }

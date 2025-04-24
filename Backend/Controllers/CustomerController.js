@@ -31,9 +31,6 @@ const shopify = shopifyApi({
 const session = shopify.session.customAppSession(process.env.SHOPIFY_STORE_DOMAIN);
 
 
-
-
-
 const createCustomer = async (req, res) => {
     try {
         // Destructure & validate input
