@@ -4,28 +4,31 @@ const CustomerSchema = new mongoose.Schema(
   {
     Name: {
       type: String,
-      required: true,
-    
+
       trim: true,
     },
     email: {
       type: String,
       unique:true,
-      required: true,
+     
+    },
+    customerfrom:{
+      type:String,
+      default:"mongodb"
     },
     Number:{
       type:String,
     },
     address: {
       type: String,
-      required: true,
+   
     },
     City:{
       type:String,
     },
     Postcode:{
         type:String,
-        required:true,
+       
     },
     userid:{
       type:mongoose.Schema.Types.ObjectId,
@@ -35,5 +38,6 @@ const CustomerSchema = new mongoose.Schema(
   },
   { timestamps: true } // Adds createdAt & updatedAt fields automatically
 );
+CustomerSchema.index({ userid: 1 , Name:"text" })
 const Customer = mongoose.model("Customer", CustomerSchema);
 module.exports = Customer;

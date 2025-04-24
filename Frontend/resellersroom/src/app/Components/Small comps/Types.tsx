@@ -40,6 +40,7 @@ export type Suggest = {
   total_spent:string,
   orders_count:string,
   customerfrom:string,
+  Number:string|null
   address:{
     adress1:string,
     city:string,
