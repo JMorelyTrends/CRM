@@ -54,7 +54,7 @@ const Firsthalf = ({
           <img
             src={selectedItems ? selectedItems.image : ""}
             alt=""
-            className="object-contain w-[70%] h-[90%] bg-amber-50"
+            className="object-contain w-[70%] h-[90%] "
           />
         </div>
       </div>
