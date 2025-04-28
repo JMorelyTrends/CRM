@@ -32,38 +32,84 @@ const session = shopify.session.customAppSession(process.env.SHOPIFY_STORE_DOMAI
 
 
 const createCustomer = async (req, res) => {
-    try {
-        // Destructure & validate input
-        const {newCustomer } = req.body;
-       
-        query = `email:${newCustomer.email.trim()}`;
-        const customerData = await shopify.rest.Customer.search({
-          session,
-          query,
-        });
-        //console.log(newCustomer)
-        if(customerData.customers.length>0 && customerData.customers[0].email===newCustomer.email){
-      
-         return res.status(201).json({alert:`Exits in the shopify search from this = ${customerData.email}`,
-                                      message:customerData.customers[0].email});
-        }
-       
-        const ncustomer=await Customer.create({
-          Name: newCustomer.name,
-          email:newCustomer.email,
-          Number:newCustomer.number,
-          address:newCustomer.address,
-          City:newCustomer.city,
-          Postcode:newCustomer.postcode,
-          userid:newCustomer.userid,
-        }
-        );
+  try {
+    const { newCustomer } = req.body;
+
+    const isValid = (field) => field && field.trim() !== "";
+
     
-        res.status(201).json({message:ncustomer});
-    } catch (error) {
-      //console.log(error)
-        res.status(500).json({ message: "Server error", error: error.message });
+    if (!isValid(newCustomer.email) && !isValid(newCustomer.number) && !isValid(newCustomer.social)) {
+        return res.status(400).json({ message: "At least one of email, number, or social handle is required." });
     }
+    const normalizePhoneNumber = (phone) => {
+      if (!phone) return "";
+      phone = phone.trim();
+      if (phone.startsWith("+44")) return phone;
+      if (phone.startsWith("44")) return `+${phone}`;
+      if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
+      return phone; 
+  };
+  
+   
+    let queryParts = [];
+    if (isValid(newCustomer.email)) queryParts.push(`email:${newCustomer.email.trim()}`);
+    if (isValid(newCustomer.number)) {
+      const normalizedPhone = normalizePhoneNumber(newCustomer.number);
+      queryParts.push(`phone:${normalizedPhone}`);
+  }
+    const query = queryParts.join(' OR ');
+
+    let customerData = { customers: [] };
+    if (queryParts.length > 0) {
+        customerData = await shopify.rest.Customer.search({
+            session,
+            query,
+        });
+    }
+   
+
+    if (customerData.customers.length > 0) {
+        return res.status(200).json({
+            alert: "Exists in Shopify database",
+            customer: customerData.customers[0]
+        });
+    }
+
+  
+    const searchConditions = [];
+    if (isValid(newCustomer.email)) searchConditions.push({ email: newCustomer.email.trim() });
+    if (isValid(newCustomer.number)) searchConditions.push({ Number: newCustomer.number.trim() });
+    if (isValid(newCustomer.social)) searchConditions.push({ socialhandel: newCustomer.social.trim() });
+
+    const existingCustomer = await Customer.findOne({ $or: searchConditions });
+
+   
+    if (existingCustomer) {
+        return res.status(200).json({
+          alert: "Exists in  database",
+          customer: existingCustomer[0]
+      });
+    }
+
+    
+    const createdCustomer = await Customer.create({
+        Name: isValid(newCustomer.name) ? newCustomer.name.trim() : "",
+        email: isValid(newCustomer.email) ? newCustomer.email.trim() : "",
+        Number: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
+        address: isValid(newCustomer.address) ? newCustomer.address.trim() : "",
+        City: isValid(newCustomer.city) ? newCustomer.city.trim() : "",
+        Postcode: isValid(newCustomer.postcode) ? newCustomer.postcode.trim() : "",
+        userid: newCustomer.userid,
+        socialhandel: isValid(newCustomer.social) ? newCustomer.social.trim() : "",
+    });
+
+    res.status(201).json({ message: "Customer created successfully.", customer: createdCustomer });
+
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+}
+
 };
 
 const getAllCustomers = async (req, res) => {
@@ -95,46 +141,74 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
 
   let query = "";
   let mongoQuery = {};
+  
+  if (!search || typeof search !== "string") {
+    return res.status(400).json({ message: "Invalid search query" });
+  }
+
   const isEmail = search.includes("@");
-  
+  const isPhone = /^\+?[0-9\s\-()]+$/.test(search.trim()); // detect phone-like input safely
+ 
   if (isEmail) {
-    // Shopify query
+    // Search by Email
     query = `email:${search.trim()}`;
-  
-    // Mongo query for email
-    mongoQuery = {
-      email: { $regex: new RegExp(`^${search}$`, 'i') }
-    };
-  } else {
-    // Shopify query
-    const nameParts = search.trim().split(/\s+/);
-    if (nameParts.length === 2) {
-      query = `name:${search}`;
-    } else if (nameParts.length === 1) {
-      query = `first_name:${nameParts[0]}`;
-    } else {
-      return res.status(400).json({ message: "Invalid search query" });
-    }
-  
-    // Mongo query for partial name match
-    const regexConditions = nameParts.map(part => ({
-      Name: { $regex: new RegExp(part, 'i') }
-    }));
-  
     mongoQuery = {
       $and: [
         { userid: id },
-        { $or: regexConditions }
+        { email: { $regex: new RegExp(`^${search}$`, 'i') } }
+      ]
+    };
+  } 
+  else if (isPhone || search.startsWith('+')) {
+    // Search by Phone
+ 
+    const sanitizedPhone = search.trim().replace(/\s+/g, ''); // remove extra spaces
+    query = `phone:${sanitizedPhone}`;
+    const mp=sanitizedPhone.replace("+","")
+    mongoQuery = {
+      $and: [
+        { userid: id },
+        { Number: { $regex: new RegExp(mp, 'i') } }
       ]
     };
   }
-  
+  else {
+   
+    // Search by Name
+    const nameParts = search.trim().split(/\s+/);
+
+    if (nameParts.length === 2) {
+      query = `name:${search.trim()}`;
+    } else if (nameParts.length === 1) {
+      query = `first_name:${nameParts[0]}`;
+    } else {
+      return res.status(400).json({ message: "Invalid name format" });
+    }
+
+    const regexConditions = nameParts.map(part => ({
+      Name: { $regex: new RegExp(part, 'i') }
+    }));
+
+    mongoQuery = {
+      $and: [
+        { userid: id },
+        {
+          $or: [
+            ...regexConditions,
+            { socialhandel: { $regex: new RegExp(search, 'i') } },
+            { Number: { $regex: new RegExp(search, 'i') } }
+          ]
+        }
+      ]
+    };
+  }
+
   try {
     const [mongodata, customerData] = await Promise.all([
       Customer.find(mongoQuery),
       shopify.rest.Customer.search({ session, query }),
     ]);
-  
+
     const d = customerData.customers.map(customer => ({
       _id: customer.id,
       email: customer.email,
@@ -150,15 +224,13 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
         zip: customer.default_address?.zip || "",
       }
     }));
-  
-   
-  
-    res.status(200).json({ d, dm:mongodata });
+
+    res.status(200).json({ d, dm: mongodata });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Shopify customer search failed", error });
   }
-  
-  };
+};
 
 const updateCustomer = async (req, res) => {
     try {

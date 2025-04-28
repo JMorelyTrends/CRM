@@ -46,7 +46,8 @@ export type Suggest = {
     city:string,
     zip:string,
     country:string,
-  }
+  },
+  socialhandel:string,
 
 }
 export type dCustomerArray = Custprop[];

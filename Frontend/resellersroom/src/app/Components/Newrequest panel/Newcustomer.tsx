@@ -3,7 +3,7 @@ import React,{useState,useEffect} from 'react';
 import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import {  RootState } from "@/lib/Resellerstore";
-import {Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
+import {Toggleleadsrenderstep,Addselectedcusotmer} from '@/lib/features/Newrequest/NewRequestSlice'
 type Props = {
   sideopen: boolean;
 };
@@ -19,12 +19,12 @@ const Newcustomer = (props: Props) => {
   const [postcode, setPostcode] = useState<string>('');
   const [city,setcity]=useState<string>('');
   const [userid,setuserid]=useState<string|null>('')
-  
+  const [social,setsocial]=useState<string>('')
   useEffect(()=>{
     if (typeof window !== 'undefined'){
      const id=localStorage.getItem('tempcred');
      setuserid(id);
-     console.log(localStorage.getItem('tempcred'))
+    //  console.log(localStorage.getItem('tempcred'))
     }
   },[])
 
@@ -32,8 +32,8 @@ const Newcustomer = (props: Props) => {
     e.preventDefault();
     console.log(userid)
     
-    if (!name || !number || !email || !address || !postcode) {
-      alert('Please fill in all fields.');
+    if (name =='' && number=='' && email=='' && social=='' ) {
+      alert('Please fill any one fields.');
       return;
     }
 
@@ -41,11 +41,10 @@ const Newcustomer = (props: Props) => {
       name,
       number,
       email,
-      address,
-      city,
-      postcode,
       userid,
+      social
     };
+
   const newc=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/createCustomer`,
       {
         newCustomer:newCustomer
@@ -53,10 +52,13 @@ const Newcustomer = (props: Props) => {
     )
     if(newc.data?.alert)
     {
-      alert(`Custoemr exits in shopify search by email : ${newc.data?.message}`)
-   
+      alert(`${newc.data?.alert} : ${newc.data?.customer}`)
     }
-    console.log('Submitted Customer:', newc);
+    else{
+      console.log(newc.data?.customer)
+      dispatch(Addselectedcusotmer(newc.data?.customer))
+    }
+    
     setName('');
     setNumber('');
     setEmail('');
@@ -97,7 +99,7 @@ const Newcustomer = (props: Props) => {
           <label className="mb-1 font-medium">Name</label>
           <input
             type="text"
-            required
+           
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="p-2 rounded-md border border-gray-300"
@@ -108,7 +110,7 @@ const Newcustomer = (props: Props) => {
           <label className="mb-1 font-medium">Number</label>
           <input
             type="tel"
-            required
+           
             pattern="[0-9]*"
             inputMode="numeric"
             value={number}
@@ -126,7 +128,7 @@ const Newcustomer = (props: Props) => {
           <label className="mb-1 font-medium">Email</label>
           <input
             type="email"
-            required
+         
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="p-2 rounded-md border border-gray-300"
@@ -134,36 +136,16 @@ const Newcustomer = (props: Props) => {
         </div>
 
         <div className="flex flex-col">
-          <label className="mb-1 font-medium">Address</label>
+          <label className="mb-1 font-medium">Social Media handel</label>
           <input
             type="text"
-            required
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+           
+            value={social}
+            onChange={(e) => setsocial(e.target.value)}
             className="p-2 rounded-md border border-gray-300"
           />
         </div>
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium">City</label>
-          <input
-            type="text"
-            required
-            value={city}
-            onChange={(e) => setcity(e.target.value)}
-            className="p-2 rounded-md border border-gray-300"
-          />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="mb-1 font-medium">Postcode</label>
-          <input
-            type="text"
-            required
-            value={postcode}
-            onChange={(e) => setPostcode(e.target.value)}
-            className="p-2 rounded-md border border-gray-300"
-          />
-        </div>
+   
 
         <button
           type="submit"
