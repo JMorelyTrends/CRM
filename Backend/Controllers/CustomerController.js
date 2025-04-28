@@ -69,9 +69,24 @@ const createCustomer = async (req, res) => {
    
 
     if (customerData.customers.length > 0) {
+     const newCustomer={
+      _id: customerData.customers[0].id,
+      email: customerData.customers[0].email,
+      first_name: customerData.customers[0].first_name,
+      last_name: customerData.customers[0].last_name,
+      total_spent: customerData.customers[0].total_spent,
+      orders_count: customerData.customers[0].orders_count,
+      customerfrom: "shopify",
+      Number: customerData.customers[0].phone,
+      address: {
+        address1: customerData.customers[0].default_address?.address1 || "",
+        city: customerData.customers[0].default_address?.city || "",
+        zip: customerData.customers[0].default_address?.zip || "",
+      }
+    }
         return res.status(200).json({
             alert: "Exists in Shopify database",
-            customer: customerData.customers[0]
+            customer: newCustomer
         });
     }
 

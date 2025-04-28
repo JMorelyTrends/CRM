@@ -1,9 +1,11 @@
 "use client"
 import React,{useState,useEffect} from 'react';
 import axios from 'axios';
+import { toast } from "sonner"
 import { useSelector, useDispatch } from 'react-redux';
 import {  RootState } from "@/lib/Resellerstore";
-import {Toggleleadsrenderstep,Addselectedcusotmer} from '@/lib/features/Newrequest/NewRequestSlice'
+import {Toggleleadsrenderstep,Addselectedcusotmer,ADD_Matched_cutomer,Toogleshopifypopup} from '@/lib/features/Newrequest/NewRequestSlice'
+import Shopifymatch from './Shopifymatch';
 type Props = {
   sideopen: boolean;
 };
@@ -33,7 +35,7 @@ const Newcustomer = (props: Props) => {
     console.log(userid)
     
     if (name =='' && number=='' && email=='' && social=='' ) {
-      alert('Please fill any one fields.');
+      toast.error('Please fill any one fields.');
       return;
     }
 
@@ -52,20 +54,22 @@ const Newcustomer = (props: Props) => {
     )
     if(newc.data?.alert)
     {
-      alert(`${newc.data?.alert} : ${newc.data?.customer}`)
+      dispatch(ADD_Matched_cutomer(newc.data.customer))
+      dispatch(Toogleshopifypopup())
+      toast.error(`${newc.data?.alert} : ${newc.data?.customer}`)
     }
     else{
-      console.log(newc.data?.customer)
       dispatch(Addselectedcusotmer(newc.data?.customer))
+      setName('');
+      setNumber('');
+      setEmail('');
+      setAddress('');
+      setPostcode('');
+      setcity('')
+      dispatch(Toggleleadsrenderstep(2));
     }
     
-    setName('');
-    setNumber('');
-    setEmail('');
-    setAddress('');
-    setPostcode('');
-    setcity('')
-    dispatch(Toggleleadsrenderstep(2));
+   
   };
 
   return (
@@ -76,7 +80,7 @@ const Newcustomer = (props: Props) => {
           : 'lg:w-[40%] md:w-[70%] w-[90%]'
       } h-[85vh] bg-white flex flex-col text-black rounded-xl overflow-hidden`}
     >
-   
+<Shopifymatch/>
       <div className="relative  w-full flex flex-col items-center pt-6  ">
         <div className="absolute top-6  text-opacity-80 text-xl md:text-3xl px-2 text-black bg-opacity-50 rounded-md">
           {selectedItems?.name}
