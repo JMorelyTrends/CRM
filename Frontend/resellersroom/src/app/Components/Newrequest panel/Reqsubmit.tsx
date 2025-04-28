@@ -65,7 +65,7 @@ const Firsthalf = ({
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
-  }, 200);
+  }, 700);
 
   return (
     <div className="w-full h-[45%] flex flex-col gap-0.5">
@@ -329,7 +329,9 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
     {
      
 
-       Name=customer.Name
+       Name=customer.Name!=''?customer.Name:customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
+
+
     }
     if(customer!=null && selectedItems )
     {
