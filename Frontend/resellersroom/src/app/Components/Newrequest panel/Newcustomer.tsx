@@ -4,8 +4,9 @@ import axios from 'axios';
 import { toast } from "sonner"
 import { useSelector, useDispatch } from 'react-redux';
 import {  RootState } from "@/lib/Resellerstore";
-import {Toggleleadsrenderstep,Addselectedcusotmer,ADD_Matched_cutomer,Toogleshopifypopup} from '@/lib/features/Newrequest/NewRequestSlice'
+import {Toggleleadsrenderstep,Addselectedcusotmer,ADD_Matched_cutomer,Toogleshopifypopup,Tooglemongopopup,AddSubmitingCustomer} from '@/lib/features/Newrequest/NewRequestSlice'
 import Shopifymatch from './Shopifymatch';
+import DBMatched from './DBMatched';
 type Props = {
   sideopen: boolean;
 };
@@ -26,7 +27,7 @@ const Newcustomer = (props: Props) => {
     if (typeof window !== 'undefined'){
      const id=localStorage.getItem('tempcred');
      setuserid(id);
-    //  console.log(localStorage.getItem('tempcred'))
+    
     }
   },[])
 
@@ -52,11 +53,27 @@ const Newcustomer = (props: Props) => {
         newCustomer:newCustomer
       }
     )
-    if(newc.data?.alert)
+    if(newc.data?.alert==="Exists in Shopify database")
     {
+      
+
       dispatch(ADD_Matched_cutomer(newc.data.customer))
       dispatch(Toogleshopifypopup())
-      toast.error(`${newc.data?.alert} : ${newc.data?.customer}`)
+      toast.error(`${newc.data?.alert}`)
+    }
+    else if(newc.data?.alert=== "Exists in database")
+    {
+      const submitteddata = {
+        name,
+        Number:number,
+        email,
+        userid,
+        socialhandel:social
+      };
+      dispatch(ADD_Matched_cutomer(newc.data.customer))
+      dispatch(AddSubmitingCustomer(submitteddata))
+      dispatch(Tooglemongopopup())
+      toast.error(`${newc.data?.alert}`)
     }
     else{
       dispatch(Addselectedcusotmer(newc.data?.customer))
@@ -68,8 +85,6 @@ const Newcustomer = (props: Props) => {
       setcity('')
       dispatch(Toggleleadsrenderstep(2));
     }
-    
-   
   };
 
   return (
@@ -81,6 +96,7 @@ const Newcustomer = (props: Props) => {
       } h-[85vh] bg-white flex flex-col text-black rounded-xl overflow-hidden`}
     >
 <Shopifymatch/>
+<DBMatched />
       <div className="relative  w-full flex flex-col items-center pt-6  ">
         <div className="absolute top-6  text-opacity-80 text-xl md:text-3xl px-2 text-black bg-opacity-50 rounded-md">
           {selectedItems?.name}
@@ -153,10 +169,16 @@ const Newcustomer = (props: Props) => {
 
         <button
           type="submit"
-          className="mt-4 bg-black text-white py-2 px-4 rounded-md hover:bg-opacity-80 transition"
-        >
+          className="mt-4 bg-black cursor-pointer text-white py-2 px-4 rounded-md hover:bg-opacity-80 transition">
           Submit
         </button>
+        <div
+           
+          onClick={()=>dispatch(Toggleleadsrenderstep(2))}
+          className="mt-4 bg-[#817F7F] text-center cursor-pointer text-white py-2 px-4 rounded-md hover:bg-opacity-80 transition"
+        >
+          Back
+        </div>
       </form>
     </div>
   );

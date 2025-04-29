@@ -101,8 +101,8 @@ const createCustomer = async (req, res) => {
    
     if (existingCustomer) {
         return res.status(200).json({
-          alert: "Exists in  database",
-          customer: existingCustomer[0]
+          alert: "Exists in database",
+          customer: existingCustomer
       });
     }
 
@@ -281,6 +281,11 @@ const deleteCustomer = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+//this api is for the mongodb custoemr update which is on the new request section it will take a whole update customer and find it by _id then update all the document
+//check if 
+const Updatecusnewreq=async(req,res)=>{
+
+}
 
 module.exports = {
     createCustomer,
@@ -288,5 +293,6 @@ module.exports = {
     getCustomerById,
     updateCustomer,
     deleteCustomer,
-    getCustomers_from_shopify_mongo
+    getCustomers_from_shopify_mongo,
+    Updatecusnewreq
 };

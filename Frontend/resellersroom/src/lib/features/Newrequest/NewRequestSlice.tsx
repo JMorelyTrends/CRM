@@ -42,6 +42,7 @@ import {createSlice} from '@reduxjs/toolkit'
     Openshopifymatch:boolean,
     OpenMongomatch:boolean,
     MatchedCustomer:Cust|null,
+    SubmitingCustomer:Cust|null,
   };
   
   
@@ -84,7 +85,7 @@ import {createSlice} from '@reduxjs/toolkit'
     Openshopifymatch:false,
     OpenMongomatch:false,
     MatchedCustomer:null,
-
+    SubmitingCustomer:null,
   };
   
  export const NewRequestSlice= createSlice({
@@ -110,17 +111,17 @@ reducers:{
     Toogleshopifypopup:((state)=>{
       state.Openshopifymatch=!state.Openshopifymatch
     }),
-    Tooglemongopopup:((state,action)=>{
+    Tooglemongopopup:((state)=>{
       state.OpenMongomatch=!state.OpenMongomatch
     }),
     ADD_Matched_cutomer:((state,action)=>{
       state.MatchedCustomer=action.payload;
+    }),
+    AddSubmitingCustomer:((state,action)=>{
+      state.SubmitingCustomer=action.payload;
     })
-    
-
 }
-
 },
 );
-export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer}=NewRequestSlice.actions;
+export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer}=NewRequestSlice.actions;
 export default NewRequestSlice.reducer
