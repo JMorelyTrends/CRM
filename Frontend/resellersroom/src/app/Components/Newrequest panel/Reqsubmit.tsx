@@ -271,9 +271,9 @@ const Secondhalf = ({
           className="bg-gray-50 border border-black text-gray-900 text-sm rounded-lg w-full p-2.5"
         >
           <option value="">Choose Condition</option>
-          <option value="new">Brand New</option>
+          <option value="new"> New</option>
           <option value="used">Pre Loved</option>
-          <option value="both">Open to Both</option>
+          <option value="both">Any Condition</option>
         </select>
       </div>
 

@@ -33,6 +33,11 @@ const Newcustomer = (props: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(number.length>0&& number.length<11)
+    {
+      toast("Number should be 11 character long");
+      return;
+    }
     console.log(userid)
     
     if (name =='' && number=='' && email=='' && social=='' ) {
@@ -136,7 +141,7 @@ const Newcustomer = (props: Props) => {
             value={number}
             onChange={(e) => {
               const val = e.target.value;
-              if (/^\d*$/.test(val)) {
+              if (/^\d*$/.test(val) && val.length <= 11) {
                 setNumber(val);
               }
             }}

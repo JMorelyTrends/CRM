@@ -6,7 +6,8 @@ const {
     getCustomerById,
     updateCustomer,
     deleteCustomer,
-    getCustomers_from_shopify_mongo
+    getCustomers_from_shopify_mongo,
+    Updatecusnewreq
 } = require("../Controllers/CustomerController");
 
 // Routes
@@ -16,6 +17,8 @@ router.post("/getCustomerById", getCustomerById);       // Get a customer by ID
 router.post("/updateCustomer", updateCustomer);        // Update a customer
 router.post("/deleteCustomer", deleteCustomer);     // Delete a customer
 router.post("/getCustomersbyboth",getCustomers_from_shopify_mongo)
+router.post("/Updatecusnewreq",Updatecusnewreq)
+
 module.exports = router;
 
 

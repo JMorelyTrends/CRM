@@ -30,7 +30,14 @@ const shopify = shopifyApi({
 
 const session = shopify.session.customAppSession(process.env.SHOPIFY_STORE_DOMAIN);
 
-
+  const normalizePhoneNumber = (phone) => {
+      if (!phone) return "";
+      phone = phone.trim();
+      if (phone.startsWith("+44")) return phone;
+      if (phone.startsWith("44")) return `+${phone}`;
+      if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
+      return phone; 
+  };
 const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
@@ -41,14 +48,7 @@ const createCustomer = async (req, res) => {
     if (!isValid(newCustomer.email) && !isValid(newCustomer.number) && !isValid(newCustomer.social)) {
         return res.status(400).json({ message: "At least one of email, number, or social handle is required." });
     }
-    const normalizePhoneNumber = (phone) => {
-      if (!phone) return "";
-      phone = phone.trim();
-      if (phone.startsWith("+44")) return phone;
-      if (phone.startsWith("44")) return `+${phone}`;
-      if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
-      return phone; 
-  };
+  
   
    
     let queryParts = [];
@@ -284,6 +284,74 @@ const deleteCustomer = async (req, res) => {
 //this api is for the mongodb custoemr update which is on the new request section it will take a whole update customer and find it by _id then update all the document
 //check if 
 const Updatecusnewreq=async(req,res)=>{
+ const { customerId, fieldName, updatedValue } = req.body;
+
+ const validFields = ['Name', 'email', 'Number', 'socialhandel'];
+ if (!validFields.includes(fieldName)) {
+   return res.status(400).json({ message: "Invalid field" });
+ }
+
+ try {
+
+  let shopifycustomerData = { customers: [] };
+  let squery=[];
+  let correctphone
+  if(fieldName==='email')
+  {
+    squery.push(`email:${updatedValue.trim()}`)
+  }
+  else if(fieldName==='Number')
+  {
+ 
+     correctphone=normalizePhoneNumber(updatedValue);
+  
+     squery.push(`phone:${correctphone}`)
+    
+  }
+ 
+ const shopifyresult = await shopify.rest.Customer.search({
+    session,
+    query: squery.join(' '),
+});
+
+if(shopifyresult.customers.length > 0)
+{
+    
+
+  if(fieldName==='email'  && shopifyresult.customers[0].email && shopifyresult.customers[0].email.trim()===updatedValue.trim())
+  {
+    return res.status(201).json({alert:`gmail exists in shpopify`})
+  }
+  else if(fieldName==='Number'  && shopifyresult.customers[0].phone && shopifyresult.customers[0].phone.trim()===correctphone.trim())
+  {
+
+    return res.status(201).json({alert:`phone number exists in shpopify`})
+  }
+}
+
+
+
+   // Check if updated value already exists (for unique fields)
+   let condition = {};
+   if (['email', 'Number', 'socialhandel'].includes(fieldName)) {
+     condition[fieldName] = updatedValue;
+     const existing = await Customer.findOne(condition);
+     if (existing && existing._id.toString() !== customerId) {
+       return res.status(409).json({ message: `${fieldName} already exists` });
+     }
+   }
+
+   // Update only the field
+   const updatedCustomer = await Customer.findByIdAndUpdate(
+     customerId,
+     { $set: { [fieldName]: updatedValue } },
+     { new: true }
+   );
+
+   res.status(200).json({ message: "Field updated", customer: updatedCustomer });
+ } catch (error) {
+   res.status(500).json({ message: "Server error", error: error.message });
+ }
 
 }
 
