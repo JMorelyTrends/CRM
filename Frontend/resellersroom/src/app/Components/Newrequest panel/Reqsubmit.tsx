@@ -6,7 +6,7 @@ import { Custprop, dCustomerArray } from "../Small comps/Types";
 import { redirect } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
-import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer } from "@/lib/features/Newrequest/NewRequestSlice";
+import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder} from "@/lib/features/Newrequest/NewRequestSlice";
 
 function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -66,6 +66,8 @@ const Firsthalf = ({
       console.error("Error fetching customers:", error);
     }
   }, 700);
+
+ 
 
   return (
     <div className="w-full h-[45%] flex flex-col gap-0.5">
@@ -146,7 +148,8 @@ const Firsthalf = ({
                           className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                           onClick={() => {
                             setsearchclient(`${customer.first_name} ${customer.last_name}`);
-                            setselectedcustomer(customer);
+                            setselectedcustomer(customer);     //if something go wrong with customer it have to do with this bit
+                            dispatch(Addselectedcusotmer(customer))
                             setsugbox(false);
                           }}
                         >
@@ -166,6 +169,7 @@ const Firsthalf = ({
                           className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                           onClick={() => {
                             setsearchclient(customer.Name);
+                            dispatch(Addselectedcusotmer(customer))    //if something go wrong with customer it have to do with this bit
                             setselectedcustomer(customer);
                             setsugbox(false);
                           }}
@@ -225,7 +229,22 @@ const Secondhalf = ({
   setsearchclient,
 }: SecondHalfProps) => {
   const dispatch = useDispatch();
-
+  const goback=()=>{
+    const dummy= {
+      _id: '',
+      Stockxid: '',
+      sku: '',
+      name: '',
+      slug: '',
+      brand: '',
+      image: '',
+      createdAt: '',
+      updatedAt: '',
+    }
+    dispatch(Addselectedcusotmer(null))
+    dispatch(addItem(dummy))
+    dispatch(Toggleleadsrenderstep(0))
+  }
   return (
     <div className="w-full h-[55%] flex flex-col gap-3 px-4 py-4">
       <div className="text-xs text-center underline underline-offset-2">
@@ -280,9 +299,19 @@ const Secondhalf = ({
       <div className="flex justify-center items-center mt-auto">
         <button
           onClick={() => Submit_Request(size, selectedCondition, selectedcustomer)}
-          className="bg-gray-700 text-white w-[60%] py-2 rounded-xl text-sm font-medium hover:bg-gray-800 transition"
+          className="bg-[#454545] text-white w-[50%] py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition cursor-pointer"
         >
           Submit Request
+        </button>
+      </div>
+      <div className="flex justify-center items-center mt-auto">
+        <button
+          onClick={() => {
+             goback()
+          }}
+          className="bg-[#817F7F] text-white w-[50%] py-3 rounded-lg text-sm font-medium hover:bg-gray-800 transition cursor-pointer"
+        >
+          Back
         </button>
       </div>
     </div>
@@ -316,9 +345,9 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   }, []);
 
   const submitRequest=async(size:string,Selectcondition:string,customer:Custprop|null)=>{
-    console.log("seleted customer :",customer)
-    console.log("size             :",size)
-    console.log("condition        : ",Selectcondition)
+    // console.log("seleted customer :",customer)
+    // console.log("size             :",size)
+    // console.log("condition        : ",Selectcondition)
     let Name;
     if(customer?.customerfrom=='shopify')
     {
@@ -344,18 +373,16 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
         Condition:Selectcondition,
         userid,
       }
-   const result=await   axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/CreateOrders`,{
+     const result=await   axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/CreateOrders`,{
         newOrder:newOrder
       })
    
      
-      dispatch(Addselectedcusotmer(null))
-      redirect('/Leads')
-      
-    }
-    
+      console.log(result)
+      dispatch(Addcreatedorder(result.data.data))
+      dispatch(Toggleleadsrenderstep(4))
   
-
+    }
   }
 
 

@@ -1,4 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit'
+import { Task } from '@/app/Components/Small comps/Types'
  type Suggest={
     _id: string,
     Stockxid: string,
@@ -43,6 +44,7 @@ import {createSlice} from '@reduxjs/toolkit'
     OpenMongomatch:boolean,
     MatchedCustomer:Cust|null,
     SubmitingCustomer:Cust|null,
+    Ordercreated:Task|null,
   };
   
   
@@ -86,6 +88,7 @@ import {createSlice} from '@reduxjs/toolkit'
     OpenMongomatch:false,
     MatchedCustomer:null,
     SubmitingCustomer:null,
+    Ordercreated:null,
   };
   
  export const NewRequestSlice= createSlice({
@@ -119,9 +122,13 @@ reducers:{
     }),
     AddSubmitingCustomer:((state,action)=>{
       state.SubmitingCustomer=action.payload;
+    }),
+    Addcreatedorder:((state,action)=>{
+      state.Ordercreated=action.payload;
     })
 }
 },
 );
-export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer}=NewRequestSlice.actions;
+export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,
+  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer,Addcreatedorder}=NewRequestSlice.actions;
 export default NewRequestSlice.reducer

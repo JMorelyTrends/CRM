@@ -28,7 +28,7 @@ function Requestpanle({sideopen,suggesteddata,setsuggesteddata}:
     const data= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getprepopulate`,{
       q:msg
      });
-     console.log(data)
+     
       setsuggesteddata(data.data.message)
      
   }
