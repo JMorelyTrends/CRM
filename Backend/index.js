@@ -8,6 +8,7 @@ const ItemRoutes=require("./Routes/ItemRoutes")
 const CustomerRoutes=require("./Routes/CustomerRoutes")
 const StockXRoutes=require("./Routes/StockxRoutes")
 const FeatureRoutes=require("./Routes/FeatureRoutes")
+const S3Routes=require("./Routes/S3routes")
 app.use(express.json()); 
 app.use(cors({ origin: "*" }));
 const DB_ConnectDB = require("./utils/DBconnect"); 
@@ -21,6 +22,7 @@ app.use("/api/item",ItemRoutes);
 app.use("/api/customers",CustomerRoutes);
 app.use("/api/Stockx/",StockXRoutes)
 app.use("/api/features/",FeatureRoutes)
+app.use("/api/S3",S3Routes);
 console.log(process.env.PORT)
 const Port = process.env.PORT;
 app.listen(Port, () => {

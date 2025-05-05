@@ -47,6 +47,10 @@ const OrderSchema = new mongoose.Schema(
     ref:"User",
     required:true,
   },
+  price:{
+    type:Number,
+    default:0
+  },
   labels:{
     type:[mongoose.Schema.Types.ObjectId],
     ref:"Label",

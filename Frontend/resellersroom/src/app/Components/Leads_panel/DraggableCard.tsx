@@ -40,12 +40,25 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
   const [startpos, setStartpos] = useState<{ x: number, y: number } | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [clickedTask, setClickedTask] = useState<Task |null>(null);
-  const [creationdate, setCreationDate] = useState<string>("");
-
+  const [creationdate, setCreationDate] = useState<string>(task?.stockxitem[0]?.image);
+  const [image,setimage]=useState<string>("")
+ 
   useEffect(() => {
     const date = new Date(task.createdAt);
     const formatted = `${date.getDate()} ${date.toLocaleString('default', { month: 'long' })}`;
     setCreationDate(formatted);
+
+    //select which image to show
+    if(task.items&&task.items?.length>0)
+    {
+       setimage(task.items[0].itempics[0])
+       console.log(task.items[0].itempics[0])
+    }
+    else{
+      setimage(task?.stockxitem[0]?.image)
+    }
+
+
   }, []);
 
   const handleClickDown = (e: React.MouseEvent) => {
@@ -116,7 +129,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
       <div className="h-[45%] flex justify-center items-center">
         <div className="w-[76%] h-[95%] rounded-2xl flex justify-center bg-white overflow-hidden">
           <img
-            src={task?.stockxitem[0]?.image}
+            src={image?image:"no image"}
             alt=""
             className="w-full h-full object-cover rounded-2xl"
           />
@@ -141,10 +154,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
         </div>
 
         {/* Name */}
-        <div className="w-full font-bold text-md truncate">{task.Name}</div>
+        <div className="w-full font-bold text-md truncate">{task?.Name}</div>
 
-        {/* StockX Name */}
-        <div className="w-full text-xs font-bold truncate">{task.stockxitem[0]?.name}</div>
+        {/* StockX and manuall input item Name */}
+        <div className="w-full text-xs font-bold truncate">{task.stockxitem.length>0?  task.stockxitem[0]?.name:task.items&&task.items[0]?.Name}</div>
 
         {/* Condition */}
         <div className="w-full text-xs font-bold truncate">{task.condition}</div>

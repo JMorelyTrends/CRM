@@ -3,11 +3,11 @@ const Stockx=require("../StockX/stockx")
 // Create a new item
 exports.createItem = async (req, res) => {
   try {
-    const {Name,B2Bprice,Sellprice,itempics,orderid}=req.body;
-    const data={
-      Name,B2Bprice,Sellprice,itempics,orderid
-    }
-    const newItem = await Item.create(data);
+    const {Name,price,url,userid}=req.body;
+   
+    const newItem= await Item.create({
+      Name,price,itempics:url,userid
+    })
   
     res.status(201).json(newItem);
   } catch (error) {

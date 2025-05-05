@@ -167,7 +167,21 @@ export function TaskPanel({
                 {task.stockxitem[0].name}
               </div>
             )}
-
+            {/*for the item section  */}
+            {task?.items?.[0]?.itempics && (
+              <div className="flex justify-center">
+                <img
+                  src={task.items[0].itempics[0]}
+                  alt="Product"
+                  className="w-40 h-40 object-contain rounded-lg"
+                />
+              </div>
+            )}
+            {task?.items?.[0]?.Name && (
+              <div className="text-lg text-center font-bold">
+                {task.items[0].Name}
+              </div>
+            )}
             <div className="mb-6">
               <h3 className="text-sm font-semibold mb-2">Labels</h3>
               <div className="flex gap-2 flex-wrap">

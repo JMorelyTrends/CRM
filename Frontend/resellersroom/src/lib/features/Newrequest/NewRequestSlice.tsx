@@ -2,14 +2,17 @@ import {createSlice} from '@reduxjs/toolkit'
 import { Task } from '@/app/Components/Small comps/Types'
  type Suggest={
     _id: string,
-    Stockxid: string,
-    sku: string,
+    Stockxid?: string,
+    sku?: string,
     name:string,
-    slug: string,
-    brand: string,
+    slug?: string,
+    brand?: string,
     image:  string,
     createdAt: string,
     updatedAt: string,
+    price?:string
+    itemid?:string
+ 
   }
   type Cust={
    
@@ -45,6 +48,7 @@ import { Task } from '@/app/Components/Small comps/Types'
     MatchedCustomer:Cust|null,
     SubmitingCustomer:Cust|null,
     Ordercreated:Task|null,
+    flow:string,
   };
   
   
@@ -89,6 +93,7 @@ import { Task } from '@/app/Components/Small comps/Types'
     MatchedCustomer:null,
     SubmitingCustomer:null,
     Ordercreated:null,
+    flow:"stockx"
   };
   
  export const NewRequestSlice= createSlice({
@@ -125,10 +130,14 @@ reducers:{
     }),
     Addcreatedorder:((state,action)=>{
       state.Ordercreated=action.payload;
+    }),
+    Addflow:((state , action)=>{
+     state.flow=action.payload;              //this thing is to tell is the flow is from stockx or manuall
     })
+
 }
 },
 );
 export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,
-  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer,Addcreatedorder}=NewRequestSlice.actions;
+  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer,Addcreatedorder,Addflow}=NewRequestSlice.actions;
 export default NewRequestSlice.reducer

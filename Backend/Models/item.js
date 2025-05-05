@@ -21,6 +21,11 @@ const ItemSchema = new mongoose.Schema(
     orderid:{
     type:mongoose.Schema.Types.ObjectId,
     ref:"Order"
+    },
+    userid:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"User",
+      required:true,
     }
   },
   { timestamps: true } 

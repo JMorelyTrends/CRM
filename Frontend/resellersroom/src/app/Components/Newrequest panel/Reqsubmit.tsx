@@ -35,7 +35,7 @@ const Firsthalf = ({
 }: FirstHalfProps) => {
   const dispatch = useDispatch();
   const selectedItems = useSelector((state: RootState) => state.NewReq.selectedItems);
-  
+  console.log(selectedItems)
   const [shopifyCustomers, setShopifyCustomers] = useState<dCustomerArray>([]);
   const [mongoCustomers, setMongoCustomers] = useState<dCustomerArray>([]);
   const [userId, setUserId] = useState<string | null>("");
@@ -321,8 +321,9 @@ const Secondhalf = ({
 export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   const dispatch=useDispatch()
   const selectedItems = useSelector((state: RootState) => state.NewReq.selectedItems);
-  const t=useSelector((state: RootState) => state.NewReq.Selectedonecustomer)
-    console.log(t)
+  const t=useSelector((state: RootState) => state.NewReq.Selectedonecustomer);
+   
+  const f=useSelector((state: RootState) => state.NewReq.flow)
   const [selectedCondition, setSelectedCondition] = useState<string>("");
   const [size, setSize] = useState<string>("");
   const [searchclient, setSearchclient] = useState<string>("");
@@ -356,15 +357,12 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
     }
     else if(customer?.customerfrom=='mongodb')
     {
-     
-
        Name=customer.Name!=''?customer.Name:customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
-
-
     }
-    if(customer!=null && selectedItems )
+    let newOrder=null;
+    if(customer!=null && selectedItems && f==="stockx" )
     {
-      const newOrder={
+       newOrder={
         customerid:customer._id,
         Name:Name,
         Stockxid:selectedItems._id,
@@ -373,17 +371,35 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
         Condition:Selectcondition,
         userid,
       }
-     const result=await   axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/CreateOrders`,{
+    }
+      else if(customer!=null && selectedItems && f==="manual" )
+      {
+          newOrder={
+            customerid:customer._id,
+            items:selectedItems._id,
+            Name:Name,
+            clientFrom:customer.customerfrom?customer.customerfrom:null,
+            size,
+            Condition:Selectcondition,
+            userid,
+          }
+      }
+
+    if(newOrder)
+    {
+      const result=await   axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/CreateOrders`,{
         newOrder:newOrder
       })
-   
-     
+      
       console.log(result)
       dispatch(Addcreatedorder(result.data.data))
       dispatch(Toggleleadsrenderstep(4))
   
     }
-  }
+  
+
+    }
+  
 
 
 

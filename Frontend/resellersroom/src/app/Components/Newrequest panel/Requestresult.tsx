@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {Suggest} from "../Small comps/Types"
 import {  useDispatch } from 'react-redux';
-
+import Addproduct from "./Addproduct";
 // import { Reseller, RootState } from "@/lib/Resellerstore";
 import {addItem,Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
 const Spinner = () => (
@@ -45,8 +45,9 @@ const RCard = ({item}:{item:Suggest}) => {
 
 const Requestresult = ({suggesteddata,spin}: {suggesteddata:Suggest[], spin:boolean
 }) => {
-
+  const dispatch =useDispatch()
   const [resutls,setresult]=useState<Suggest[]>([])
+  const [notfound,setnotfound]=useState<boolean>(false);
     useEffect(()=>{
       if(suggesteddata.length>0)
       {
@@ -57,8 +58,15 @@ const Requestresult = ({suggesteddata,spin}: {suggesteddata:Suggest[], spin:bool
 
   return (
     <div className="lg:h-[82%] md:h-[81%] h-[89%] w-full">
-    <div className="w-full h-[10%] bg-back flex items-center px-4"> 
-      <span>Result</span>
+    <div className="w-full h-[10%] bg-back flex justify-between items-center px-4"> 
+    <div className=""><span>Result</span></div>  
+
+    <div className=" text-sm font-light underline cursor-pointer"
+    onClick={()=>{
+             //here the flow is changing
+      setnotfound(!notfound); 
+    }}
+    ><span>Product Not found</span></div>  
     </div>
     
     <div className="w-full h-[90%] overflow-y-auto flex flex-col gap-4 p-2">
@@ -75,6 +83,8 @@ const Requestresult = ({suggesteddata,spin}: {suggesteddata:Suggest[], spin:bool
       }
   
     </div>
+
+    <Addproduct notfound={notfound} setnotfound={setnotfound}/>
   </div>
   );
 };

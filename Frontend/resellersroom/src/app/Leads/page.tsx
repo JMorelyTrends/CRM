@@ -79,7 +79,7 @@ export default function Page({}: Props) {
         id: userid,
       })
     ).data;
-    
+   
     setstate(mongodata);
 }    };
 

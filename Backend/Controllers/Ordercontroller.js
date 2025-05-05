@@ -4,9 +4,10 @@ const Order = require("../Models/Order");
 exports.createOrder = async (req, res) => {
   try {
     const {newOrder} = req.body;
-  
+    let or=null;
  
-      const or=await Order.create({
+    if(newOrder.Stockxid){
+    or=await Order.create({
         Name: newOrder.Name,
         stockxitem:newOrder.Stockxid,
         shopifycustomerid:newOrder.clientFrom=='shopify'?newOrder.customerid:null,
@@ -14,8 +15,18 @@ exports.createOrder = async (req, res) => {
         size:newOrder.size,
         condition:newOrder.Condition,
         userid:newOrder.userid   
-     })
-
+     })}
+      else{
+        or=await Order.create({
+          Name: newOrder.Name,
+          items:newOrder.items,
+          shopifycustomerid:newOrder.clientFrom=='shopify'?newOrder.customerid:null,
+          cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:null,
+          size:newOrder.size,
+          condition:newOrder.Condition,
+          userid:newOrder.userid   
+       })
+      }
      
      //add here for the customers comming form the mongodb
 
@@ -32,7 +43,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").sort({createdAt:-1});
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",
@@ -69,7 +80,8 @@ exports.getAllOrders = async (req, res) => {
         stage:data.stage,
         createdAt:data.createdAt,
         labels:data.labels,
-        Description:data.Description
+        Description:data.Description,
+        items:data.items
       }
 
     

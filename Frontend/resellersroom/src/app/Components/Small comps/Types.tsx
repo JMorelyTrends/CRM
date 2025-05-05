@@ -27,8 +27,18 @@ export type Suggest = {
   createdAt: string;
   updatedAt: string;
   name?:string
+  price?:string
 };
 
+export type additem={
+  Name:string,
+  createdAt:string,
+  itempics:[string],
+  updatedAt:string,
+  userid:string,
+  __v:string,
+  _id:string,
+}
 
  export type Custprop={
    
@@ -71,7 +81,7 @@ export type Task ={
   Description:string;
   Condition:string,
   cusid:string|null,
-  
+  items?:additem[],
 }
 
 export type column={
