@@ -25,6 +25,13 @@ const StockxDatabaseSchema = new mongoose.Schema(
    },
    Colorway:{
     type:String,
+   },
+   last_sale_price:{
+    type:Number,
+    default:0
+   },
+   last_sale_update_date:{
+    type:String,
    }
   
   },

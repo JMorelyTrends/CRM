@@ -87,10 +87,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
       style={style}
       {...(!disableDrag && listeners)}
       {...(!disableDrag && attributes)}
-      className={`relative w-[190px] h-[235px] text-black ${
+      className={`relative w-[94%] h-[300px] text-black ${
         task.stage === 'Won' ? 'bg-[#B7CBAF]' :
-        task.stage === 'Lost' ? 'bg-[#B56060]' : 'bg-[#D9D9D9]'
-      } rounded-xl cursor-pointer flex flex-col transition-all duration-300 ease-in-out shadow-lg shadow-black hover:border-amber-50 border`}
+        task.stage === 'Lost' ? 'bg-[#B56060]' : 'border-1 border-black '
+      } rounded-xl cursor-pointer flex flex-col transition-all duration-300 ease-in-out  hover:shadow-lg hover:shadow-black`}
     >
       {showPanel && <TaskPanel open={showPanel} setOpen={setShowPanel} task={clickedTask} fetchallorders={fetchallorders} />}
 

@@ -31,7 +31,7 @@ const LeadCols = (props: Props) => {
 
     
       <div
-        className="flex-1 overflow-y-auto border-1 border-black 
+        className="flex-1 overflow-y-auto 
         [&::-webkit-scrollbar]:hidden
         dark:[&::-webkit-scrollbar]:hidden
         scrollbar-thin"

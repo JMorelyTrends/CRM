@@ -353,7 +353,14 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
     if(customer?.customerfrom=='shopify')
     {
     
-        Name=customer.first_name +" "+ customer.last_name
+      if(customer.last_name)
+      {
+        Name=customer.first_name   +" "+ customer.last_name
+
+      }
+      else{
+        Name=customer.first_name;
+      }
     }
     else if(customer?.customerfrom=='mongodb')
     {

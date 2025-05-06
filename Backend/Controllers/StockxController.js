@@ -116,3 +116,45 @@ exports.Getprepopulate=async(req,res)=>{
     
     }
 }
+exports.Getproductprice = async (req, res) => {
+  const { itemid, search } = req.body;
+
+  try {
+    const options = {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.RETAIL_API_KEY
+      }
+    };
+
+    const searchTerm = search;
+    const currency = 'GBP';
+    const url = `https://app.retailed.io/api/v1/scraper/stockx/product?query=${encodeURIComponent(searchTerm)}&currency=${currency}`;
+
+    const response = await fetch(url, options);
+    const data = await response.json();
+
+    const d = new Date().toISOString(); // use ISO format (better for DB)
+
+    const lastSale = data?.market?.sales?.last_sale;
+    if (!lastSale) {
+      return res.status(404).json({ message: 'Last sale price not found in API response' });
+    }
+
+    const updatedStockx = await StockxDatabase.findOneAndUpdate(
+      { _id: itemid },
+      {
+        $set: {
+          last_sale_price: lastSale,
+          last_sale_update_date: d
+        }
+      },
+      { new: true }
+    );
+
+    res.status(201).json({ data: updatedStockx });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Something went wrong' });
+  }
+};

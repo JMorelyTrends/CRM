@@ -8,10 +8,7 @@ const ItemSchema = new mongoose.Schema(
       trim: true,
     },
   
-    B2Bprice:{
-        type:Number,
-    },
-    Sellprice:{
+  price:{
         type:Number
     },
     itempics:{

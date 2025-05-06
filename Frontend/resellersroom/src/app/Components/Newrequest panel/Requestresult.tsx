@@ -3,7 +3,7 @@ import {Suggest} from "../Small comps/Types"
 import {  useDispatch } from 'react-redux';
 import Addproduct from "./Addproduct";
 // import { Reseller, RootState } from "@/lib/Resellerstore";
-import {addItem,Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
+import {addItem,Toggleleadsrenderstep,Addflow} from '@/lib/features/Newrequest/NewRequestSlice'
 const Spinner = () => (
   <div className="flex justify-center items-center h-full">
     <div className="w-6 h-6 border-4 border-black border-t-transparent rounded-full animate-spin" />
@@ -30,6 +30,7 @@ const RCard = ({item}:{item:Suggest}) => {
       <div className="w-[30%] flex justify-center items-center">
         <button
         onClick={()=>{
+          dispatch(Addflow("stockx"))
           dispatch(addItem(item))
           dispatch(Toggleleadsrenderstep(2));
           

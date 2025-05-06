@@ -15,7 +15,10 @@ exports.createOrder = async (req, res) => {
         size:newOrder.size,
         condition:newOrder.Condition,
         userid:newOrder.userid   
-     })}
+     });
+     
+    
+    }
       else{
         or=await Order.create({
           Name: newOrder.Name,
