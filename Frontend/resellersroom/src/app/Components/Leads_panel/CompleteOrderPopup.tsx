@@ -20,10 +20,10 @@ export function CompleteOrderPopup({
   task: Task;
   fetchallorders: () => void;
 }) {
-
+console.log(task.items?.[0]?.price?.toString() )
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
-  const [costPrice, setCostPrice] = useState(task.stockxitem?.[0]?.last_sale_price?.toString() || '');
+  const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString ||'');
   const [shippingFee, setShippingFee] = useState('');
   const [processingFee, setProcessingFee] = useState('');
   const [supplierUsed, setSupplierUsed] = useState('');
@@ -46,7 +46,7 @@ export function CompleteOrderPopup({
     if (open && task) {
       setProductName(task.Name);
       setSize(task.size);
-      setCostPrice(task.stockxitem?.[0]?.last_sale_price?.toString() || '');
+      setCostPrice(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price?.toString() ||'');
       setShippingFee('');
       setProcessingFee('');
       setSupplierUsed('');
