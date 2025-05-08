@@ -31,7 +31,7 @@ export function CompleteOrderPopup({
   const [dealOwner, setDealOwner] = useState('');
   const [sourceOfTruth, setSourceOfTruth] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
-
+ const [image,setimage]=useState<string>("")
 //usestates for feautres
   const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task.labels);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
@@ -215,7 +215,7 @@ export function CompleteOrderPopup({
         {/* Image + Name */}
         <div className="flex items-center gap-4 mb-6">
          <div className=" w-[40%] h-full"> <img
-            src={task.stockxitem?.[0]?.image || '/placeholder.jpg'}
+            src={task?.stockxitem?.[0]?.image ||task.items&&task.items[0].itempics[0]|| '/placeholder.jpg'}
             alt={task.Name}
             className="w-[150px] h-[150px] object-contain rounded "
           />

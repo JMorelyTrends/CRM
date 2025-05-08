@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { TaskPanel } from './TaskPanel';
 import { Clock } from 'lucide-react';
 import { Task } from "../Small comps/Types";
-
+import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
 
 
 
@@ -41,7 +41,8 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag 
   const [showPanel, setShowPanel] = useState(false);
   const [clickedTask, setClickedTask] = useState<Task |null>(null);
   const [creationdate, setCreationDate] = useState<string>(task?.stockxitem[0]?.image);
-  
+    const [wonpopup,setwonpopup]=useState<boolean>(false)
+    const [wontask,setwontask]=useState<Task|null>(null)
   const [openlabeldialog,setopenlabeldialog]=useState<boolean>(false)
   const [image,setimage]=useState<string>("")
  
@@ -80,14 +81,17 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag 
           setShowPanel(true);
         }
         else{
-          
+         
+          setwonpopup(true)
         }
       }
     }
   };
 
   return (
-    <div
+ <>  
+  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={task} />}
+  <div
       ref={setNodeRef}
       onPointerDown={handleClickDown}
       onPointerUp={handleClickUp}
@@ -145,10 +149,10 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag 
       </div>
 
    {/* Bottom content */}
-<div className="h-[65%] rounded-xl flex flex-col justify-center items-center px-2 gap-1  text-sm w-full">
-
-          {/* Tags */}
-          <div className="w-full flex gap-2 items-center justify-start min-h-[24px] flex-wrap ">
+    <div className="h-[65%] rounded-xl flex flex-col justify-center items-center px-2 gap-1  text-sm w-full">
+    
+              {/* Tags */}
+              <div className="w-full flex gap-2 items-center justify-start min-h-[24px] flex-wrap ">
             {task.labels?.slice(0, 3).map((label, index) => (
               <div
                 key={index}
@@ -165,44 +169,45 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag 
                 +{task.labels.length - 3} more
               </div>
             )}
-          </div>
-          
-          {/* Name */}
-          <div className="w-full font-bold text-md truncate ">{task?.Name}</div>
-
-          <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
-            {task?.email}
-          </div>
-          <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
-            {task?.phone!=null?task.phone:" "}
-          </div>
-           
-          {/* StockX and manual item Name */}
-          <div className="w-full text-xs font-semibold truncate ">
-            {task.stockxitem.length > 0 ? task.stockxitem[0]?.name : task.items && task.items[0]?.Name}
-          </div>
-          
-        
-           {/* StockX and manual item Name */}
-           <div className="w-full text-xs font-light truncate ">
-            {task.condition}
-          </div>
-           {/* StockX and manual item Name */}
-           <div className="w-full text-xs font-light truncate ">
-            {task.size}
-          </div>
-          
-          {/* Created Date */}
-          <div className="w-full flex justify-start items-start gap-1 mt-1 ">
-            <div className="rounded-2xl flex items-center gap-1 bg-[#374D71] text-white text-[10px] px-2 py-1">
-              <Clock color="white" size={14} />
-              <span>{creationdate}</span>
-            </div>
-          </div>
-
-</div>
+              </div>
+              
+              {/* Name */}
+              <div className="w-full font-bold text-md truncate ">{task?.Name}</div>
+    
+              <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
+                {task?.email}
+              </div>
+              <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
+                {task?.phone!=null?task.phone:" "}
+              </div>
+               
+              {/* StockX and manual item Name */}
+              <div className="w-full text-xs font-semibold truncate ">
+                {task.stockxitem.length > 0 ? task.stockxitem[0]?.name : task.items && task.items[0]?.Name}
+              </div>
+              
+            
+               {/* StockX and manual item Name */}
+               <div className="w-full text-xs font-light truncate ">
+                {task.condition}
+              </div>
+               {/* StockX and manual item Name */}
+               <div className="w-full text-xs font-light truncate ">
+                {task.size}
+              </div>
+              
+              {/* Created Date */}
+              <div className="w-full flex justify-start items-start gap-1 mt-1 ">
+                <div className="rounded-2xl flex items-center gap-1 bg-[#374D71] text-white text-[10px] px-2 py-1">
+                  <Clock color="white" size={14} />
+                  <span>{creationdate}</span>
+                </div>
+              </div>
+    
+    </div>
 
     </div>
+    </>
   );
 };
 
