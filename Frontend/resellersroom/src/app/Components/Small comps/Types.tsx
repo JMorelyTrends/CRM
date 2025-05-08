@@ -73,6 +73,7 @@ interface StockXItem {
   slug:string,
   last_sale_price?:number,
   last_sale_update_date?:string,
+  sku?:string|null
 }
 
 export type Task ={

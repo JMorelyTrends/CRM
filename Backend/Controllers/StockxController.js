@@ -1,5 +1,7 @@
 const StockxDatabase =require("../Models/StockxDatabase")
 const Stockx=require("../StockX/stockx")
+const SneaksAPI = require('sneaks-api');
+const sneaks = new SneaksAPI();
 exports.Getdatastore=async (req,res)=>{
 try
 {
@@ -32,12 +34,11 @@ try
         };
         const searchTerm = search;
         const url = `https://app.retailed.io/api/v1/scraper/stockx/search?query=${encodeURIComponent(searchTerm)}`;
-        
         const data = await fetch(url, options)
         .then(res => res.json())
         .then(async(d) =>{
             const products = [];
-          
+          console.log(d)
             d.length>0&&
             await Promise.all(
             d.map(async (item) => {
@@ -118,9 +119,9 @@ exports.Getprepopulate=async(req,res)=>{
 }
 exports.Getproductprice = async (req, res) => {
   const { itemid, search } = req.body;
-console.log("getting the price")
+
   try {
-    console.log("getting here")
+
     const options = {
       method: 'GET',
       headers: {
@@ -134,10 +135,7 @@ console.log("getting the price")
 
     const response = await fetch(url, options);
     const data = await response.json();
-
     const d = new Date().toISOString();
-
-    
     const retailPriceTrait = data.traits.find(trait => trait.name === 'Retail Price');
     const retailPrice = retailPriceTrait ? retailPriceTrait.value : null;
 
@@ -163,3 +161,37 @@ console.log("getting the price")
     res.status(500).json({ message: err.message || 'Something went wrong' });
   }
 };
+exports.getprice_github=async(req,res)=>{
+   const {itemid,sku}=req.body;
+
+  try{
+    //getProducts(keyword, limit, callback) takes in a keyword and limit and returns a product array 
+sneaks.getProductPrices(sku, async function (err, product){
+  console.log(product.retailPrice)
+
+  const d=product.retailPrice;
+      //  if(d)
+      // {
+      //   const updatedStockx = await StockxDatabase.findOneAndUpdate(
+      //     { _id: itemid },
+      //     {
+      //       $set: {
+      //         last_sale_price: retailPrice,
+      //         last_sale_update_date: d
+      //       }
+      //     },
+      //     { new: true }
+      //   );
+      //  return res.status(201).json({ price: updatedStockx });
+      // }
+
+    //  res.status(201).json({ message:"dont find it" })
+})
+    
+ res.status(201).json({ message:"dont find it" })
+  }
+  catch(err)
+  {
+  return res.status(500).json({ message: err.message });
+  }
+}

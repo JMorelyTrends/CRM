@@ -25,6 +25,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.1",
     "node-fetch": "^2.7.0",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "sneaks-api": "^1.2.3"
   }
 }

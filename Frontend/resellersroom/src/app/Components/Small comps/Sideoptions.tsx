@@ -45,7 +45,7 @@ const Sideoptions = () => {
         <Slide img="/images/Dahboard.png" name="Dashboard" number={null} link="/Dashboard" />
         <Slide img="/images/request.png" name="Add New Request" number={null} link="/NewRequest" />
         <Slide img="/images/Lead.png" name="Lead Management" number={"54"} link="/Leads" />
-        <Slide img="/images/supplier.png" name="Supplier CRM" number={null} link="/CRM" />
+        <Slide img="/images/supplier.png" name="Supplier CRM" number={null} link="/SupplierCRM" />
         <Slide img="/images/Crm.png" name="Customer CRM" number={null} link="/customer-crm" />
     </div>
   )
