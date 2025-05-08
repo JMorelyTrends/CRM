@@ -9,21 +9,20 @@ import {
   useSensor,
   useSensors,
   DragStartEvent,
-  DragEndEvent
+  DragEndEvent,
 } from "@dnd-kit/core";
 import DraggableCard from "../Components/Leads_panel/DraggableCard";
 import axios from "axios";
-import {  useDispatch } from 'react-redux';
+import { useDispatch } from "react-redux";
 //import { Reseller, RootState } from "@/lib/Resellerstore";
-import {Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { statetype, Task } from "../Components/Small comps/Types";
+import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
 const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
 });
 
-type Props =object;
-
-
+type Props = object;
 
 function useIsSmallScreen() {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -42,19 +41,20 @@ function useIsSmallScreen() {
 }
 
 export default function Page({}: Props) {
-  const dispatch=useDispatch()
-  const [state, setstate] = useState<statetype>();
-  const [activeCard, setActiveCard] = useState<Task|null>(null);
+  const dispatch = useDispatch();
+  const [state, setstate] = useState<statetype | null>(null);
+  const [activeCard, setActiveCard] = useState<Task | null>(null);
   const [smcolumn, setsmcolumn] = useState<string>("New Lead");
   const [userid, setuserid] = useState<string | null>("");
- 
-
+  const [Dragging, setDragging] = useState<boolean>(false);
+  const [search,setserach]=useState<string>("")
+  const [wonpopup,setwonpopup]=useState<boolean>(false)
+  const [wontask,setwontask]=useState<Task|null>(null)
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 10, 
+        distance: 10,
       },
-      
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
@@ -63,9 +63,8 @@ export default function Page({}: Props) {
       },
     })
   );
-  
-  useEffect(() => {
 
+  useEffect(() => {
     dispatch(Toggleleadsrenderstep(0));
     if (typeof window !== "undefined") {
       const id = localStorage.getItem("tempcred");
@@ -73,33 +72,98 @@ export default function Page({}: Props) {
     }
   }, []);
   const fetchallorders = async () => {
-    if(userid!=""){
-    const mongodata = (
-      await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`, {
-        id: userid,
-      })
-    ).data;
-   console.log(mongodata)
-    setstate(mongodata);
-}    };
+    if (userid != "") {
+      const mongodata = (
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`,
+          {
+            id: userid,
+          }
+        )
+      ).data;
+      console.log(mongodata);
+      setstate(mongodata);
+      getprices(mongodata); // pass fresh state to getprices
+    }
+  };
 
   useEffect(() => {
-   
-    fetchallorders();
+    if (userid) {
+      fetchallorders();
+    }
   }, [userid]);
+  function isOlderThanOneMonth(dateString?: string): boolean {
+    if (!dateString) return true; // treat undefined as "too old"
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    return diffInDays > 30;
+  }
 
+  const getprices = async (currentState: statetype) => {
+    if (currentState) {
+      let pricesUpdated = false; // Flag to check if we updated any price
+  
+      const stateCopy = { ...currentState }; // optional: not mutating original state
+      const columnOrder = stateCopy.columnOrder;
+  
+      for (const ColumnId of columnOrder) {
+        const column = stateCopy.columns[ColumnId];
+        const tasks = column.taskIds.map((taskId) => stateCopy.tasks[taskId]);
+  
+        for (const task of tasks) {
+          if (
+            task?.stockxitem?.length > 0 &&
+            (!task?.stockxitem[0]?.last_sale_price ||
+              isOlderThanOneMonth(task?.stockxitem[0]?.last_sale_update_date))
+          ) {
+           try{ await axios.post(
+              `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
+              {
+                itemid: task.stockxitem[0]._id,
+                search: task.stockxitem[0].slug,
+              }
+            );
+            pricesUpdated = true; }
+            catch (error) {
+              console.error("Error fetching prices:", error);
+            }// Mark that we updated at least one price
+          }
+        }
+      }
+  
+      // Only fetch orders again if we actually updated prices
+      if (pricesUpdated) {
+      try{  const mongodata = (
+          await axios.post(
+            `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`,
+            {
+              id: userid,
+            }
+          )
+        ).data;
+        console.log(mongodata);
+        setstate(mongodata);}
+        catch (error) {
+          console.error("Error fetching orders:", error);
+        }
+      }
+    }
+  };
   const isSmallScreen = useIsSmallScreen();
 
   const DragStart = (event: DragStartEvent) => {
-  if(state) { const { active } = event;
-    const taskId = parseInt(active.id as string);
-    const task = findTaskById(state, taskId);
-   
-   // const colId = findColumnByTaskId(state, taskId);
-   
-    setActiveCard(task);
-    
-  }
+    setDragging(true);
+    if (state) {
+      const { active } = event;
+      const taskId = parseInt(active.id as string);
+      const task = findTaskById(state, taskId);
+
+      // const colId = findColumnByTaskId(state, taskId);
+
+      setActiveCard(task);
+    }
   };
 
   const findTaskById = (state: statetype, id: number) => {
@@ -108,7 +172,6 @@ export default function Page({}: Props) {
 
   const findColumnByTaskId = (state: statetype, taskId: number): string => {
     for (const colId of Object.keys(state.columns)) {
-     
       if (state.columns[colId].taskIds.includes(taskId)) {
         return colId;
       }
@@ -116,45 +179,81 @@ export default function Page({}: Props) {
     return "";
   };
 
-  const DragEnd = (event: DragEndEvent) => {
+  // Basic timeout wrapper
+function timeout(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+  const DragEnd = async(event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over ) return setActiveCard(null);
-    if(state)
-      {
-        const taskid= parseInt(active.id as string);
-    const currenttask = findTaskById(state, taskid);
-  
-    const overId = over.id;
+    if (!over) return setActiveCard(null);
+    if (state) {
+      const taskid = parseInt(active.id as string);
+      const currenttask = findTaskById(state, taskid);
 
-    const sourceColId = findColumnByTaskId(state, taskid);
-// CASE 1: over.id is a column → dropped into empty space in column
-    const isOverAColumn = state.columns.hasOwnProperty(overId);
-    const destinationColId = isOverAColumn
-      ? overId
-      : findColumnByTaskId(state, parseInt(overId as string));
+      const overId = over.id;
 
-    if (!destinationColId) return setActiveCard(null);
+      const sourceColId = findColumnByTaskId(state, taskid);
+      // CASE 1: over.id is a column → dropped into empty space in column
+      const isOverAColumn = state.columns.hasOwnProperty(overId);
+      const destinationColId = isOverAColumn
+        ? overId
+        : findColumnByTaskId(state, parseInt(overId as string));
 
-    const sourceCol = state.columns[sourceColId];
-    const destinationCol = state.columns[destinationColId];
+      if (!destinationColId) return setActiveCard(null);
 
-    if (sourceColId === destinationColId) {
-      // Reordering in the same column
-      const oldIndex = sourceCol.taskIds.indexOf(taskid);
+      const sourceCol = state.columns[sourceColId];
+      const destinationCol = state.columns[destinationColId];
+   
+      if (sourceColId === destinationColId) {
+        // Reordering in the same column
+        const oldIndex = sourceCol.taskIds.indexOf(taskid);
 
-      const newIndex = isOverAColumn
-        ? sourceCol.taskIds.length
-        : sourceCol.taskIds.indexOf(parseInt(overId as string));
+        const newIndex = isOverAColumn
+          ? sourceCol.taskIds.length
+          : sourceCol.taskIds.indexOf(parseInt(overId as string));
 
-      if (oldIndex === newIndex) {
+        if (oldIndex === newIndex) {
+          setActiveCard(null);
+          return;
+        }
+
+        const newTaskIds = [...sourceCol.taskIds];
+        newTaskIds.splice(oldIndex, 1); // remove active
+        newTaskIds.splice(newIndex, 0, taskid); // insert at new index
+
+        const newState = {
+          ...state,
+          columns: {
+            ...state.columns,
+            [sourceColId]: {
+              ...sourceCol,
+              taskIds: newTaskIds,
+            },
+          },
+        };
+        setDragging(false);
+        setstate(newState);
         setActiveCard(null);
+ 
         return;
       }
 
-      const newTaskIds = [...sourceCol.taskIds];
-      newTaskIds.splice(oldIndex, 1); // remove active
-      newTaskIds.splice(newIndex, 0, taskid); // insert at new index
+      // CASE 2: Moving to a different column
+      const newSourceTaskIds = sourceCol.taskIds.filter((id) => id !== taskid);
+
+      const newDestinationTaskIds = isOverAColumn
+        ? [...destinationCol.taskIds, taskid] // just push at end
+        : (() => {
+            const index = destinationCol.taskIds.indexOf(
+              parseInt(overId as string)
+            );
+            const updated = [...destinationCol.taskIds];
+            updated.splice(index, 0, taskid);
+            return updated;
+          })();
 
       const newState = {
         ...state,
@@ -162,55 +261,44 @@ export default function Page({}: Props) {
           ...state.columns,
           [sourceColId]: {
             ...sourceCol,
-            taskIds: newTaskIds,
+            taskIds: newSourceTaskIds,
+          },
+          [destinationColId]: {
+            ...destinationCol,
+            taskIds: newDestinationTaskIds,
+          },
+        },
+        tasks: {
+          ...state.tasks,
+          [active.id]: {
+            ...state.tasks[Number(active.id)],
+            stage: destinationCol.title,
           },
         },
       };
+
       setstate(newState);
       setActiveCard(null);
-      return;
+      try{const d=await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateStages`,
+        {
+          taskid: currenttask,
+          newstage: destinationCol.id,
+        }
+        
+      );
+     
+      if(destinationCol.title=='Won')
+      {
+        await timeout(1000);
+        setwontask(currenttask)
+        setwonpopup(true)
+      }
     }
-
-    // CASE 2: Moving to a different column
-    const newSourceTaskIds = sourceCol.taskIds.filter((id) => id !== taskid);
-
-    const newDestinationTaskIds = isOverAColumn
-      ? [...destinationCol.taskIds, taskid] // just push at end
-      : (() => {
-          const index = destinationCol.taskIds.indexOf(parseInt(overId as string));
-          const updated = [...destinationCol.taskIds];
-          updated.splice(index, 0, taskid);
-          return updated;
-        })();
-
-    const newState = {
-      ...state,
-      columns: {
-        ...state.columns,
-        [sourceColId]: {
-          ...sourceCol,
-          taskIds: newSourceTaskIds,
-        },
-        [destinationColId]: {
-          ...destinationCol,
-          taskIds: newDestinationTaskIds,
-        },
-      },
-      tasks: {
-        ...state.tasks,
-        [active.id]: {
-          ...state.tasks[Number(active.id)],
-          stage: destinationCol.title,
-        },
-      },
-    };
-
-    setstate(newState);
-    setActiveCard(null);
-    axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateStages`, {
-      taskid: currenttask,
-      newstage: destinationCol.id,
-    });}
+      catch (error) {
+        console.error("Error updating stages:", error);
+      }
+    }
   };
 
   const Manualcolchange = (
@@ -219,63 +307,94 @@ export default function Page({}: Props) {
     taskid: number,
     task_id: object
   ) => {
-   if(state)
-    { const sourceCol = state.columns[oldstage];
-    const newSourceTaskIds = sourceCol.taskIds.filter((id:number) => id !== taskid);
+    if (state) {
+      const sourceCol = state.columns[oldstage];
+      const newSourceTaskIds = sourceCol.taskIds.filter(
+        (id: number) => id !== taskid
+      );
 
-    const destinationCol = state.columns[newStage];
+      const destinationCol = state.columns[newStage];
 
-    const isOverAColumn = state.columns.hasOwnProperty(newStage);
+      const isOverAColumn = state.columns.hasOwnProperty(newStage);
 
-    const newDestinationTaskIds = isOverAColumn
-      ? [...destinationCol.taskIds, taskid] // just push at end
-      : (() => {
-          const index = destinationCol.taskIds.indexOf(parseInt(newStage));
-          const updated = [...destinationCol.taskIds];
-          updated.splice(index, 0, taskid);
-          return updated;
-        })();
+      const newDestinationTaskIds = isOverAColumn
+        ? [...destinationCol.taskIds, taskid] // just push at end
+        : (() => {
+            const index = destinationCol.taskIds.indexOf(parseInt(newStage));
+            const updated = [...destinationCol.taskIds];
+            updated.splice(index, 0, taskid);
+            return updated;
+          })();
 
-    const n = {
-      ...state,
-      columns: {
-        ...state.columns,
-        [oldstage]: {
-          ...sourceCol,
-          taskIds: newSourceTaskIds,
+      const n = {
+        ...state,
+        columns: {
+          ...state.columns,
+          [oldstage]: {
+            ...sourceCol,
+            taskIds: newSourceTaskIds,
+          },
+          [newStage]: {
+            ...destinationCol,
+            taskIds: newDestinationTaskIds,
+          },
         },
-        [newStage]: {
-          ...destinationCol,
-          taskIds: newDestinationTaskIds,
+        tasks: {
+          ...state.tasks,
+          [taskid]: {
+            ...state.tasks[Number(taskid)],
+            stage: destinationCol.title,
+          },
         },
-      },
-      tasks: {
-        ...state.tasks,
-        [taskid]: {
-          ...state.tasks[Number(taskid)],
-          stage: destinationCol.title,
-        },
-      },
-    };
-    setstate(n);
-    setActiveCard(null);
-    axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateStages`, {
-      taskid: task_id,
-      newstage: newStage,
-    });}
+      };
+      setstate(n);
+      setActiveCard(null);
+   try {  axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateStages`,
+        {
+          taskid: task_id,
+          newstage: newStage,
+        }
+      );}
+      catch (error) {
+        console.error("Error UpdateStages:", error);
+      }
+    }
   };
 
   return (
-    <DndContext onDragStart={DragStart} onDragEnd={DragEnd}  sensors={sensors}>
-      {!isSmallScreen ? (
+    <DndContext onDragStart={DragStart} onDragEnd={DragEnd} sensors={sensors}>
+       {/* Header with Leads label and search bar */}
+     {/* Header with Leads label and search bar */}
+     {wonpopup && wontask &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} />}
+   {!isSmallScreen&& 
+   
+   <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">
+      <h1 className=" text-3xl font-semibold text-gray-800 dark:text-[#888888]">Leads Management</h1>
+      <input
+        type="text"
+        value={search}
+        onChange={(e)=>{
+          setserach(e.target.value)
+        }}
+        placeholder="Search by customer and product "
+        className="w-full lg:w-54 px-4 py-2 border-2 text-xs p-4 text-black border-gray-300 rounded-lg "
+      />
+    </div>}
+
+      <div className="overflow-x-auto pb-4 w-full">
+      <div className="flex w-max space-x-4">
+      {!isSmallScreen 
+      ? (
         <div
-          className="lg:w-[80vw] md:w-[60vw] lg:visible hidden w-full px-0.5 h-[100vh]  lg:flex gap-2 justify-start items-center overflow-x-auto
+          className="w-[80vw] lg:w-[80vw] md:w-[60vw] lg:visible hidden flex-nowrap  px-0.5 h-[90vh]  lg:flex gap-2 justify-start items-center overflow-x-auto
        [&::-webkit-scrollbar]:w-1
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
     dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500 "
         >
+          
           <div className="flex gap-1">
             {state &&
               state.columnOrder &&
@@ -291,6 +410,7 @@ export default function Page({}: Props) {
                     Colname={column.title}
                     column={column}
                     tasks={tasks}
+                    search={search}
                     disableDrag={isSmallScreen}
                     Manualcolchange={Manualcolchange}
                     fetchallorders={fetchallorders}
@@ -299,8 +419,9 @@ export default function Page({}: Props) {
               })}
           </div>
         </div>
-      ) : (
-        <div className=" lg:hidden visible w-full h-full flex-col  flex items-center">
+      ) :
+       (
+        <div className=" lg:hidden  visible w-[100vw] h-[100vh] flex-col  flex items-center">
           <div className=" w-full  h-[5vh] flex justify-center item-center ">
             <select
               id="condition"
@@ -323,13 +444,12 @@ export default function Page({}: Props) {
             state.columnOrder &&
             state.columnOrder.map((ColumnId, index) => {
               const column = state.columns[ColumnId];
-              const tasks = column.taskIds.map(
-                (taskId) => state.tasks[taskId]
-              );
+              const tasks = column.taskIds.map((taskId) => state.tasks[taskId]);
               if (smcolumn == ColumnId) {
                 return (
                   <LeadCols
                     key={index}
+                    search=""
                     className=""
                     Colname={column.title}
                     column={column}
@@ -343,14 +463,24 @@ export default function Page({}: Props) {
             })}
         </div>
       )}
-
+</div>
+</div>
       <DragOverlay>
-        {activeCard ? <DraggableCard task={activeCard}  disableDrag Manualcolchange={Manualcolchange} fetchallorders={fetchallorders} /> : null}
+        {activeCard ? (
+          <DraggableCard
+            task={activeCard}
+            search=""
+            disableDrag
+            Manualcolchange={Manualcolchange}
+            fetchallorders={fetchallorders}
+          />
+        ) : null}
       </DragOverlay>
     </DndContext>
   );
 }
 
+// state for kanban system
 // const initialData = {
 //   tasks: {
 //     "1": { id: 1, content: "Configure Next.js application" },

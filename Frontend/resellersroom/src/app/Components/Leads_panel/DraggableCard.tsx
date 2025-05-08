@@ -10,15 +10,14 @@ import { Task } from "../Small comps/Types";
 
 interface DraggableCardProps {
   task: Task;
-
+search:string;
   disableDrag?: boolean;
   Manualcolchange: (newStage: string, oldstage: string, taskid: number, task: Task) => void;
   fetchallorders: () => void;
 }
-
 const columnOptions = ["NewLead", "NeedToSource", "Offered", "WarmLead", "Won", "Lost"];
 
-const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false, Manualcolchange, fetchallorders }) => {
+const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag = false, Manualcolchange, fetchallorders }) => {
   const {
     attributes,
     listeners,
@@ -29,6 +28,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
     id: String(task.id),
     disabled: disableDrag,
   });
+
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -41,18 +41,20 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
   const [showPanel, setShowPanel] = useState(false);
   const [clickedTask, setClickedTask] = useState<Task |null>(null);
   const [creationdate, setCreationDate] = useState<string>(task?.stockxitem[0]?.image);
+  
+  const [openlabeldialog,setopenlabeldialog]=useState<boolean>(false)
   const [image,setimage]=useState<string>("")
  
   useEffect(() => {
     const date = new Date(task.createdAt);
     const formatted = `${date.getDate()} ${date.toLocaleString('default', { month: 'long' })}`;
     setCreationDate(formatted);
-
+    
     //select which image to show
     if(task.items&&task.items?.length>0)
     {
        setimage(task.items[0].itempics[0])
-       console.log(task.items[0].itempics[0])
+       //console.log(task.items[0].itempics[0])
     }
     else{
       setimage(task?.stockxitem[0]?.image)
@@ -73,8 +75,13 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
 
       if (distance < 5 && task) {
         setClickedTask(task);
-        
-        setShowPanel(true);
+        if(task.stage!='Won')
+        {
+          setShowPanel(true);
+        }
+        else{
+          
+        }
       }
     }
   };
@@ -90,9 +97,9 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
       className={`relative w-[94%] h-[300px] text-black ${
         task.stage === 'Won' ? 'bg-[#B7CBAF]' :
         task.stage === 'Lost' ? 'bg-[#B56060]' : 'border-1 border-black '
-      } rounded-xl cursor-pointer flex flex-col transition-all duration-300 ease-in-out  hover:shadow-lg hover:shadow-black`}
+      } rounded-md cursor-pointer flex flex-col transition-all duration-300 ease-in-out  hover:shadow-lg hover:shadow-black`}
     >
-      {showPanel && <TaskPanel open={showPanel} setOpen={setShowPanel} task={clickedTask} fetchallorders={fetchallorders} />}
+      {showPanel && <TaskPanel setopenlabeldialog={()=>false}  openlabeldialog={false} open={showPanel} setOpen={setShowPanel} task={clickedTask} fetchallorders={fetchallorders} />}
 
       {/* Dropdown */}
       <div className="absolute top-2 right-2 sm:block md:hidden z-50">
@@ -112,6 +119,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
               <button
                 key={colName}
                 onClick={() => {
+                  
                   Manualcolchange(colName, selectedCol, task.id, task);
                   setSelectedCol(colName);
                   setOpenDropdown(false);
@@ -126,53 +134,74 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
       </div>
 
       {/* Image */}
-      <div className="h-[45%] flex justify-center items-center">
-        <div className="w-[76%] h-[95%] rounded-2xl flex justify-center bg-white overflow-hidden">
+      <div className="h-[35%]  flex justify-center items-center">
+        <div className="w-[76%] h-full rounded-2xl flex justify-center overflow-hidden">
           <img
             src={image?image:"no image"}
             alt=""
-            className="w-full h-full object-cover rounded-2xl"
+            className="w-full h-full object-cover rounded-2xl p-2"
           />
         </div>
       </div>
 
-      {/* Bottom content */}
-      <div className="h-[55%] rounded-xl flex flex-col justify-between items-center px-2 pt-1 text-sm">
-        {/* Tags */}
-        <div className="w-full flex flex-wrap gap-2 items-center justify-start min-h-[24px]">
-          {task.labels?.map((label, index) => (
-            <div
-              key={index}
-              className={`relative group w-6 h-3 rounded-full cursor-pointer ${label.label.col}`}
-             
-            >
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition duration-200 whitespace-nowrap z-10">
-                {label.label.name}
+   {/* Bottom content */}
+<div className="h-[65%] rounded-xl flex flex-col justify-center items-center px-2 gap-1  text-sm w-full">
+
+          {/* Tags */}
+          <div className="w-full flex gap-2 items-center justify-start min-h-[24px] flex-wrap ">
+            {task.labels?.slice(0, 3).map((label, index) => (
+              <div
+                key={index}
+                className={`relative group w-10 h-5 rounded-full cursor-pointer ${label.label.col}`}
+              >
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition duration-200 whitespace-nowrap z-10">
+                  {label.label.name}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Name */}
-        <div className="w-full font-bold text-md truncate">{task?.Name}</div>
-
-        {/* StockX and manuall input item Name */}
-        <div className="w-full text-xs font-bold truncate">{task.stockxitem.length>0?  task.stockxitem[0]?.name:task.items&&task.items[0]?.Name}</div>
-
-        {/* Condition */}
-        <div className="w-full text-xs font-bold truncate">{task.condition}</div>
-
-        {/* Size */}
-        <div className="w-full text-xs font-bold truncate">{task.size}</div>
-
-        {/* Created Date */}
-        <div className="w-full flex justify-start items-start  gap-1 mt-1">
-          <div className="rounded-2xl flex items-center gap-1 bg-[#374D71] text-white text-[10px] px-2 py-1  ">
-            <Clock color="white" size={14} />
-            <span>{creationdate}</span>
+            ))}
+          
+            {task.labels && task.labels.length > 4 && (
+              <div className="text-xs text-gray-600">
+                +{task.labels.length - 3} more
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+          
+          {/* Name */}
+          <div className="w-full font-bold text-md truncate ">{task?.Name}</div>
+
+          <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
+            {task?.email}
+          </div>
+          <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
+            {task?.phone!=null?task.phone:" "}
+          </div>
+           
+          {/* StockX and manual item Name */}
+          <div className="w-full text-xs font-semibold truncate ">
+            {task.stockxitem.length > 0 ? task.stockxitem[0]?.name : task.items && task.items[0]?.Name}
+          </div>
+          
+        
+           {/* StockX and manual item Name */}
+           <div className="w-full text-xs font-light truncate ">
+            {task.condition}
+          </div>
+           {/* StockX and manual item Name */}
+           <div className="w-full text-xs font-light truncate ">
+            {task.size}
+          </div>
+          
+          {/* Created Date */}
+          <div className="w-full flex justify-start items-start gap-1 mt-1 ">
+            <div className="rounded-2xl flex items-center gap-1 bg-[#374D71] text-white text-[10px] px-2 py-1">
+              <Clock color="white" size={14} />
+              <span>{creationdate}</span>
+            </div>
+          </div>
+
+</div>
+
     </div>
   );
 };

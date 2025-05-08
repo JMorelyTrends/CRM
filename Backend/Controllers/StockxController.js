@@ -118,8 +118,9 @@ exports.Getprepopulate=async(req,res)=>{
 }
 exports.Getproductprice = async (req, res) => {
   const { itemid, search } = req.body;
-
+console.log("getting the price")
   try {
+    console.log("getting here")
     const options = {
       method: 'GET',
       headers: {
@@ -134,25 +135,29 @@ exports.Getproductprice = async (req, res) => {
     const response = await fetch(url, options);
     const data = await response.json();
 
-    const d = new Date().toISOString(); // use ISO format (better for DB)
+    const d = new Date().toISOString();
 
-    const lastSale = data?.market?.sales?.last_sale;
-    if (!lastSale) {
-      return res.status(404).json({ message: 'Last sale price not found in API response' });
+    
+    const retailPriceTrait = data.traits.find(trait => trait.name === 'Retail Price');
+    const retailPrice = retailPriceTrait ? retailPriceTrait.value : null;
+
+    if (!retailPrice) {
+      return res.status(404).json({ message: 'Retail price not found in API response' });
     }
 
     const updatedStockx = await StockxDatabase.findOneAndUpdate(
       { _id: itemid },
       {
         $set: {
-          last_sale_price: lastSale,
+          last_sale_price: retailPrice,
           last_sale_update_date: d
         }
       },
       { new: true }
     );
+    console.log("updated the price")
 
-    res.status(201).json({ data: updatedStockx });
+    res.status(201).json({ price: updatedStockx });
 
   } catch (err) {
     res.status(500).json({ message: err.message || 'Something went wrong' });

@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -10,24 +9,31 @@ import {
   DialogOverlay
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Flag } from "lucide-react";
 import axios from "axios";
 import { labeltype,Task } from "../Small comps/Types";
 
-
+import {  useDispatch, useSelector } from 'react-redux';
+import {addLabel}from "../../../lib/features/Leads/LeadsSlice"
+import { RootState } from "@/lib/Resellerstore";
 
 
 export function TaskPanel({
   open,
   setOpen,
   task,
-  fetchallorders
+  fetchallorders,
+  openlabeldialog,
+  setopenlabeldialog
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   task: Task | null;
   fetchallorders: () => void;
+  openlabeldialog:boolean,
+  setopenlabeldialog: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const dispatch=useDispatch();
   const [labelDialogOpen, setLabelDialogOpen] = useState(false);
   const [createLabelOpen, setCreateLabelOpen] = useState(false);
   const [Description, setDescription] = useState<string>(task?.Description ?? "");
@@ -35,7 +41,8 @@ export function TaskPanel({
   const [newLabel, setNewLabel] = useState("");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
- 
+  
+  
 
   const AddnewLabel = async (color: string, label: string) => {
     try {
@@ -54,6 +61,7 @@ export function TaskPanel({
       });
 
       setavailableLabels(availtags.data.data || []);
+      dispatch(addLabel(availtags.data.data||[]))
       setLabelDialogOpen(true);
     } catch (err) {
       console.error("Failed to add label", err);
@@ -95,6 +103,7 @@ export function TaskPanel({
         });
 
         setavailableLabels(availtags.data.data || []);
+        dispatch(addLabel(availtags.data.data||[]))
       } catch (err) {
         console.error("Failed to fetch labels", err);
       }
@@ -123,7 +132,7 @@ export function TaskPanel({
           id:id
          })
        setavailableLabels(  availableLabels.filter((label:labeltype)=> id!==label._id))
-         
+       dispatch(addLabel(availableLabels.filter((label:labeltype)=> id!==label._id)))
     }
     catch{
 
@@ -220,7 +229,9 @@ export function TaskPanel({
         </DialogPortal>
       </Dialog>
 
-      <Dialog open={labelDialogOpen} onOpenChange={() => setLabelDialogOpen(false)}>
+      <Dialog open={labelDialogOpen||openlabeldialog} onOpenChange={() => {setLabelDialogOpen(false)
+        setopenlabeldialog(false)
+      }}>
         <DialogContent className="sm:max-w-sm p-4">
           <DialogHeader>
             <DialogTitle>Select a Label</DialogTitle>

@@ -14,7 +14,9 @@ export type Suggest = {
   Stockxid: string;
   stockxitem:[{
     name:string,
-    image:string
+    image:string,
+    last_sale_price?:number,
+    last_sale_update_date?:string,
   }];
   labels:labeltype[]
   
@@ -35,6 +37,7 @@ export type additem={
   createdAt:string,
   itempics:[string],
   updatedAt:string,
+  price:number,
   userid:string,
   __v:string,
   _id:string,
@@ -64,8 +67,12 @@ export type dCustomerArray = Custprop[];
 
 
 interface StockXItem {
+  _id:string,
   image: string;
   name: string;
+  slug:string,
+  last_sale_price?:number,
+  last_sale_update_date?:string,
 }
 
 export type Task ={
@@ -82,6 +89,8 @@ export type Task ={
   Condition:string,
   cusid:string|null,
   items?:additem[],
+  email?:string,
+  phone?:string,
 }
 
 export type column={

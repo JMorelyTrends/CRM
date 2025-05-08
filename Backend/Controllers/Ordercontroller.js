@@ -1,5 +1,5 @@
 const Order = require("../Models/Order");
-
+const {get_shopify_byid,Get_mongo_byid}=require("./CustomerController")
 
 exports.createOrder = async (req, res) => {
   try {
@@ -69,7 +69,27 @@ exports.getAllOrders = async (req, res) => {
     });
 
 
-    orders.forEach((data)=>{
+    for (const data of orders){
+      let h;
+      let phone;
+      let email;
+      if(!data.cusid)
+      {
+        //shopify customer
+        h=await get_shopify_byid(data.shopifycustomerid)
+        // console.log("shopify customer get :",h.customers[0])
+        phone=h.customers[0].phone!=null?h.customers[0].phone:null
+        email=h.customers[0].email!=h.customers[0].email!=null?h.customers[0].email:null
+        //add address here if needed
+      
+      }
+      else{
+        h= await Get_mongo_byid(data.cusid)
+      // console.log("customer from db customer get :",h)
+        phone=h[0].Number!=''?h[0].Number:null
+        email=h[0].email!=''?h[0].email:null
+         
+      }
       const counter=tcounter++;
       tasks[counter]={
         id:counter,
@@ -84,7 +104,9 @@ exports.getAllOrders = async (req, res) => {
         createdAt:data.createdAt,
         labels:data.labels,
         Description:data.Description,
-        items:data.items
+        items:data.items,
+        phone:phone,
+        email:email
       }
 
     
@@ -94,7 +116,7 @@ exports.getAllOrders = async (req, res) => {
         columns[stage].taskIds.push(counter)
       }
 
-    })
+    }
 
  
     const maporderdata={
@@ -102,7 +124,7 @@ exports.getAllOrders = async (req, res) => {
       columns,
       columnOrder
     }
-
+  // console.log(maporderdata)
 
     res.status(200).json(maporderdata);
   } catch (error) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Task,column } from '../Small comps/Types';
@@ -12,12 +12,54 @@ type Props = {
   tasks: Task[];
   disableDrag?: boolean; 
   Manualcolchange:(newStage: string ,oldstage:string, taskid:number, task_id:object)=>void;
-  fetchallorders: () => void
+  fetchallorders: () => void;
+  search:string
 };
 
 const LeadCols = (props: Props) => {
 
+  const [totalprice,settotalprice]=useState<number>(0)
+  useEffect(()=>{
 
+    let c=0;
+    if(props.tasks.length>0)
+    {
+      props.tasks.map((task:Task)=>{
+        if(task.stockxitem.length>0 && task?.stockxitem[0]?.last_sale_price){
+        c+=task?.stockxitem[0]?.last_sale_price;
+      }
+        else if( task?.items?.length&& task?.items?.length >0){
+         c+=task.items[0].price;
+        
+        }
+        settotalprice(c)
+      })
+    }
+    else{
+      settotalprice(0)
+    }
+    
+  },[props.tasks])
+  const taskMatchesSearch = (task: Task, search: string): boolean => {
+    const searchLower = search.toLowerCase();
+  
+    // Collect all possible fields as strings
+    const fieldsToSearch: string[] = [
+      task.Name ?? '',
+      task.email ?? '',
+      task.phone ?? '',
+      task.condition ?? '',
+      task.size ?? '',
+      ...(task.labels?.map(labelObj => labelObj.label?.name ?? '') ?? []),
+      ...(task.stockxitem?.map(stockx => stockx.name ?? '') ?? []),
+      ...(task.items?.map(item => item.Name ?? '') ?? []),
+    ];
+  
+    // Return true if any field includes the search string
+    return fieldsToSearch.some(field =>
+      field.toLowerCase().includes(searchLower)
+    );
+  };
 
   const { setNodeRef } = useDroppable({
     id: props.column.id, 
@@ -25,11 +67,10 @@ const LeadCols = (props: Props) => {
   return (
     <div className="lg:w-[20vw] lg:h-[90vh] w-[70vw] h-[80vh]  flex flex-col py-3 px-2 ">
     
-      <div className="text-black text-lg font-semibold text-center mb-4">
-        {props.Colname}
-      </div>
-
-    
+      <div className="text-black  font-semibold text-center mb-2 mt-2 flex justify-center gap-2  items-center">
+       <div className=" text-md flex bg-blacks w-fit gap-2 "> <div className="">{props.Colname}</div>{`(${props.tasks.length})`}</div>   
+       <div className=" bg-[#374D71CC] w-[30%] h-full rounded-lg text-md text-white">£ {totalprice}</div>
+      </div>    
       <div
         className="flex-1 overflow-y-auto 
         [&::-webkit-scrollbar]:hidden
@@ -42,9 +83,18 @@ const LeadCols = (props: Props) => {
           strategy={verticalListSortingStrategy}
         >
           <div className="flex  flex-col items-center gap-5  transition-all duration-300 ease-in-out">
-            {props.tasks.map((task: Task) => (
-                <DraggableCard key={task.id} task={task}  disableDrag={props.disableDrag} Manualcolchange={props.Manualcolchange} fetchallorders={props.fetchallorders}/>
-            ))}
+            {
+
+
+            props.tasks
+            .filter(task => taskMatchesSearch(task, props.search))
+            .map((task: Task) => (
+                <DraggableCard key={task.id} task={task} search={props.search}  disableDrag={props.disableDrag} Manualcolchange={props.Manualcolchange} fetchallorders={props.fetchallorders}/>
+           )
+           
+           
+           
+           )}
           </div>
         </SortableContext>
       </div>

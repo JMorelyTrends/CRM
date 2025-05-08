@@ -46,7 +46,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <SelectionProvider>
           <Navbar toggleSidebar={handleMainClick} />
           <div
-          className="flex flex-col gap-5 items-center  h-full"
+          className="  h-[100vh] "
           onClick={()=>handleMainClick("")} >
           {
           children

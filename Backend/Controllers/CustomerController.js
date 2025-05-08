@@ -355,6 +355,16 @@ if(shopifyresult.customers.length > 0)
 
 }
 
+const Get_mongo_byid=async(id)=>{
+
+  const d=await Customer.find({_id:id});
+  return d;
+}
+const get_shopify_byid=async(id)=>{
+  const d=await  shopify.rest.Customer.search({ session, id:id })
+  return d;
+}
+
 module.exports = {
     createCustomer,
     getAllCustomers,
@@ -362,5 +372,7 @@ module.exports = {
     updateCustomer,
     deleteCustomer,
     getCustomers_from_shopify_mongo,
-    Updatecusnewreq
+    Updatecusnewreq,
+    Get_mongo_byid,
+    get_shopify_byid
 };

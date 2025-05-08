@@ -31,7 +31,7 @@ export function AddtagsDes({ sideopen }: { sideopen: boolean }) {
     (state: RootState) => state.NewReq.Selectedonecustomer
   );
   const item = useSelector((state: RootState) => state.NewReq.selectedItems);
-  console.log(task);
+
   const [labelDialogOpen, setLabelDialogOpen] = useState(false);
   const [createLabelOpen, setCreateLabelOpen] = useState(false);
   const [Description, setDescription] = useState<string>(
