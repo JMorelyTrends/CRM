@@ -9,13 +9,14 @@ const CustomerRoutes=require("./Routes/CustomerRoutes")
 const StockXRoutes=require("./Routes/StockxRoutes")
 const FeatureRoutes=require("./Routes/FeatureRoutes")
 const S3Routes=require("./Routes/S3routes")
+const SupplierRoute=require("./Routes/SupplierRoute")
 app.use(express.json()); 
 app.use(cors({ origin: "*" }));
 const DB_ConnectDB = require("./utils/DBconnect"); 
 
 DB_ConnectDB();
 
-
+app.use("/api/supplier",SupplierRoute)
 app.use("/api/users", userRoutes);
 app.use("/api/orders",OrderRoutes);
 app.use("/api/item",ItemRoutes);

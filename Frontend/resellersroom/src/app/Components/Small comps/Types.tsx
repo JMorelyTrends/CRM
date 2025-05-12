@@ -112,3 +112,13 @@ export type statetype={
 
 
 
+//suppliers types
+
+export type Sup={
+    Name:string|null,
+    Number:string|null,
+    Email:string|null,
+    Website:string|null,
+    Brand:string[]|null,
+    image:string|null
+}
