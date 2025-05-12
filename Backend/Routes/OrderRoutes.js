@@ -13,7 +13,7 @@ router.put("/orders/:id", orderController.updateOrder);
 router.delete("/orders/:id", orderController.deleteOrder);
 router.post("/updatelabels",orderController.updatelabels)
 router.post("/UpdateDescription",orderController.UpdateDescription)
-
+router.post("/Getorderofsuppliers",orderController.Getorderofsuppliers)
 
 module.exports=router;
 

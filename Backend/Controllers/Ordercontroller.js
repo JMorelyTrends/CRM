@@ -230,3 +230,16 @@ exports.UpdateDescription=async(req,res)=>{
      res.status(500).json({message:"error on updating Description"})
   }
 }
+
+exports.Getorderofsuppliers=async(req,res)=>{
+   const {name}=req.body;
+  try
+  {
+      const o=await Order.find({});
+      res.status(201).json({data:o})
+  }
+  catch(err)
+  {
+   res.status(500).json({message:"error on updating Description"})
+  }
+}

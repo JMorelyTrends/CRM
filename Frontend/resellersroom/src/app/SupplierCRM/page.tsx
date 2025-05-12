@@ -7,6 +7,9 @@ import BrandSelector from "../Components/Suppliers/BrandSelector";
 import { Sup } from "../Components/Small comps/Types";
 import { Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import {  useDispatch, useSelector } from 'react-redux';
+import { RootState } from "@/lib/Resellerstore";
+import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
   type pageProps = object;
  
   type hprops={
@@ -47,6 +50,7 @@ import { useRouter } from 'next/navigation';
 
 
 const page: React.FC<pageProps> = () => {
+  const dispatch=useDispatch()
   const router = useRouter();
   const [suppliers,setsuppliers]=useState<Sup[]>();
 
@@ -162,6 +166,7 @@ const page: React.FC<pageProps> = () => {
         <div key={index} className="relative w-full h-[190px] bg-white rounded-lg flex flex-col p-3 text-black shadow hover:shadow-lg transition">
           <button
             onClick={() => {
+              dispatch(AddselectedSup(data))
               router.push('/SupplierCRM/Edit');
             }}
             className="absolute top-2 right-2 p-2 rounded-2xl bg-[#4774B1] hover:bg-gray-600 text-white flex text-sm items-center gap-1"
