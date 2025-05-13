@@ -1,5 +1,5 @@
 const Order = require("../Models/Order");
-const {get_shopify_byid,Get_mongo_byid}=require("./CustomerController")
+const {get_shopify_byid,Get_mongo_byid,draftorder}=require("./CustomerController")
 
 exports.createOrder = async (req, res) => {
   try {
@@ -46,7 +46,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").sort({createdAt:-1});
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",
@@ -107,8 +107,22 @@ exports.getAllOrders = async (req, res) => {
         items:data.items,
         phone:phone,
         email:email
+        
       }
-
+      //optional variables if they exists they added basically for those which are submitted
+// Add optional fields if they exist and are not null
+if (data.Orderrecived != null)  tasks[counter].Orderrecived = data.Orderrecived;
+if (data.ordersend != null)  tasks[counter].ordersend = data.ordersend;
+if (data.Supplierid != null)  tasks[counter].Supplierid = data.Supplierid;
+if (data.userid != null)  tasks[counter].userid = data.userid;
+if (data.price != null)  tasks[counter].price = data.price;
+if (data.Shippingfee != null)  tasks[counter].Shippingfee = data.Shippingfee;
+if (data.processingfee != null)  tasks[counter].processingfee = data.processingfee;
+if (data.shippingaddress != null)  tasks[counter].shippingaddress = data.shippingaddress;
+if (data.Sourceofthruth != null)  tasks[counter].Sourceofthruth = data.Sourceofthruth;
+if (data.paymentmethod != null)  tasks[counter].paymentmethod = data.paymentmethod;
+if (data.DealOwner != null)  tasks[counter].DealOwner = data.DealOwner;
+if (data.confirm != null)  tasks[counter].confirm = data.confirm;
     
       const stage=data.stage || "NewLead";
       if(columns[stage])
@@ -236,10 +250,99 @@ exports.Getorderofsuppliers=async(req,res)=>{
   try
   {
       const o=await Order.find({});
+      console.log(o.length)
       res.status(201).json({data:o})
   }
   catch(err)
   {
    res.status(500).json({message:"error on updating Description"})
+  }
+}
+
+exports.Confrimorder=async(req,res)=>{
+  const {
+_id,
+price,
+Name,
+size,
+Supplierid,
+Shippingfee,
+processingfee,
+shippingaddress,
+Sourceofthruth,
+paymentmethod,
+DealOwner,
+}=req.body;
+  
+  try{
+    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:Shippingfee,processingfee:processingfee,shippingaddress:shippingaddress,
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:price,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
+   
+   // console.log(order)
+    let customerid;
+    let product;
+    let tags=[];
+    let shiping;
+    
+    //customer 
+    if(order.shopifycustomerid!=null)
+    {
+      customerid={id:order.shopifycustomerid}
+    }
+    else{
+      customerid= {
+      first_name: order.Name,
+      last_name: " ",
+      email: order.cusid.email?order.cusid.email:"",
+      phone: order.cusid.Number?order.cusid.Number:""
+    }
+    }
+
+    //product
+
+    if(order.stockxitem.length>0)
+    {
+    product=   order.stockxitem.map((item) => ({
+    title: item.name,
+    price: item.last_sale_price || order.price,
+    quantity: 1,
+    sku: item?.sku,
+  }))
+    }
+    else{
+      product= [{
+        title:order.items[0].Name,
+        price:order.items[0].price,
+        quantity:1,
+        
+      }]
+    }
+
+   //labels
+    if(order.labels?.length>0)
+    {
+      order.labels.map((l)=>{
+      
+        tags.push(l.label.name)
+      })
+    }
+    else{
+      tags=["notags"]
+    }
+
+    shiping={
+      first_name: order.Name,
+      address1: order.shippingaddress,
+    }
+
+
+   //console.log(product)
+    draftorder(customerid,product,tags,shiping)
+    res.status(201).json({data:order})
+  }
+  catch(err)
+  {
+    console.log(err)
+       res.status(500).json({message:"error on updating Description"})
   }
 }

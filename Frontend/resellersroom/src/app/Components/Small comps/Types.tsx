@@ -76,8 +76,8 @@ interface StockXItem {
   sku?:string|null
 }
 
-export type Task ={
-  _id:string
+export type Task = {
+  _id: string;
   id: number;
   Name: string;
   condition: string;
@@ -86,13 +86,30 @@ export type Task ={
   createdAt: string;
   stockxitem: StockXItem[];
   labels: labeltype[];
-  Description:string;
-  Condition:string,
-  cusid:string|null,
-  items?:additem[],
-  email?:string,
-  phone?:string,
-}
+  Description: string;
+  Condition: string;
+  cusid: string | null;
+
+  // Existing optional fields
+  items?: additem[];
+  email?: string;
+  phone?: string;
+
+  // New fields from OrderSchema (all optional)
+  Orderrecived?: string;
+  ordersend?: string;
+  shopifycustomerid?: string | null;
+  Supplierid?: Supplier | null;
+  userid?: string[]; // assuming ObjectId array
+  price?: number;
+  Shippingfee?: string | null;
+  processingfee?: string | null;
+  shippingaddress?: string | null;
+  Sourceofthruth?: string | null;
+  paymentmethod?: string | null;
+  DealOwner?: string | null;
+  confirm?: boolean;
+};
 
 export type column={
   id:number,
@@ -121,4 +138,17 @@ export type Sup={
     Website:string|null,
     Brand:string[]|null,
     image:string|null
+}
+
+export type Supplier ={
+  _id: string;
+  Name: string | null;
+  Number: string | null;
+  Email: string;
+  Website: string | null;
+  Brand: string | null;
+  image: string | null;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }

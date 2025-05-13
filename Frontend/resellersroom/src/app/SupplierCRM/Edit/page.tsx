@@ -120,7 +120,7 @@ function Page({}: Props) {
         </div>
 
         {/**divider */}
-        <div className="w-[80%] h-[1px]  bg-gray-300"></div>
+        <div className="w-[80%] h-[3px]  bg-gray-300"></div>
 
         {/**Brands */}
         <div className="w-full h-[10vh]   ">

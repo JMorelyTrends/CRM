@@ -23,10 +23,13 @@ const shopify = shopifyApi({
   adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
   isEmbeddedApp: false,
   hostName: process.env.SHOPIFY_STORE_DOMAIN,
-  scopes: ["read_customers"],
+  scopes: [ 'read_customers',
+    'write_draft_orders',
+    'write_orders'],
   logger: customLogger,
   restResources,
 });
+const { DraftOrder } = shopify.rest;
 
 const session = shopify.session.customAppSession(process.env.SHOPIFY_STORE_DOMAIN);
 
@@ -365,6 +368,28 @@ const get_shopify_byid=async(id)=>{
   return d;
 }
 
+
+//Draf order here becasue our shopify session is here i should make it sepearte module in near future
+
+ async function draftorder(customerid,product,tags,shiping)
+{
+   const draftOrder = new DraftOrder({ session });
+
+    draftOrder.line_items = product;
+
+    draftOrder.customer =  customerid;
+
+    draftOrder.use_customer_default_address = true;
+
+    draftOrder.shipping_address = shiping;
+
+    const response = await draftOrder.save({
+      update: true
+    });
+
+    console.log("Draft Order Created:", response);
+}
+
 module.exports = {
     createCustomer,
     getAllCustomers,
@@ -374,5 +399,6 @@ module.exports = {
     getCustomers_from_shopify_mongo,
     Updatecusnewreq,
     Get_mongo_byid,
-    get_shopify_byid
+    get_shopify_byid,
+    draftorder
 };

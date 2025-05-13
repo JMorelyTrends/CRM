@@ -31,6 +31,11 @@ const OrderSchema = new mongoose.Schema(
     ref:"Customer",
     default:null,
   },
+  Supplierid:{
+     type:mongoose.Schema.Types.ObjectId,
+    ref:"Supplier",
+    default:null,
+  },
   size:{
     type:String,
   },
@@ -49,16 +54,44 @@ const OrderSchema = new mongoose.Schema(
   },
   price:{
     type:Number,
-    default:0
+    default:0,
   },
   labels:{
     type:[mongoose.Schema.Types.ObjectId],
     ref:"Label",
-    default:null
+    default:null,
   },
   Description:{
     type:String,
     default:null,
+  },
+  Shippingfee:{
+    type:String,
+    default:null,
+  },
+  processingfee:{
+    type:String,
+    default:null,
+  },
+  shippingaddress:{
+    type:String,
+    default:null,
+  },
+  Sourceofthruth:{
+    type:String,
+    default:null,
+  },
+  paymentmethod:{
+    type:String,
+    default:null,
+  },
+  DealOwner:{
+    type:String,
+    default:null,
+  },
+  confirm:{
+    type:Boolean,
+    default:false,
   }
   },
   { timestamps: true } 

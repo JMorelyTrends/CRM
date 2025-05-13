@@ -14,6 +14,6 @@ router.delete("/orders/:id", orderController.deleteOrder);
 router.post("/updatelabels",orderController.updatelabels)
 router.post("/UpdateDescription",orderController.UpdateDescription)
 router.post("/Getorderofsuppliers",orderController.Getorderofsuppliers)
-
+router.post("/Confrimorder",orderController.Confrimorder);
 module.exports=router;
 

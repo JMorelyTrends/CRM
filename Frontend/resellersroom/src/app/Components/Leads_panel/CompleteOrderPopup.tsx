@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Check, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Task, labeltype } from "../Small comps/Types";
+import { Supplier } from "../Small comps/Types";
 import { TaskPanel } from "./TaskPanel";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
@@ -20,18 +21,19 @@ export function CompleteOrderPopup({
   task: Task;
   fetchallorders: () => void;
 }) {
-console.log(task.items?.[0]?.price?.toString() )
+
+  console.log(task)
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
-  const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString ||'');
-  const [shippingFee, setShippingFee] = useState('');
-  const [processingFee, setProcessingFee] = useState('');
-  const [supplierUsed, setSupplierUsed] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [dealOwner, setDealOwner] = useState('');
-  const [sourceOfTruth, setSourceOfTruth] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
- const [image,setimage]=useState<string>("")
+  const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
+  const [shippingFee, setShippingFee] = useState<string>(task.Shippingfee?task.Shippingfee:'');
+  const [processingFee, setProcessingFee] = useState<string>(task.processingfee?task.processingfee:'');
+  const [supplierUsed, setSupplierUsed] = useState<string>('');
+  const [shippingAddress, setShippingAddress] = useState<string>(task.shippingaddress?task.shippingaddress:'');
+  const [dealOwner, setDealOwner] = useState<string>(task.DealOwner?task.DealOwner:'');
+  const [sourceOfTruth, setSourceOfTruth] = useState<string>(task.Sourceofthruth?task.Sourceofthruth:'');
+  const [paymentMethod, setPaymentMethod] = useState<string>(task.paymentmethod?task.paymentmethod:'');
+ 
 //usestates for feautres
   const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task.labels);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
@@ -39,23 +41,35 @@ console.log(task.items?.[0]?.price?.toString() )
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
   const [newLabel, setNewLabel] = useState("");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
+
+  const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
   let item:any=task&& task.stockxitem.length>0?task.stockxitem[0]: task.items&&task.items?.length>0?task.items[0]:{};//change this 
-  
+
+
+  useEffect(()=>{
+    const getsuppliers=async()=>{
+     const sup=await axios.get(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
+     console.log(sup.data.supps)
+     setavailsuppliers(sup.data.supps)
+    }
+    getsuppliers();
+
+  },[])
 
   useEffect(() => {
     if (open && task) {
       setProductName(task.Name);
       setSize(task.size);
-      setCostPrice(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price?.toString() ||'');
-      setShippingFee('');
-      setProcessingFee('');
-      setSupplierUsed('');
-      setShippingAddress('');
-      setDealOwner('');
-      setSourceOfTruth('');
-      setPaymentMethod('');
+      setCostPrice(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
+      setShippingFee(task.Shippingfee?task.Shippingfee:'');
+      setProcessingFee(task.processingfee?task.processingfee:'');
+      setSupplierUsed((task.Supplierid&&task.Supplierid?._id)?task.Supplierid._id:'');
+      setShippingAddress(task.shippingaddress?task.shippingaddress:'');
+      setDealOwner(task.DealOwner?task.DealOwner:'');
+      setSourceOfTruth(task.Sourceofthruth?task.Sourceofthruth:'');
+      setPaymentMethod(task.paymentmethod?task.paymentmethod:'');
       setSelectedLabels(task.labels);
-
+ 
 
 
       //
@@ -68,14 +82,14 @@ console.log(task.items?.[0]?.price?.toString() )
         item=task.items[0];
       }
 
-      console.log(item)
+     
     }
     
   }, [task, open]);
 
 
 
-  //for label functiononality
+
   const AddnewLabel = async (color: string, label: string) => {
     try {
       const userid = localStorage.getItem("tempcred");
@@ -106,9 +120,9 @@ console.log(task.items?.[0]?.price?.toString() )
   };
 
   const Labeltoggle = async (label: labeltype) => {
-    console.log("helo",item)
+   
     if (!item?._id) return;
-    console.log("helo")
+
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
       ? selectedLabels.filter((l) => l._id !== label._id)
@@ -127,8 +141,8 @@ console.log(task.items?.[0]?.price?.toString() )
         })
         
       );
-      console.log("going to update")
-      fetchallorders();
+     
+  
     } catch (err) {
       console.error("Failed to update labels", err);
     }
@@ -202,6 +216,33 @@ console.log(task.items?.[0]?.price?.toString() )
     "bg-teal-400",
     "bg-indigo-400",
   ];
+
+  const Submit=()=>{
+   
+
+    if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
+    {
+      axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
+        {
+         _id:task._id,
+         price:costPrice,
+         Name:productName,
+         size:size,
+         Supplierid:supplierUsed,
+         Shippingfee:shippingFee,
+         processingfee:processingFee,
+         shippingaddress:shippingAddress,
+         Sourceofthruth:sourceOfTruth,
+         paymentmethod:paymentMethod,
+         DealOwner:dealOwner,
+        }
+      );
+      fetchallorders()
+       setOpen(false)
+
+    }
+  }
  
   return (
 
@@ -242,27 +283,32 @@ console.log(task.items?.[0]?.price?.toString() )
     </div>
     <div>
       <label className="block text-sm font-medium">Cost Price</label>
-      <input type="number" className="w-full border rounded px-3 py-2 mt-1"
+      <input type="string" className="w-full border rounded px-3 py-2 mt-1"
         value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
     </div>
-    <div>
-      <label className="block text-sm font-medium">Supplier Used</label>
-      <select className="w-full border rounded px-3 py-2 mt-1"
-        value={supplierUsed} onChange={(e) => setSupplierUsed(e.target.value)}>
-        <option value="">Select Supplier</option>
-        <option value="Supplier A">Supplier A</option>
-        <option value="Supplier B">Supplier B</option>
-        <option value="Supplier C">Supplier C</option>
-      </select>
-    </div>
+<div>
+  <label className="block text-sm font-medium">Supplier Used</label>
+  <select
+    className="w-full border rounded px-3 py-2 mt-1"
+    value={supplierUsed}
+    onChange={(e) => setSupplierUsed(e.target.value)}
+  >
+    <option value="">Select Supplier</option>
+    {availsuppliers&&availsuppliers?.map((supplier) => (
+      <option key={supplier._id} value={supplier._id}>
+        {supplier.Name || "Unnamed Supplier"}
+      </option>
+    ))}
+  </select>
+</div>
     <div>
       <label className="block text-sm font-medium">Deal Owner</label>
       <select className="w-full border rounded px-3 py-2 mt-1"
         value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
         <option value="">Select Deal Owner</option>
-        <option value="Owner A">Owner A</option>
-        <option value="Owner B">Owner B</option>
-        <option value="Owner C">Owner C</option>
+        <option value="Owner A">Alfy</option>
+        <option value="Owner B">Fran</option>
+      
       </select>
     </div>
   </div>
@@ -270,12 +316,12 @@ console.log(task.items?.[0]?.price?.toString() )
   <div className="space-y-5 ">
     <div>
       <label className="block text-sm font-medium">Shipping Fee</label>
-      <input type="number" className="w-full border rounded px-3 py-2 mt-1"
+      <input type="string" className="w-full border rounded px-3 py-2 mt-1"
         value={shippingFee} onChange={(e) => setShippingFee(e.target.value)} />
     </div>
     <div>
       <label className="block text-sm font-medium">Processing Fee</label>
-      <input type="number" className="w-full border rounded px-3 py-2 mt-1"
+      <input type="string" className="w-full border rounded px-3 py-2 mt-1"
         value={processingFee} onChange={(e) => setProcessingFee(e.target.value)} />
     </div>
     <div>
@@ -334,7 +380,7 @@ console.log(task.items?.[0]?.price?.toString() )
              
              {/* Submit Button */}
              <div className="flex justify-end">
-               <Button onClick={() => setOpen(false)}>Submit</Button>
+               <Button onClick={() =>Submit()}>Submit</Button>
              </div>
       </DialogContent>
     </Dialog>
