@@ -285,7 +285,6 @@ DealOwner,
     const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:Shippingfee,processingfee:processingfee,shippingaddress:shippingaddress,
     Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:price,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
    
-   // console.log(order)
     let customerid;
     let product;
     let tags=[];
@@ -314,6 +313,12 @@ DealOwner,
     price: item.last_sale_price || order.price,
     quantity: 1,
     sku: item?.sku,
+     properties: [
+      {
+        name: "Image",
+        value: item.image  // Replace with actual field
+      }
+    ]
   }))
     }
     else{
@@ -321,6 +326,12 @@ DealOwner,
         title:order.items[0].Name,
         price:order.items[0].price,
         quantity:1,
+          properties: [
+      {
+        name: "Image",
+        value: order.items[0].itempics[0]  
+      }
+    ]
         
       }]
     }

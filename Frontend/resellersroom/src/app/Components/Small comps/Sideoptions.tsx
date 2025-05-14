@@ -17,7 +17,7 @@ const Slide = ({img, name, link, number}: {img: string, link: string, name: stri
     return(
                         <Link href={link} passHref legacyBehavior prefetch={true} >
 
-        <div className={`ml-4 w-[90%] h-[14%] ${pathname==link?"text-md font-bold":"text-sm"} hover:bg-background cursor-pointer text-[#454545] flex items-center gap-3`}>
+        <div className={`ml-4 w-[90%] h-[14%] ${pathname.startsWith(link)?"text-md font-bold":"text-sm"} hover:bg-background cursor-pointer text-[#454545] flex items-center gap-3`}>
             <div className="flex justify-center items-center w-6 h-6">
                 <img  src={img} alt="" className="w-full h-full object-contain" />
             </div>

@@ -108,7 +108,7 @@ export default function Page({}: Props) {
   const getprices = async (currentState: statetype) => {
     if (currentState ) {
       let pricesUpdated = false; // Flag to check if we updated any price
-  
+ 
       const stateCopy = { ...currentState }; // optional: not mutating original state
       const columnOrder = stateCopy.columnOrder;
   
@@ -118,20 +118,24 @@ export default function Page({}: Props) {
   
         for (const task of tasks) {
           if (
-            task?.stockxitem?.length > 0 && (task.price&& task?.price<=0)&&
-            (!task?.stockxitem[0]?.last_sale_price ||
+            task?.stockxitem?.length > 0 &&
+            (task?.stockxitem[0]?.last_sale_price==0 ||
               isOlderThanOneMonth(task?.stockxitem[0]?.last_sale_update_date )
             
             )
           ) {
-           try{ await axios.post(
+        
+           try{ 
+            await axios.post(
               `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
               {
                 itemid: task.stockxitem[0]._id,
                 search: task.stockxitem[0].slug,
               }
             );
-            pricesUpdated = true; }
+            pricesUpdated = true;
+          
+          }
             catch (error) {
               console.error("Error fetching prices:", error);
             }// Mark that we updated at least one price
@@ -296,7 +300,7 @@ function timeout(ms: number) {
      
       if(destinationCol.title=='Won')
       {
-        await timeout(1000);
+        await timeout(700);
         setwontask(currenttask)
         setwonpopup(true)
       }

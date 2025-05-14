@@ -22,7 +22,6 @@ export function CompleteOrderPopup({
   fetchallorders: () => void;
 }) {
 
-  console.log(task)
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
   const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
@@ -120,9 +119,9 @@ export function CompleteOrderPopup({
   };
 
   const Labeltoggle = async (label: labeltype) => {
-   
-    if (!item?._id) return;
-
+    if (!task?._id) return;
+  
+     console.log(label)
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
       ? selectedLabels.filter((l) => l._id !== label._id)
@@ -131,23 +130,17 @@ export function CompleteOrderPopup({
     setSelectedLabels(updatedLabels);
 
     try {
-    
-      const cleanlabel = updatedLabels.map(({ _id }) => _id);
-     task&&( await axios.post(
-        `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/updatelabels`,
-        {
-          newlabels: cleanlabel,
-          orderid: task._id,
-        })
-        
-      );
-     
-  
+      const cleanlabel =  updatedLabels.map(({ _id }) => _id);;
+       await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/updatelabels`, {
+        newlabels: cleanlabel,
+        orderid: task._id
+      });
+
+      fetchallorders();
     } catch (err) {
       console.error("Failed to update labels", err);
     }
   };
-
   const handleDeleteLabel=async(id:string)=>{
     try{
        await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/features/dellabel`,{
@@ -222,6 +215,7 @@ export function CompleteOrderPopup({
 
     if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
+     
       axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
         {
