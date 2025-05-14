@@ -102,11 +102,6 @@ const NewSup = (props: Props) => {
             newSupplier,
           }
         );
-
-        if (newsu.data.message) {
-          return toast.error("supllier already exits");
-        }
-
         toast.success("Supplier created successfully!");
         close();
       } catch (error) {

@@ -1,16 +1,20 @@
 import {createSlice} from '@reduxjs/toolkit'
-import { Sup } from '../../../app/Components/Small comps/Types'
+import { Supplier } from '../../../app/Components/Small comps/Types'
 type NewReqState ={
-SelectedSupplier:Sup
+SelectedSupplier:Supplier
 }
 export  const initialState: NewReqState ={
   SelectedSupplier:{
+    _id:'',
      Name:'',
     Number:'',
     Email:'',
     Website:'',
     Brand:[],
-    image:''
+    image:'',
+      createdAt: '',
+  updatedAt: '',
+  __v: 0
   }
 }
 

@@ -146,8 +146,9 @@ export type Supplier ={
   Number: string | null;
   Email: string;
   Website: string | null;
-  Brand: string | null;
+  Brand: string[] | null;
   image: string | null;
+  
   createdAt: string;
   updatedAt: string;
   __v: number;

@@ -106,7 +106,7 @@ export default function Page({}: Props) {
   }
 
   const getprices = async (currentState: statetype) => {
-    if (currentState) {
+    if (currentState ) {
       let pricesUpdated = false; // Flag to check if we updated any price
   
       const stateCopy = { ...currentState }; // optional: not mutating original state
@@ -118,9 +118,11 @@ export default function Page({}: Props) {
   
         for (const task of tasks) {
           if (
-            task?.stockxitem?.length > 0 &&
+            task?.stockxitem?.length > 0 && (task.price&& task?.price<=0)&&
             (!task?.stockxitem[0]?.last_sale_price ||
-              isOlderThanOneMonth(task?.stockxitem[0]?.last_sale_update_date))
+              isOlderThanOneMonth(task?.stockxitem[0]?.last_sale_update_date )
+            
+            )
           ) {
            try{ await axios.post(
               `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,

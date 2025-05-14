@@ -149,16 +149,13 @@ const page: React.FC<pageProps> = () => {
 
 
 
-       {/* Cards Container */}
-     {/* Cards Container */}
 {/* Cards Container */}
 <div className="w-full h-[65vh] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 
     [&::-webkit-scrollbar]:w-1
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-black
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
-    dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500
-">
+    dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
   {
     suppliers && suppliers.length > 0 &&
     suppliers.map((data: Sup, index: number) => {

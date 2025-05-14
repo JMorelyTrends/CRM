@@ -249,9 +249,16 @@ exports.Getorderofsuppliers=async(req,res)=>{
    const {name}=req.body;
   try
   {
-      const o=await Order.find({});
-      console.log(o.length)
-      res.status(201).json({data:o})
+   // console.log(name)
+      const o=await Order.find({Supplierid:name}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid");
+      let spend=0;
+      if(o?.length>0)
+      {
+        o.map((or)=>{
+         spend+=or.price;
+        })
+      }
+      res.status(201).json({data:o,spend:spend})
   }
   catch(err)
   {

@@ -37,13 +37,24 @@ exports.CreateSupplier=async(req,res)=>{
 
 exports.getthemall=async(req,res)=>{
     try{
-
         const supp=await Supplier.find({});
         res.status(201).json({supps:supp})
-
     }
     catch(err)
     {
           res.status(500).json({ message: err.message || 'Something went wrong' });
     }
+}
+exports.updatesupplier=async(req,res)=>{
+  const {id,newSupplier}=req.body;
+  try{
+    //need to make checks
+    const d= await Supplier.findOneAndUpdate({_id:id},{$set:newSupplier},{ new: true })
+ 
+    res.status(201).json({data:d})
+  }
+  catch(err)
+  {
+    res.status(500).json({ message: err.message || 'Something went wrong' });
+  }
 }
