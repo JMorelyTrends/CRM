@@ -42,7 +42,7 @@ const Sideoptions = () => {
   return (
     <div className='w-full h-[50%] flex flex-col items-start justify-around'>
         {/* Fixed links - Next.js routes are case-sensitive */}
-        <Slide img="/images/Dahboard.png" name="Dashboard" number={null} link="/Dashboard" />
+        <Slide img="/images/Dahboard.png" name="Dashboard" number={null} link="/" />
         <Slide img="/images/request.png" name="Add New Request" number={null} link="/NewRequest" />
         <Slide img="/images/Lead.png" name="Lead Management" number={"54"} link="/Leads" />
         <Slide img="/images/supplier.png" name="Supplier CRM" number={null} link="/SupplierCRM" />

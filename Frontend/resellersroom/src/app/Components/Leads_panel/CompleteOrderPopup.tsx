@@ -10,6 +10,7 @@ import { TaskPanel } from "./TaskPanel";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import axios from "axios";
+import { toast } from "sonner";
 export function CompleteOrderPopup({
   open,
   setOpen,
@@ -235,6 +236,9 @@ export function CompleteOrderPopup({
       fetchallorders()
        setOpen(false)
 
+    }
+    else{
+      toast("Fill all fields")
     }
   }
  

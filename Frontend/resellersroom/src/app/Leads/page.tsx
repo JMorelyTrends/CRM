@@ -18,27 +18,14 @@ import { useDispatch } from "react-redux";
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { statetype, Task } from "../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
+import { useIsSmallScreen } from "../Components/Small comps/Issmall";
 const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
 });
 
 type Props = object;
 
-function useIsSmallScreen() {
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsSmallScreen(window.innerWidth < 1024);
-    };
-
-    handleResize(); // Initial check
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return isSmallScreen;
-}
 
 export default function Page({}: Props) {
   const dispatch = useDispatch();
