@@ -15,5 +15,9 @@ router.post("/updatelabels",orderController.updatelabels)
 router.post("/UpdateDescription",orderController.UpdateDescription)
 router.post("/Getorderofsuppliers",orderController.Getorderofsuppliers)
 router.post("/Confrimorder",orderController.Confrimorder);
+router.post("/PieData", orderController.PieData);
+router.post("/reqwondata",orderController.reqwondata);
+
+
 module.exports=router;
 

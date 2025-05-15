@@ -360,7 +360,249 @@ DealOwner,
   }
   catch(err)
   {
-    console.log(err)
+   
        res.status(500).json({message:"error on updating Description"})
   }
+}
+
+exports.PieData=async(req,res)=>{
+  const {userid}=req.body;
+  try{
+
+     const pieData = [
+       { name: "New Lead", value: 0 },
+       { name: "Need To Source", value: 0 },
+       { name: "Offered", value: 0 },
+       { name: "Warm Lead", value: 0 },
+       { name: "Won", value: 0 },
+       { name: "Lost", value: 0 },
+     ];
+
+for (let i = 0; i < pieData.length; i++) {
+  const stageName = pieData[i].name;
+  const orders = await Order.find({ stage: stageName },{userid:userid});
+  pieData[i].value = orders.length;
+}
+
+    res.status(201).json({data:pieData})
+
+
+
+ 
+
+  }
+  catch(err){
+       res.status(500).json({message:"error on updating Description"})
+
+  }
+}
+
+exports.reqwondata=async(req,res)=>{
+try {
+    const { interval, startdate, enddate } = req.body;
+     
+    let detectedInterval = interval;
+    let start = startdate;
+    let end = enddate;
+
+    // Auto-detect interval if not provided
+    if (!interval && startdate && enddate) {
+      const diffMillis = new Date(enddate) - new Date(startdate);
+      const diffInDays = diffMillis / (1000 * 60 * 60 * 24);
+
+      if (diffInDays > 90) {
+        detectedInterval = "year";
+      } else if (diffInDays > 14) {
+        detectedInterval = "week";
+      } else {
+        detectedInterval = "day";
+      }
+    } else {
+      // Set date range if only interval is given
+      if (detectedInterval === "year") {
+        end = new Date();
+        const past = new Date();
+        past.setFullYear(end.getFullYear() - 1);
+        start = past;
+      } else if (detectedInterval === "week") {
+        end = new Date();
+        start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else if (detectedInterval === "day") {
+        end = new Date();
+        start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+      }
+    }
+
+    let groupFormat, labels;
+
+    switch (detectedInterval) {
+      case "year":
+        
+        groupFormat = { $month: "$createdAt" };
+        labels =  getdaystilldate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],detectedInterval);
+        break;
+      case "week":
+        groupFormat = { $dayOfWeek: "$createdAt" };
+        labels =  getdaystilldate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],detectedInterval);
+        break;
+      case "day":
+        groupFormat = { $hour: "$createdAt" }; // still truncate by hour
+        labels = getLast24HourLabels().labels; // 8 blocks
+        break;
+      default:
+        groupFormat = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
+    }
+
+    // MongoDB aggregation
+    const data = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(start), $lte: new Date(end) }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateTrunc: {
+              date: "$createdAt",
+              unit:detectedInterval=="day"?  "hour":"day",
+                binSize: 3,
+              timezone: "UTC"
+            }
+          },
+          Won: {
+            $sum: {
+              $cond: [{ $eq: ["$stage", "Won"] }, 1, 0]
+            }
+          },
+          Req: {
+            $sum: {
+              $cond: [
+                { $not: { $in: ["$stage", ["Won", "Lost"]] } },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    // Format result
+    let formatted = [];
+     formatted = labels&&labels.length>0&& labels.map(label => ({
+        name: label,
+        Won: 0,
+        Request: 0
+      }));
+
+    if (detectedInterval === "day") {
+      formatted=getLast24HourLabels().formatted
+      data.forEach(entry => {
+        const hour = new Date(entry._id).getUTCHours(); // hour form the monogo result
+        let bucket = Math.floor(hour / 3) * 3;        // 
+        let label = `${bucket.toString().padStart(2, '0')}:00`;
+        let index = labels.indexOf(label);
+          //  console.log(label,bucket,hour)
+        if (index !== -1) {
+          formatted[index].Won += entry.Won;
+          formatted[index].Request += entry.Req;
+        }
+        else{
+          console.log("prev",label)
+            for(i=0;i<2;i++)
+            {
+               bucket+=1;
+               
+               label = `${bucket.toString().padStart(2, '0')}:00`
+               index = labels.indexOf(label);
+                if(index !== -1)
+                {
+                  break;
+                }
+            }
+          formatted[index].Won += entry.Won;
+          formatted[index].Request += entry.Req;
+            console.log(label)
+        }
+      });
+      // console.log(formatted);
+      // console.log(data);
+      // console.log(labels);
+   
+       
+    } 
+    else if(detectedInterval==="week") {
+       data&& data.length>0&& data.map((entry) => {
+        let kk=new Date(entry._id);
+        let index=kk.getDay();
+        if(index)
+        {
+           formatted[index].Won += entry.Won;
+           formatted[index].Request += entry.Req;
+        }
+    });
+        
+    
+   
+    }
+    else if(detectedInterval==="year")
+    {
+      data&& data.length>0&&  data.map((entry) => {
+        let kk=new Date(entry._id);
+        let index=kk.getMonth();
+        if(index)
+        {
+           formatted[index].Won += entry.Won;
+           formatted[index].Request += entry.Req;
+        }
+    });
+    }
+
+    res.status(200).json({ data: formatted });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "error getting request vs won data" });
+  }
+}
+
+
+
+
+function getLast24HourLabels(step = 3) {
+  const now = new Date();
+  const labels = [];
+  const formatted = [];
+
+  // Go 24 hours back in step size
+  for (let i = 7; i >= 0; i--) {
+    let hour = (now.getUTCHours() - i * step + 24) % 24;
+    let label = `${hour.toString().padStart(2, '0')}:00`;
+    labels.push(label);
+    formatted.push({ name: label, Won: 0, Request: 0 });
+  }
+
+  return { labels, formatted };
+}
+function getdaystilldate(arr,detectedInterval){
+  let array=[];
+if(detectedInterval==="week")
+{
+   let cd=new Date().getDay();
+   cd=cd+1;
+  array=arr.slice(0,cd);
+  return array
+}
+else if(detectedInterval==="year")
+{
+  
+   let cd=new Date().getMonth();
+   cd=cd+1;
+  array=arr.slice(0,cd);
+  return array
+}
+
 }
