@@ -153,3 +153,12 @@ export type Supplier ={
   updatedAt: string;
   __v: number;
 }
+
+export type Dashstats={
+  newOrders: number,
+  needToSource: number,
+  liveRequests: number,
+  wonOrders: number,
+  wonRevenue: number,
+  wonProfit: number
+}

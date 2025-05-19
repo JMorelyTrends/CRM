@@ -387,7 +387,7 @@ const get_shopify_byid=async(id)=>{
       update: true
     });
 
-    console.log("Draft Order Created:", response);
+    // console.log("Draft Order Created:", response);
 }
 
 module.exports = {

@@ -1,4 +1,3 @@
-
 "use client";
 import React,{useEffect,useState} from "react";
 import axios from "axios";
@@ -16,13 +15,13 @@ import {
   Legend,
 } from "recharts";
 
-
-
+import {  DateRange } from "react-day-picker";
+import { Dashstats } from "../Small comps/Types";
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
 
 
 
-const DashboardCharts = ({internval,setinternval}:{internval:string,setinternval:React.Dispatch<React.SetStateAction<string>>}) => {
+const DashboardCharts = ({internval,setinternval,range, otherdetails,setotherdetails}:{internval:string,setinternval:React.Dispatch<React.SetStateAction<string>>,range:DateRange|undefined,otherdetails:Dashstats,setotherdetails:React.Dispatch<React.SetStateAction<Dashstats>>}) => {
    
 
 //states
@@ -43,33 +42,123 @@ const DashboardCharts = ({internval,setinternval}:{internval:string,setinternval
            { name: "Apr", Won: 278, Lost: 390 },
       ])
 
-//functions
-//stop at the current date time and 
+  const [revenue,setrevenue]=useState<number>(0);
 
-  const getpidata=async()=>{
- 
-     const d=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`,{
-        userid:userid
-     })
-     setPieData(d.data.data)
+
+const getpidata = async () => {
+  try {
+    let response;
+
+    if (range && range.from === range.to) {
+      // Same day selected
+      response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`, {
+        internval: internval ? internval : "today",
+        userid: userid,
+      });
+    } else if (range) {
+      // Custom date range selected
+      response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`, {
+        startdate: range.from,
+        enddate: range.to,
+        userid: userid,
+      });
+    } else {
+      // Default fallback (e.g. whole year)
+      response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`, {
+        internval: internval ? internval : "year",
+        userid: userid,
+      });
+    }
+    console.log(response.data.data)
+    setPieData(response.data.data);
+  } catch (error) {
+    console.error("Error fetching pie chart data:", error);
   }
+};
+
 
   const getreqwon=async()=>{
-
-const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
-    interval:internval?internval:"day",
-})
-
-    setreqwon(d.data.data)
+    if(range &&range?.from===range?.to)
+    {
+        const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
+        interval:internval?internval:"today",
+         userid:userid
+    })
+      setreqwon(d.data.data)
+    }
+    else if(range){
+    const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
+       startdate:range.from,
+       enddate:range.to,
+        userid:userid
+    })
+      setreqwon(d.data.data)
+    }
+    else{
+ const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
+        interval:internval?internval:"year",
+         userid:userid
+    })
+    console.log(d.data.data)
+      setreqwon(d.data.data)
+    }
+  
   }
 
-  const getwonlost=()=>{
-    
+  const getwonlost=async()=>{
+     if(range &&range?.from===range?.to)
+    {
+        const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/wonloastdata`,{
+        interval:internval?internval:"today",
+         userid:userid
+    })
+      setwonlost(d.data.data)
+    }
+    else if(range){
+    const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/wonloastdata`,{
+       startdate:range.from,
+       enddate:range.to,
+        userid:userid
+    })
+      setwonlost(d.data.data)
+    }
+    else{
+ const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/wonloastdata`,{
+        interval:internval?internval:"year",
+         userid:userid
+    })
+      setwonlost(d.data.data)
+    }
+  }
+
+  const otherdetail=async()=>{
+     if(range &&range?.from===range?.to)
+    {
+        const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/otherdetails`,{
+        interval:internval?internval:"today",
+         userid:userid
+    })
+      setotherdetails(d.data.data)
+    }
+    else if(range){
+    const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/otherdetails`,{
+       startdate:range.from,
+       enddate:range.to,
+        userid:userid
+    })
+      setotherdetails(d.data.data)
+    }
+    else{
+     const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/otherdetails`,{
+        internval:internval?internval:"year",
+         userid:userid
+    })
+       setotherdetails(d.data.data)
+    }
   }
 
 
-  //useeffects
-   //get userid
+  
      useEffect(() => {
       
         if (typeof window !== "undefined") {
@@ -79,12 +168,15 @@ const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqw
       }, []);
 
   useEffect(()=>{
-    console.log(internval)
+  
     if(userid!=""){
-
+ 
     getpidata()
-    getreqwon()}
-  },[userid,internval])
+    getreqwon()
+    getwonlost()
+    otherdetail()
+  }
+  },[userid,internval,range])
 
 
   return (
@@ -104,8 +196,9 @@ const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqw
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip />
-        </PieChart>}
+      
+        </PieChart>
+        }
       </div>
 
       <div className="w-[65%] h-full bg-white rounded-2xl overflow-y-auto p-4 py-9 text-center">

@@ -5,11 +5,20 @@ import Dashboardheader from "./Components/Small comps/Dashboardheader";
 import DashboardCharts from "./Components/Dashboard/DashboardCharts";
 import CustomDateRangePicker from "./Components/Dashboard/CustomDateRangePicker";
 import { DayPicker, DateRange } from "react-day-picker";
+import { Dashstats } from "./Components/Small comps/Types";
 const Page: React.FC = () => {
   const isSmallScreen = useIsSmallScreen();
   const [internval, setinternval] = useState<string>("");
   const [active, setactive] = useState<string>("year");
   const [range, setRange] = React.useState<DateRange | undefined>();
+  const [otherdetails,setotherdetails]=useState<Dashstats>({
+newOrders: 0,
+  needToSource: 0,
+  liveRequests: 0,
+  wonOrders: 0,
+  wonRevenue: 0,
+  wonProfit: 0
+  });
   return (
     <div className="w-full h-full">
       {!isSmallScreen && <Dashboardheader />}
@@ -65,11 +74,13 @@ const Page: React.FC = () => {
         {/* Info Cards */}
         <div className="w-full h-[60%] flex items-center gap-4 px-4 font-semibold">
           {[
-            ["Live Update", "1234"],
-            ["Live Users", "87"],
-            ["New Orders", "12"],
-            ["Revenue", "$1.2k"],
-            ["Support Tickets", "5"],
+            ["Live Request", otherdetails.liveRequests],
+            ["Need to Source", otherdetails.needToSource],
+            ["New Orders", otherdetails.newOrders],
+            ["Live Request:Won", otherdetails.liveRequests],
+            ["Won profit", otherdetails.wonProfit],
+            ["Won Revenue", otherdetails.wonRevenue],
+           
           ].map(([title, value], i) => (
             <div
               key={i}
@@ -86,7 +97,7 @@ const Page: React.FC = () => {
         </div>
       </div>
 
-      <DashboardCharts internval={internval} setinternval={setinternval} />
+      <DashboardCharts internval={internval} setinternval={setinternval} range={range} otherdetails={otherdetails} setotherdetails={setotherdetails}  />
     </div>
   );
 };

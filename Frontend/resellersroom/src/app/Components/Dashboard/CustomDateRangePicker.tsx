@@ -13,7 +13,7 @@ import "react-day-picker/dist/style.css";
 
 export default function CustomDateRangePicker({active,setactive,range,setRange}:{active:string,setactive:React.Dispatch<React.SetStateAction<string>>,range:DateRange|undefined,setRange:React.Dispatch<React.SetStateAction<DateRange|undefined>>}) {
   
- console.log(active)
+
   const formattedValue =
     range?.from && range?.to
       ? `${format(range.from, "PPP")} - ${format(range.to, "PPP")}`

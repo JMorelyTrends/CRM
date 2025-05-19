@@ -38,7 +38,7 @@ try
         .then(res => res.json())
         .then(async(d) =>{
             const products = [];
-          console.log(d)
+    
             d.length>0&&
             await Promise.all(
             d.map(async (item) => {
@@ -153,7 +153,7 @@ exports.Getproductprice = async (req, res) => {
       },
       { new: true }
     );
-    console.log("updated the price")
+   
 
     res.status(201).json({ price: updatedStockx });
 
@@ -167,7 +167,6 @@ exports.getprice_github=async(req,res)=>{
   try{
     //getProducts(keyword, limit, callback) takes in a keyword and limit and returns a product array 
 sneaks.getProductPrices(sku, async function (err, product){
-  console.log(product.retailPrice)
 
   const d=product.retailPrice;
       //  if(d)

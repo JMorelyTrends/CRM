@@ -17,6 +17,9 @@ router.post("/Getorderofsuppliers",orderController.Getorderofsuppliers)
 router.post("/Confrimorder",orderController.Confrimorder);
 router.post("/PieData", orderController.PieData);
 router.post("/reqwondata",orderController.reqwondata);
+router.post("/wonloastdata",orderController.wonloastdata);
+router.post("/otherdetails",orderController.otherdetails);
+
 
 
 module.exports=router;
