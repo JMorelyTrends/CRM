@@ -26,14 +26,33 @@ const StockxDatabaseSchema = new mongoose.Schema(
    Colorway:{
     type:String,
    },
+   size:{
+    type:Object,
+    default:null
+   },
    last_sale_price:{
     type:Number,
     default:0
    },
+   primary_category:{
+    type:String,
+    default:null
+   },
    last_sale_update_date:{
     type:String,
-   }
-  
+   },
+    enriched:{
+     type: Boolean,
+     default: false
+     },
+    model:{
+      type:String,
+      default:null
+    },
+  enrichedAt:{
+     type: Date,
+      default: null
+     },
   },
   { timestamps: true } 
 );

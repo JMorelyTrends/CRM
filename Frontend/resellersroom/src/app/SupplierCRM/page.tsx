@@ -85,7 +85,7 @@ const page: React.FC<pageProps> = () => {
 
   return (
     <>
-      <div className="w-full h-[100vh]  flex flex-col">
+      <div className="w-[80vw] h-[100vh]  flex flex-col">
      {/**popups */}
 
      <NewSup

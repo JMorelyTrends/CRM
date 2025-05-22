@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useIsSmallScreen } from "./Components/Small comps/Issmall";
 import Dashboardheader from "./Components/Small comps/Dashboardheader";
 import DashboardCharts from "./Components/Dashboard/DashboardCharts";
@@ -19,7 +19,13 @@ newOrders: 0,
   wonRevenue: 0,
   wonProfit: 0
   });
+  const [isClient, setIsClient] = useState(false);
+useEffect(() => setIsClient(true), []);
+
   return (
+
+    <>
+    {isClient&&(
     <div className="w-full h-full">
       {!isSmallScreen && <Dashboardheader />}
 
@@ -77,7 +83,7 @@ newOrders: 0,
             ["Live Request", otherdetails.liveRequests],
             ["Need to Source", otherdetails.needToSource],
             ["New Orders", otherdetails.newOrders],
-            ["Live Request:Won", otherdetails.liveRequests],
+            ["Live Request:Won", `${otherdetails.liveRequests}:${otherdetails.wonOrders} `],
             ["Won profit", otherdetails.wonProfit],
             ["Won Revenue", otherdetails.wonRevenue],
            
@@ -99,6 +105,8 @@ newOrders: 0,
 
       <DashboardCharts internval={internval} setinternval={setinternval} range={range} otherdetails={otherdetails} setotherdetails={setotherdetails}  />
     </div>
+    )}
+    </>
   );
 };
 

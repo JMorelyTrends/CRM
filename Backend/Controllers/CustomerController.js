@@ -1,157 +1,168 @@
-process.env.SHOPIFY_LOG = 'error';
+process.env.SHOPIFY_LOG = "error";
 const Customer = require("../Models/Custormer");
-require ("@shopify/shopify-api/adapters/node")
+const Order = require("../Models/Order");
+const mongoose = require("mongoose");
+require("@shopify/shopify-api/adapters/node");
 const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
 const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
 
-
-
-  
 const customLogger = {
   log: (severity, message) => {
-    if (severity === 'error') {
+    if (severity === "error") {
       //console.error(`[${severity}] ${message}`);
     }
   },
 };
 
 const shopify = shopifyApi({
-  apiKey:process.env.SHOPIFY_API_KEY,
-  apiSecretKey:process.env.SHOPIFY_API_SECRET,
+  apiKey: process.env.SHOPIFY_API_KEY,
+  apiSecretKey: process.env.SHOPIFY_API_SECRET,
   apiVersion: ApiVersion.April25,
   isCustomStoreApp: true,
   adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
   isEmbeddedApp: false,
   hostName: process.env.SHOPIFY_STORE_DOMAIN,
-  scopes: [ 'read_customers',
-    'write_draft_orders',
-    'write_orders'],
+  scopes: ["read_customers", "write_draft_orders", "write_orders"],
   logger: customLogger,
   restResources,
 });
 const { DraftOrder } = shopify.rest;
 
-const session = shopify.session.customAppSession(process.env.SHOPIFY_STORE_DOMAIN);
+const session = shopify.session.customAppSession(
+  process.env.SHOPIFY_STORE_DOMAIN
+);
 
-  const normalizePhoneNumber = (phone) => {
-      if (!phone) return "";
-      phone = phone.trim();
-      if (phone.startsWith("+44")) return phone;
-      if (phone.startsWith("44")) return `+${phone}`;
-      if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
-      return phone; 
-  };
+const normalizePhoneNumber = (phone) => {
+  if (!phone) return "";
+  phone = phone.trim();
+  if (phone.startsWith("+44")) return phone;
+  if (phone.startsWith("44")) return `+${phone}`;
+  if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
+  return phone;
+};
 const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
 
     const isValid = (field) => field && field.trim() !== "";
 
-    
-    if (!isValid(newCustomer.email) && !isValid(newCustomer.number) && !isValid(newCustomer.social)) {
-        return res.status(400).json({ message: "At least one of email, number, or social handle is required." });
+    if (
+      !isValid(newCustomer.email) &&
+      !isValid(newCustomer.number) &&
+      !isValid(newCustomer.social)
+    ) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "At least one of email, number, or social handle is required.",
+        });
     }
-  
-  
-   
+
     let queryParts = [];
-    if (isValid(newCustomer.email)) queryParts.push(`email:${newCustomer.email.trim()}`);
+    if (isValid(newCustomer.email))
+      queryParts.push(`email:${newCustomer.email.trim()}`);
     if (isValid(newCustomer.number)) {
       const normalizedPhone = normalizePhoneNumber(newCustomer.number);
       queryParts.push(`phone:${normalizedPhone}`);
-  }
-    const query = queryParts.join(' OR ');
+    }
+    const query = queryParts.join(" OR ");
 
     let customerData = { customers: [] };
     if (queryParts.length > 0) {
-        customerData = await shopify.rest.Customer.search({
-            session,
-            query,
-        });
-    }
-   
-
-    if (customerData.customers.length > 0) {
-     const newCustomer={
-      _id: customerData.customers[0].id,
-      email: customerData.customers[0].email,
-      first_name: customerData.customers[0].first_name,
-      last_name: customerData.customers[0].last_name,
-      total_spent: customerData.customers[0].total_spent,
-      orders_count: customerData.customers[0].orders_count,
-      customerfrom: "shopify",
-      Number: customerData.customers[0].phone,
-      address: {
-        address1: customerData.customers[0].default_address?.address1 || "",
-        city: customerData.customers[0].default_address?.city || "",
-        zip: customerData.customers[0].default_address?.zip || "",
-      }
-    }
-        return res.status(200).json({
-            alert: "Exists in Shopify database",
-            customer: newCustomer
-        });
-    }
-
-  
-    const searchConditions = [];
-    if (isValid(newCustomer.email)) searchConditions.push({ email: newCustomer.email.trim() });
-    if (isValid(newCustomer.number)) searchConditions.push({ Number: newCustomer.number.trim() });
-    if (isValid(newCustomer.social)) searchConditions.push({ socialhandel: newCustomer.social.trim() });
-
-    const existingCustomer = await Customer.findOne({ $or: searchConditions });
-
-   
-    if (existingCustomer) {
-        return res.status(200).json({
-          alert: "Exists in database",
-          customer: existingCustomer
+      customerData = await shopify.rest.Customer.search({
+        session,
+        query,
       });
     }
 
-    
+    if (customerData.customers.length > 0) {
+      const newCustomer = {
+        _id: customerData.customers[0].id,
+        email: customerData.customers[0].email,
+        first_name: customerData.customers[0].first_name,
+        last_name: customerData.customers[0].last_name,
+        total_spent: customerData.customers[0].total_spent,
+        orders_count: customerData.customers[0].orders_count,
+        customerfrom: "shopify",
+        Number: customerData.customers[0].phone,
+        address: {
+          address1: customerData.customers[0].default_address?.address1 || "",
+          city: customerData.customers[0].default_address?.city || "",
+          zip: customerData.customers[0].default_address?.zip || "",
+        },
+      };
+      return res.status(200).json({
+        alert: "Exists in Shopify database",
+        customer: newCustomer,
+      });
+    }
+
+    const searchConditions = [];
+    if (isValid(newCustomer.email))
+      searchConditions.push({ email: newCustomer.email.trim() });
+    if (isValid(newCustomer.number))
+      searchConditions.push({ Number: newCustomer.number.trim() });
+    if (isValid(newCustomer.social))
+      searchConditions.push({ socialhandel: newCustomer.social.trim() });
+
+    const existingCustomer = await Customer.findOne({ $or: searchConditions });
+
+    if (existingCustomer) {
+      return res.status(200).json({
+        alert: "Exists in database",
+        customer: existingCustomer,
+      });
+    }
+
     const createdCustomer = await Customer.create({
-        Name: isValid(newCustomer.name) ? newCustomer.name.trim() : "",
-        email: isValid(newCustomer.email) ? newCustomer.email.trim() : "",
-        Number: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
-        address: isValid(newCustomer.address) ? newCustomer.address.trim() : "",
-        City: isValid(newCustomer.city) ? newCustomer.city.trim() : "",
-        Postcode: isValid(newCustomer.postcode) ? newCustomer.postcode.trim() : "",
-        userid: newCustomer.userid,
-        socialhandel: isValid(newCustomer.social) ? newCustomer.social.trim() : "",
+      Name: isValid(newCustomer.name) ? newCustomer.name.trim() : "",
+      email: isValid(newCustomer.email) ? newCustomer.email.trim() : "",
+      Number: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
+      address: isValid(newCustomer.address) ? newCustomer.address.trim() : "",
+      City: isValid(newCustomer.city) ? newCustomer.city.trim() : "",
+      Postcode: isValid(newCustomer.postcode)
+        ? newCustomer.postcode.trim()
+        : "",
+      userid: newCustomer.userid,
+      socialhandel: isValid(newCustomer.social)
+        ? newCustomer.social.trim()
+        : "",
     });
 
-    res.status(201).json({ message: "Customer created successfully.", customer: createdCustomer });
-
-} catch (error) {
+    res
+      .status(201)
+      .json({
+        message: "Customer created successfully.",
+        customer: createdCustomer,
+      });
+  } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
-}
-
+  }
 };
 
 const getAllCustomers = async (req, res) => {
-    try {
-        const customers = await Customer.find();
-        res.status(200).json(customers);
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
+  try {
+    const customers = await Customer.find();
+    res.status(200).json(customers);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 const getCustomerById = async (req, res) => {
-    try {
-      
-        const {id}=req.body;
-        //console.log(id)
-        const customer = await Customer.findById(id);
-        if (!customer) {
-            return res.status(404).json({ message: "Customer not found" });
-        }
-        res.status(200).json(customer);
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+  try {
+    const { id } = req.body;
+    //console.log(id)
+    const customer = await Customer.findById(id);
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
     }
+    res.status(200).json(customer);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
 const getCustomers_from_shopify_mongo = async (req, res) => {
@@ -159,39 +170,33 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
 
   let query = "";
   let mongoQuery = {};
-  
+
   if (!search || typeof search !== "string") {
     return res.status(400).json({ message: "Invalid search query" });
   }
 
   const isEmail = search.includes("@");
   const isPhone = /^\+?[0-9\s\-()]+$/.test(search.trim()); // detect phone-like input safely
- 
+
   if (isEmail) {
     // Search by Email
     query = `email:${search.trim()}`;
     mongoQuery = {
       $and: [
         { userid: id },
-        { email: { $regex: new RegExp(`^${search}$`, 'i') } }
-      ]
+        { email: { $regex: new RegExp(`^${search}$`, "i") } },
+      ],
     };
-  } 
-  else if (isPhone || search.startsWith('+')) {
+  } else if (isPhone || search.startsWith("+")) {
     // Search by Phone
- 
-    const sanitizedPhone = search.trim().replace(/\s+/g, ''); // remove extra spaces
+
+    const sanitizedPhone = search.trim().replace(/\s+/g, ""); // remove extra spaces
     query = `phone:${sanitizedPhone}`;
-    const mp=sanitizedPhone.replace("+","")
+    const mp = sanitizedPhone.replace("+", "");
     mongoQuery = {
-      $and: [
-        { userid: id },
-        { Number: { $regex: new RegExp(mp, 'i') } }
-      ]
+      $and: [{ userid: id }, { Number: { $regex: new RegExp(mp, "i") } }],
     };
-  }
-  else {
-   
+  } else {
     // Search by Name
     const nameParts = search.trim().split(/\s+/);
 
@@ -203,8 +208,8 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
       return res.status(400).json({ message: "Invalid name format" });
     }
 
-    const regexConditions = nameParts.map(part => ({
-      Name: { $regex: new RegExp(part, 'i') }
+    const regexConditions = nameParts.map((part) => ({
+      Name: { $regex: new RegExp(part, "i") },
     }));
 
     mongoQuery = {
@@ -213,11 +218,11 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
         {
           $or: [
             ...regexConditions,
-            { socialhandel: { $regex: new RegExp(search, 'i') } },
-            { Number: { $regex: new RegExp(search, 'i') } }
-          ]
-        }
-      ]
+            { socialhandel: { $regex: new RegExp(search, "i") } },
+            { Number: { $regex: new RegExp(search, "i") } },
+          ],
+        },
+      ],
     };
   }
 
@@ -227,7 +232,7 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
       shopify.rest.Customer.search({ session, query }),
     ]);
 
-    const d = customerData.customers.map(customer => ({
+    const d = customerData.customers.map((customer) => ({
       _id: customer.id,
       email: customer.email,
       first_name: customer.first_name,
@@ -240,7 +245,7 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
         address1: customer.default_address?.address1 || "",
         city: customer.default_address?.city || "",
         zip: customer.default_address?.zip || "",
-      }
+      },
     }));
 
     res.status(200).json({ d, dm: mongodata });
@@ -251,154 +256,319 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
 };
 
 const updateCustomer = async (req, res) => {
-    try {
-        const { Name, email, address, Postcode,id } = req.body;
+  try {
+    const { Name, email, address, Postcode, id } = req.body;
 
-        // Find and update
-        const updatedCustomer = await Customer.findByIdAndUpdate(
-            id,
-            { Name, email, address, Postcode },
-            { new: true, runValidators: true }
-        );
+    // Find and update
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      id,
+      { Name, email, address, Postcode },
+      { new: true, runValidators: true }
+    );
 
-        if (!updatedCustomer) {
-            return res.status(404).json({ message: "Customer not found" });
-        }
-
-        res.status(200).json({ message: "Customer updated successfully", customer: updatedCustomer });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+    if (!updatedCustomer) {
+      return res.status(404).json({ message: "Customer not found" });
     }
+
+    res
+      .status(200)
+      .json({
+        message: "Customer updated successfully",
+        customer: updatedCustomer,
+      });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 
+//to get all the customers from orders
+
+const getAllCustomerOrderStats = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const agg = await Order.aggregate([
+     { $match: { userid: new mongoose.Types.ObjectId(userId) } },
+     {
+       $lookup: {
+         from: 'customers',
+         localField: 'cusid',
+         foreignField: '_id',
+         as: 'CustomerInfo'
+       }
+     },
+     {
+       $unwind: {
+         path: '$CustomerInfo',
+         preserveNullAndEmptyArrays: true // set to true if you want to keep orders without customer
+       }
+     },
+     {
+       $group: {
+         _id: {
+           shopifyId: "$shopifycustomerid",
+           mongoId: "$cusid",
+         },
+         orderCount: { $sum: 1 },
+         totalSpent: { $sum: "$price" },
+         customer: { $first: "$CustomerInfo" }, // include full customer data
+       }
+     },
+     {
+       $project: {
+         _id: 0,
+         shopifyId: "$_id.shopifyId",
+         cusid: "$_id.mongoId",
+         orderCount: 1,
+         totalSpent: 1,
+         customer: 1 
+       }
+     }
+    ]);
+
+    const shopifyMap = new Map(
+    agg.filter(r => r.shopifyId).map(r => [r.shopifyId, r])
+    );
+   
+    const mongoBuckets = agg.filter((r) => !r.shopifyId);
+
+    const shocus = (await getcustoemrwithorders(shopifyMap)).flat();
+  
+   const mergedCustomers = [];
+
+
+for (const customer of mongoBuckets) {
+  mergedCustomers.push({
+    Name: customer.customer?.Name || 'N/A',
+    Email: customer.customer?.email || 'N/A',
+    Phone: customer.customer?.Number || 'N/A',
+    SocialHandle: customer.customer?.socialhandel || 'N/A',
+    emailMarketingConsent:'UNSUBSCRIBED',
+    TotalSpent: customer.totalSpent || 0,
+    TotalOrders: customer.orderCount || 0
+  });
+}
+
+
+for (const customer of shocus) {
+  mergedCustomers.push({
+    Name: customer?.Name || `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim(),
+    Email: customer?.email || 'N/A',
+    Phone: customer?.phone || 'N/A',
+    SocialHandle: 'N/A',
+     emailMarketingConsent:customer?.emailMarketingConsent?.marketingState ||'UNSUBSCRIBED' ,
+    TotalSpent: parseFloat(customer?.amountspend || '0'),  //here an ohter amounspend is comming which is amountSpent so if any ting with with amount check here first
+    TotalOrders: customer?.numberOfOrders || 0
+  });
+}
+ 
+
+    return  res.status(201).json({data:mergedCustomers});
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error", err: err.message });
+  }
+};
 
 const deleteCustomer = async (req, res) => {
-    try {
-        const {id}=req.body;
-        const deletedCustomer = await Customer.findByIdAndDelete(id);
-        if (!deletedCustomer) {
-            return res.status(404).json({ message: "Customer not found" });
-        }
-        res.status(200).json({ message: "Customer deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
+  try {
+    const { id } = req.body;
+    const deletedCustomer = await Customer.findByIdAndDelete(id);
+    if (!deletedCustomer) {
+      return res.status(404).json({ message: "Customer not found" });
     }
+    res.status(200).json({ message: "Customer deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 //this api is for the mongodb custoemr update which is on the new request section it will take a whole update customer and find it by _id then update all the document
-//check if 
-const Updatecusnewreq=async(req,res)=>{
- const { customerId, fieldName, updatedValue } = req.body;
+//check if
+const Updatecusnewreq = async (req, res) => {
+  const { customerId, fieldName, updatedValue } = req.body;
 
- const validFields = ['Name', 'email', 'Number', 'socialhandel'];
- if (!validFields.includes(fieldName)) {
-   return res.status(400).json({ message: "Invalid field" });
- }
-
- try {
-
-  let shopifycustomerData = { customers: [] };
-  let squery=[];
-  let correctphone
-  if(fieldName==='email')
-  {
-    squery.push(`email:${updatedValue.trim()}`)
+  const validFields = ["Name", "email", "Number", "socialhandel"];
+  if (!validFields.includes(fieldName)) {
+    return res.status(400).json({ message: "Invalid field" });
   }
-  else if(fieldName==='Number')
-  {
- 
-     correctphone=normalizePhoneNumber(updatedValue);
-  
-     squery.push(`phone:${correctphone}`)
-    
+
+  try {
+    let shopifycustomerData = { customers: [] };
+    let squery = [];
+    let correctphone;
+    if (fieldName === "email") {
+      squery.push(`email:${updatedValue.trim()}`);
+    } else if (fieldName === "Number") {
+      correctphone = normalizePhoneNumber(updatedValue);
+
+      squery.push(`phone:${correctphone}`);
+    }
+
+    const shopifyresult = await shopify.rest.Customer.search({
+      session,
+      query: squery.join(" "),
+    });
+
+    if (shopifyresult.customers.length > 0) {
+      if (
+        fieldName === "email" &&
+        shopifyresult.customers[0].email &&
+        shopifyresult.customers[0].email.trim() === updatedValue.trim()
+      ) {
+        return res.status(201).json({ alert: `gmail exists in shpopify` });
+      } else if (
+        fieldName === "Number" &&
+        shopifyresult.customers[0].phone &&
+        shopifyresult.customers[0].phone.trim() === correctphone.trim()
+      ) {
+        return res
+          .status(201)
+          .json({ alert: `phone number exists in shpopify` });
+      }
+    }
+
+    // Check if updated value already exists (for unique fields)
+    let condition = {};
+    if (["email", "Number", "socialhandel"].includes(fieldName)) {
+      condition[fieldName] = updatedValue;
+      const existing = await Customer.findOne(condition);
+      if (existing && existing._id.toString() !== customerId) {
+        return res.status(409).json({ message: `${fieldName} already exists` });
+      }
+    }
+
+    // Update only the field
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      customerId,
+      { $set: { [fieldName]: updatedValue } },
+      { new: true }
+    );
+
+    res
+      .status(200)
+      .json({ message: "Field updated", customer: updatedCustomer });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
- 
- const shopifyresult = await shopify.rest.Customer.search({
-    session,
-    query: squery.join(' '),
-});
+};
 
-if(shopifyresult.customers.length > 0)
-{
-    
-
-  if(fieldName==='email'  && shopifyresult.customers[0].email && shopifyresult.customers[0].email.trim()===updatedValue.trim())
-  {
-    return res.status(201).json({alert:`gmail exists in shpopify`})
-  }
-  else if(fieldName==='Number'  && shopifyresult.customers[0].phone && shopifyresult.customers[0].phone.trim()===correctphone.trim())
-  {
-
-    return res.status(201).json({alert:`phone number exists in shpopify`})
-  }
-}
-
-
-
-   // Check if updated value already exists (for unique fields)
-   let condition = {};
-   if (['email', 'Number', 'socialhandel'].includes(fieldName)) {
-     condition[fieldName] = updatedValue;
-     const existing = await Customer.findOne(condition);
-     if (existing && existing._id.toString() !== customerId) {
-       return res.status(409).json({ message: `${fieldName} already exists` });
-     }
-   }
-
-   // Update only the field
-   const updatedCustomer = await Customer.findByIdAndUpdate(
-     customerId,
-     { $set: { [fieldName]: updatedValue } },
-     { new: true }
-   );
-
-   res.status(200).json({ message: "Field updated", customer: updatedCustomer });
- } catch (error) {
-   res.status(500).json({ message: "Server error", error: error.message });
- }
-
-}
-
-const Get_mongo_byid=async(id)=>{
-
-  const d=await Customer.find({_id:id});
+const Get_mongo_byid = async (id) => {
+  const d = await Customer.find({ _id: id });
   return d;
-}
-const get_shopify_byid=async(id)=>{
-  const d=await  shopify.rest.Customer.search({ session, id:id })
+};
+const get_shopify_byid = async (id) => {
+  const d = await shopify.rest.Customer.search({ session, id: id });
   return d;
-}
-
+};
 
 //Draf order here becasue our shopify session is here i should make it sepearte module in near future
 
- async function draftorder(customerid,product,tags,shiping)
-{
-   const draftOrder = new DraftOrder({ session });
+async function draftorder(customerid, product, tags, shiping) {
+  const draftOrder = new DraftOrder({ session });
 
-    draftOrder.line_items = product;
+  draftOrder.line_items = product;
 
-    draftOrder.customer =  customerid;
+  draftOrder.customer = customerid;
 
-    draftOrder.use_customer_default_address = true;
+  draftOrder.use_customer_default_address = true;
 
-    draftOrder.shipping_address = shiping;
+  draftOrder.shipping_address = shiping;
 
-    const response = await draftOrder.save({
-      update: true
-    });
+  const response = await draftOrder.save({
+    update: true,
+  });
 
-    // console.log("Draft Order Created:", response);
+  // console.log("Draft Order Created:", response);
 }
 
+//to get customers
+
+function buildCustomerQuery(shopifyIds) {
+  const queries = shopifyIds.map((id, i) => {
+    return `
+      customer${i}: customer(id: "gid://shopify/Customer/${id}") {
+        id
+        firstName
+        lastName
+        email
+        phone
+        createdAt
+        numberOfOrders
+        amountSpent {
+          amount
+          currencyCode
+        }
+        defaultAddress {
+          address1
+          city
+          zip
+        }
+          emailMarketingConsent {
+          consentUpdatedAt
+          marketingOptInLevel
+          marketingState
+        }
+      }
+    `;
+  });
+  return `query { ${queries.join("\n")} }`;
+}
+const fetchShopifyCustomers = async (ids) => {
+  const client = new shopify.clients.Graphql({ session });
+  const query = buildCustomerQuery(ids);
+  try {
+    const result = await client.query({ data: query });
+
+    // Flatten the results
+    const customers = Object.values(result.body.data);
+    return customers;
+  } catch (err) {
+    console.error("Error fetching Shopify customers:", err.message);
+  }
+};
+
+const getcustoemrwithorders = async (shopifyMap) => {
+  try {
+    const ids=[] 
+    shopifyMap.forEach((b) => ids.push(b.shopifyId.split("/").pop()));
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 50) {
+      chunks.push(ids.slice(i, i + 50));
+    }
+    // Fetch details per chunk
+    const shopifycustomers = [];
+   for (const chunk of chunks) {
+  const fetches = await fetchShopifyCustomers(chunk);
+  shopifycustomers.push(fetches);
+}
+     const re= shopifycustomers.flat();
+
+      re.map((e)=>{
+       
+        e.numberOfOrders=shopifyMap.get(e.id.split('/')[4]).orderCount;
+        e.Name= e.lastName!=null? (e.firstName + ' '+ e.lastName):e.firstName;
+        e.amountspend=shopifyMap.get(e.id.split('/')[4]).totalSpent;
+         
+      })
+     
+
+    return re;
+  } 
+  catch(err) {
+   console.error("Error fetching Shopify customers:", err.message);
+  }
+};
+
 module.exports = {
-    createCustomer,
-    getAllCustomers,
-    getCustomerById,
-    updateCustomer,
-    deleteCustomer,
-    getCustomers_from_shopify_mongo,
-    Updatecusnewreq,
-    Get_mongo_byid,
-    get_shopify_byid,
-    draftorder
+  createCustomer,
+  getAllCustomers,
+  getCustomerById,
+  updateCustomer,
+  deleteCustomer,
+  getCustomers_from_shopify_mongo,
+  Updatecusnewreq,
+  Get_mongo_byid,
+  get_shopify_byid,
+  draftorder,
+  getAllCustomerOrderStats,
 };

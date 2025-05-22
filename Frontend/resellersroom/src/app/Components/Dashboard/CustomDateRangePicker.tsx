@@ -36,8 +36,8 @@ export default function CustomDateRangePicker({active,setactive,range,setRange}:
               readOnly
               crossOrigin="anonymous" 
               onClick={()=>{setactive("Range")}}
-              onPointerEnterCapture={() => {alert()}}
-              onPointerLeaveCapture={() => {alert()}}
+              // onPointerEnterCapture={() => {}}
+              // onPointerLeaveCapture={() => {}}
               onChange={() => {alert()}}
               containerProps={{
              className: `min-h-0 h-[34px]   cursor-pointer rounded-2xl shadow-md  border-black  ${

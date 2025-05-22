@@ -74,7 +74,7 @@ export default function Page({}: Props) {
       ).data;
       console.log(mongodata);
       setstate(mongodata);
-      getprices(mongodata); // pass fresh state to getprices
+    //  getprices(mongodata); // pass fresh state to getprices
     }
   };
 

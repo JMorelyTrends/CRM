@@ -162,3 +162,15 @@ export type Dashstats={
   wonRevenue: number,
   wonProfit: number
 }
+
+//Customer Crm
+
+export type Customerprop={
+  Name:string,
+  Email:string,
+  Phone:string,
+  SocialHandle:string,
+  emailMarketingConsent:string,
+  TotalSpent:number,
+  TotalOrders:number
+}

@@ -13,8 +13,6 @@ try
     //  console.log("get the exact match",exactMatch)
      return res.status(200).json({ message: exactMatch });
    }
-
-  
    const partialMatch = await StockxDatabase.find({
     
      name: { $regex: `.*${search}.*`, $options: 'i' } 
@@ -25,7 +23,6 @@ try
 
   //    return res.status(200).json({ message: partialMatch });
   //  }
-   
         const options = {
             method: 'GET',
             headers: {
@@ -37,11 +34,13 @@ try
         const data = await fetch(url, options)
         .then(res => res.json())
         .then(async(d) =>{
+            console.log(d)
             const products = [];
     
             d.length>0&&
             await Promise.all(
             d.map(async (item) => {
+             // console.log(item)
                 const exists = await StockxDatabase.findOne({ Stockxid: item.id });
             
                 if (!exists && item.image) {
@@ -52,9 +51,10 @@ try
                     slug: item.slug,
                     brand: item.brand,
                     image: item.image, 
-                    category: item.category,
+                    Category: item.category,
                     Colorway: item.colorway,
                 });
+             
                 products.push(created); 
                 }
                 else{
@@ -69,7 +69,13 @@ try
          
             
             
-            res.status(201).json({ message: newproduct });
+           return res.status(201).json({ message: newproduct });
+          //    for (const item of newproduct) {
+          //   if (!item?.enriched) {
+          //     await enrichProduct(item._id, item.slug); // Wait for enrichment
+          //     await delay(1000); // Wait for 2 seconds before next iteration
+          //   }
+          // }
         })
         .catch(err =>{ console.error('Fetch error:', err)
             return null
@@ -107,8 +113,13 @@ exports.Getprepopulate=async(req,res)=>{
           }); 
       
          
-         return res.status(201).json({ message: results });
-          //res.json(results);
+                    res.status(201).json({ message: results });
+          //       for (const item of results) {
+          //   if (!item.enriched) {
+          //     await enrichProduct(item._id, item.slug); // Wait for enrichment
+          //     await delay(2000); // Wait for 2 seconds before next iteration
+          //   }
+          // }
         } 
      
     catch(err)
@@ -117,6 +128,7 @@ exports.Getprepopulate=async(req,res)=>{
     
     }
 }
+
 exports.Getproductprice = async (req, res) => {
   const { itemid, search } = req.body;
 
@@ -128,6 +140,8 @@ exports.Getproductprice = async (req, res) => {
         'x-api-key': process.env.RETAIL_API_KEY
       }
     };
+
+    return res.status(404).json({ message: 'Retail price not found in API response' });
 
     const searchTerm = search;
     const currency = 'GBP';
@@ -161,6 +175,7 @@ exports.Getproductprice = async (req, res) => {
     res.status(500).json({ message: err.message || 'Something went wrong' });
   }
 };
+
 exports.getprice_github=async(req,res)=>{
    const {itemid,sku}=req.body;
 
@@ -192,5 +207,42 @@ sneaks.getProductPrices(sku, async function (err, product){
   catch(err)
   {
   return res.status(500).json({ message: err.message });
+  }
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function enrichProduct(docId, stockxId) {
+  try {
+    const url = `https://app.retailed.io/api/v1/scraper/stockx/product?query=${stockxId}&currency=GBP`;
+    const resp = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-api-key': process.env.RETAIL_API_KEY }
+    });
+    const data = await resp.json();
+    // console.log(data)
+    const model = data.model;
+    const primary_category = data.primary_category || data.category;
+    const variant = data.variants?.[0];
+    const size = variant?.sizes || null;
+
+    // Get retail price from traits
+    
+    const price =data.market.sales.last_sale;
+    // console.log(price)
+    await StockxDatabase.findByIdAndUpdate(docId, {
+      $set: {
+        model,
+        primary_category,
+        size,
+       last_sale_price: price,
+        enriched: true,
+        enrichedAt: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Enrichment failed for', stockxId, err.message);
   }
 }

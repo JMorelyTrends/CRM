@@ -17,7 +17,10 @@ const Slide = ({img, name, link, number}: {img: string, link: string, name: stri
     return(
                         <Link href={link} passHref legacyBehavior prefetch={true} >
 
-        <div className={`ml-4 w-[90%] h-[14%] ${pathname.startsWith(link)?"text-md font-bold":"text-sm"} hover:bg-background cursor-pointer text-[#454545] flex items-center gap-3`}>
+        <div className={`ml-4 w-[90%] h-[14%] ${link === "/" 
+  ? pathname === "/" ? "text-md font-bold" : "text-sm"
+  : pathname.startsWith(link) ? "text-md font-bold" : "text-sm"}
+ hover:bg-background cursor-pointer text-[#454545] flex items-center gap-3`}>
             <div className="flex justify-center items-center w-6 h-6">
                 <img  src={img} alt="" className="w-full h-full object-contain" />
             </div>
@@ -46,7 +49,7 @@ const Sideoptions = () => {
         <Slide img="/images/request.png" name="Add New Request" number={null} link="/NewRequest" />
         <Slide img="/images/Lead.png" name="Lead Management" number={"54"} link="/Leads" />
         <Slide img="/images/supplier.png" name="Supplier CRM" number={null} link="/SupplierCRM" />
-        <Slide img="/images/Crm.png" name="Customer CRM" number={null} link="/customer-crm" />
+        <Slide img="/images/Crm.png" name="Customer CRM" number={null} link="/CustomerCrm" />
     </div>
   )
 }
