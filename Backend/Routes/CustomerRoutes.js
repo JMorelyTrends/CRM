@@ -8,7 +8,8 @@ const {
     deleteCustomer,
     getCustomers_from_shopify_mongo,
     Updatecusnewreq,
-    getAllCustomerOrderStats
+    getAllCustomerOrderStats,
+    update_Customer_Crm
 
 } = require("../Controllers/CustomerController");
 
@@ -21,6 +22,7 @@ router.post("/deleteCustomer", deleteCustomer);     // Delete a customer
 router.post("/getCustomersbyboth",getCustomers_from_shopify_mongo)
 router.post("/Updatecusnewreq",Updatecusnewreq)
 router.post("/getAllCustomerOrderStats", getAllCustomerOrderStats);          // Get all customers
+router.post("/update_Customer_Crm",update_Customer_Crm)
 
 module.exports = router;
 

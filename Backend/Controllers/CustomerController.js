@@ -338,11 +338,13 @@ const getAllCustomerOrderStats = async (req, res) => {
 
 for (const customer of mongoBuckets) {
   mergedCustomers.push({
-    Name: customer.customer?.Name || 'N/A',
-    Email: customer.customer?.email || 'N/A',
-    Phone: customer.customer?.Number || 'N/A',
-    SocialHandle: customer.customer?.socialhandel || 'N/A',
+    id:customer._id,
+    Name: customer.customer?.Name || '',
+    Email: customer.customer?.email || '',
+    Phone: customer.customer?.Number || '',
+    SocialHandle: customer.customer?.socialhandel || '',
     emailMarketingConsent:'UNSUBSCRIBED',
+    Custoemrfrom:'Mongodb',
     TotalSpent: customer.totalSpent || 0,
     TotalOrders: customer.orderCount || 0
   });
@@ -350,11 +352,14 @@ for (const customer of mongoBuckets) {
 
 
 for (const customer of shocus) {
+  
   mergedCustomers.push({
+    id:customer?.id?.split('/')[4],
     Name: customer?.Name || `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim(),
-    Email: customer?.email || 'N/A',
-    Phone: customer?.phone || 'N/A',
-    SocialHandle: 'N/A',
+    Email: customer?.email || '',
+    Phone: customer?.phone || '',
+    SocialHandle: '',
+    Custoemrfrom:'Shopify',
      emailMarketingConsent:customer?.emailMarketingConsent?.marketingState ||'UNSUBSCRIBED' ,
     TotalSpent: parseFloat(customer?.amountspend || '0'),  //here an ohter amounspend is comming which is amountSpent so if any ting with with amount check here first
     TotalOrders: customer?.numberOfOrders || 0
@@ -382,8 +387,10 @@ const deleteCustomer = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 //this api is for the mongodb custoemr update which is on the new request section it will take a whole update customer and find it by _id then update all the document
 //check if
+
 const Updatecusnewreq = async (req, res) => {
   const { customerId, fieldName, updatedValue } = req.body;
 
@@ -451,6 +458,42 @@ const Updatecusnewreq = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+const update_Customer_Crm=async(req,res)=>{
+
+   const {Customer}=req.body;
+   try{
+      if(Customer.customerfrom==='Mongodb')
+      {
+         
+      }
+      else
+      {
+     const re=await shopifycustomer(Customer)
+   
+      }
+      res.json(201);
+   }
+   catch(err)
+   {
+   
+     res.status(500).json({ message: "Server error", error: error.message });
+   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//FUNCTIONS
+
 
 const Get_mongo_byid = async (id) => {
   const d = await Customer.find({ _id: id });
@@ -559,6 +602,31 @@ const getcustoemrwithorders = async (shopifyMap) => {
   }
 };
 
+const shopifycustomer=async(Customer)=>{
+  try{
+       const client = new shopify.rest.Customer({ session });
+     const response = await shopify.rest.Customer.find({
+  session,
+  id: Customer.id, // numeric ID, not GID
+});
+response.first_name = "Haris";
+response.last_name = "test";
+response.phone = "+1234567890";
+response.email='test@gmail.com'   // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+const t=await response.save({ update: true });
+    console.log(t)
+
+    return response;
+       
+  }
+  catch(err)
+  {
+     console.log(err)
+    console.log("error on updating the shopify customer from customer crm")
+  }
+}
+
+
 module.exports = {
   createCustomer,
   getAllCustomers,
@@ -571,4 +639,5 @@ module.exports = {
   get_shopify_byid,
   draftorder,
   getAllCustomerOrderStats,
+  update_Customer_Crm
 };

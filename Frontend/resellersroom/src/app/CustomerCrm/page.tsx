@@ -3,6 +3,12 @@ import React,{useState,useEffect} from 'react'
 import {ArrowUpNarrowWide,Funnel } from "lucide-react"
 import axios from 'axios'
 import { Customerprop } from '../Components/Small comps/Types'
+import EditPopup from '../Components/Customer/Editpopup'
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/lib/Resellerstore";
+import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus} from "../../lib/features/CustomerCrm/CustomerCrmslice"
+
+
 type Props = {}
   type hprops={
     search:string,
@@ -221,6 +227,7 @@ type Props = {}
 
 
 const page = (props: Props) => {
+        const dispatch=useDispatch();
         const isSmallScreen=useIsSmallScreen();
 
         const [search,setsearch ]=useState<string>("")
@@ -234,6 +241,7 @@ const page = (props: Props) => {
           })
           setcusto(re.data.data)
           console.log(re.data.data)
+          dispatch(AddCustomers(re.data.data))
         }
 
         //useeffects
@@ -256,6 +264,8 @@ const page = (props: Props) => {
              search={search}
              setsearch={setsearch}
         />}
+
+        <EditPopup />
         
           {/*Fillters */}
 
@@ -348,7 +358,11 @@ const page = (props: Props) => {
                       </button>
                     </td>
                     <td className="px-4 py-2">
-                      <button className="bg-blue-400 cursor-pointer text-white  px-4 py-1 rounded-full">Edit</button>
+                      <button
+                      onClick={()=>{
+                        dispatch(AddSelectedCustomer(customer))
+                        dispatch(Toogle_Editopen())}}
+                      className="bg-blue-400 cursor-pointer text-white  px-4 py-1 rounded-full">Edit</button>
                     </td>
 
                   </tr>

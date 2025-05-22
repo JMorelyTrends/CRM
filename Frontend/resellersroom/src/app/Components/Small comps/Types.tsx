@@ -172,5 +172,7 @@ export type Customerprop={
   SocialHandle:string,
   emailMarketingConsent:string,
   TotalSpent:number,
-  TotalOrders:number
+  TotalOrders:number,
+  Custoemrfrom:string,
+  id:string,
 }
