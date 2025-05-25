@@ -233,7 +233,24 @@ const page = (props: Props) => {
         const [search,setsearch ]=useState<string>("")
         const [userid, setuserid] = useState<string | null>("");
         const [custo,setcusto]=useState<Customerprop[]|null>(null)
+        const [noofcus,setnoofcus]=useState<number>(0);
+        const [Klaviyop,setKlaviyop]=useState<number>(0)
         //functions
+       const    calKlaviyop=(data:Customerprop[])=>{
+          let optout=0;
+          let optin=0;
+          data.map((d:Customerprop)=>{
+            if(d.emailMarketingConsent==='SUBSCRIBED')
+            {
+              optin++;
+            }
+          } )
+          
+          const per= ((optin/data.length)*100);
+          const n=Math.round(per*10)/10
+          setKlaviyop(n)
+
+       }  
         const getcustomers=async()=>{
           const re=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getAllCustomerOrderStats`,
           {
@@ -241,7 +258,9 @@ const page = (props: Props) => {
           })
           setcusto(re.data.data)
           console.log(re.data.data)
+          setnoofcus(re.data.data.length);
           dispatch(AddCustomers(re.data.data))
+          calKlaviyop(re.data.data);
         }
 
         //useeffects
@@ -303,15 +322,24 @@ const page = (props: Props) => {
 
                   <div className="w-[70%] flex justify-around h-full items-center ">
 
-                    <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-2xl">
-
+                    <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
+                              <div className="w-full h-[30%] text-center text-xl font-bold">
+                                Total Customers
+                              </div>
+                              <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center ">
+                                {noofcus}
+                              </div>
                     </div>
-                    <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-2xl">
-                        
-                    </div>
-                   <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-2xl">
-
-                    </div>
+ 
+                    <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
+                              <div className="w-full h-[30%] text-center text-xl font-bold">
+                                Klaviyo optin
+                              </div>
+                              <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center ">
+                              {Klaviyop}   %ha 
+                              </div>
+                    </div>                       
+                  
                   </div>
 
           </div>

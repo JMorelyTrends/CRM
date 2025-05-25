@@ -9,6 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import { Toogle_Editopen } from "../../../lib/features/CustomerCrm/CustomerCrmslice";
 import axios from "axios";
+import { toast } from "sonner";
 export default function EditPopup() {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.Cus.openedit);
@@ -32,26 +33,50 @@ export default function EditPopup() {
       if(customer.Custoemrfrom!=="Mongodb")
       {
         setFirstName(customer?.Name?.split(' ')[0]||"");
-        setLastName(customer?.Name?.split(' ')[0]||"")
+        setLastName(customer?.Name?.split(' ')[1]||"")
       }
       setEmail(customer.Email || "");
       setPhone(customer.Phone || "");
       setSocialHandle(customer.SocialHandle || "");
       setEmailMarketingConsent(customer.emailMarketingConsent || "");
     }
-  }, [customer]);
-
+  }, [customer, ]);
+console.log(customer)
   const handleSubmit = async() => {
     const data =
       customer.Custoemrfrom === "Mongodb"
         ? { id:customer.id, Name:name, email, Number:phone, socialhandel:socialHandle, Custoemrfrom:'Mongodb' }
         : {id:customer.id, firstName, lastName, email, phone, emailMarketingConsent, Custoemrfrom:'shopify' };
          
-        await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/update_Customer_Crm`,
+        try{
+               const re= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/update_Customer_Crm`,
           {
-            Customer:data,
+            Cust:data,
           })
-    
+          if(re.data)
+          {
+            toast.success("Customer updated succesfully")
+            setEmail("")
+            setFirstName("");
+            setLastName("")
+            setPhone("")
+            setName("")
+            dispatch(Toogle_Editopen())
+
+          }
+        }
+        catch(err:any)
+        {
+          if(err.response)
+          {
+          console.log(err.response.data.error)
+          toast.error(err.response.data.error)
+                
+          }
+
+        }
+  
+      
   };
 
   const isMongo = customer?.Custoemrfrom === "Mongodb";
@@ -101,17 +126,7 @@ export default function EditPopup() {
                 <Label>Phone</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
-              <div className="flex flex-col gap-1">
-                <Label>Email Marketing Consent</Label>
-                <select
-                  value={emailMarketingConsent}
-                  onChange={(e) => setEmailMarketingConsent(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="subscribe">Subscribe</option>
-                  <option value="unsubscribe">Unsubscribe</option>
-                </select>
-              </div>
+            
             </>
           )}
 

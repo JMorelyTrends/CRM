@@ -51,12 +51,9 @@ const createCustomer = async (req, res) => {
       !isValid(newCustomer.number) &&
       !isValid(newCustomer.social)
     ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "At least one of email, number, or social handle is required.",
-        });
+      return res.status(400).json({
+        message: "At least one of email, number, or social handle is required.",
+      });
     }
 
     let queryParts = [];
@@ -130,12 +127,10 @@ const createCustomer = async (req, res) => {
         : "",
     });
 
-    res
-      .status(201)
-      .json({
-        message: "Customer created successfully.",
-        customer: createdCustomer,
-      });
+    res.status(201).json({
+      message: "Customer created successfully.",
+      customer: createdCustomer,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -270,12 +265,10 @@ const updateCustomer = async (req, res) => {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Customer updated successfully",
-        customer: updatedCustomer,
-      });
+    res.status(200).json({
+      message: "Customer updated successfully",
+      customer: updatedCustomer,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -287,88 +280,86 @@ const getAllCustomerOrderStats = async (req, res) => {
   try {
     const { userId } = req.body;
     const agg = await Order.aggregate([
-     { $match: { userid: new mongoose.Types.ObjectId(userId) } },
-     {
-       $lookup: {
-         from: 'customers',
-         localField: 'cusid',
-         foreignField: '_id',
-         as: 'CustomerInfo'
-       }
-     },
-     {
-       $unwind: {
-         path: '$CustomerInfo',
-         preserveNullAndEmptyArrays: true // set to true if you want to keep orders without customer
-       }
-     },
-     {
-       $group: {
-         _id: {
-           shopifyId: "$shopifycustomerid",
-           mongoId: "$cusid",
-         },
-         orderCount: { $sum: 1 },
-         totalSpent: { $sum: "$price" },
-         customer: { $first: "$CustomerInfo" }, // include full customer data
-       }
-     },
-     {
-       $project: {
-         _id: 0,
-         shopifyId: "$_id.shopifyId",
-         cusid: "$_id.mongoId",
-         orderCount: 1,
-         totalSpent: 1,
-         customer: 1 
-       }
-     }
+      { $match: { userid: new mongoose.Types.ObjectId(userId) } },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "cusid",
+          foreignField: "_id",
+          as: "CustomerInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$CustomerInfo",
+          preserveNullAndEmptyArrays: true, // set to true if you want to keep orders without customer
+        },
+      },
+      {
+        $group: {
+          _id: {
+            shopifyId: "$shopifycustomerid",
+            mongoId: "$cusid",
+          },
+          orderCount: { $sum: 1 },
+          totalSpent: { $sum: "$price" },
+          customer: { $first: "$CustomerInfo" }, // include full customer data
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          shopifyId: "$_id.shopifyId",
+          cusid: "$_id.mongoId",
+          orderCount: 1,
+          totalSpent: 1,
+          customer: 1,
+        },
+      },
     ]);
 
     const shopifyMap = new Map(
-    agg.filter(r => r.shopifyId).map(r => [r.shopifyId, r])
+      agg.filter((r) => r.shopifyId).map((r) => [r.shopifyId, r])
     );
-   
+
     const mongoBuckets = agg.filter((r) => !r.shopifyId);
 
     const shocus = (await getcustoemrwithorders(shopifyMap)).flat();
-  
-   const mergedCustomers = [];
 
+    const mergedCustomers = [];
 
-for (const customer of mongoBuckets) {
-  mergedCustomers.push({
-    id:customer._id,
-    Name: customer.customer?.Name || '',
-    Email: customer.customer?.email || '',
-    Phone: customer.customer?.Number || '',
-    SocialHandle: customer.customer?.socialhandel || '',
-    emailMarketingConsent:'UNSUBSCRIBED',
-    Custoemrfrom:'Mongodb',
-    TotalSpent: customer.totalSpent || 0,
-    TotalOrders: customer.orderCount || 0
-  });
-}
+    for (const customer of mongoBuckets) {
+      mergedCustomers.push({
+        id: customer.customer?._id,
+        Name: customer.customer?.Name || "",
+        Email: customer.customer?.email || "",
+        Phone: customer.customer?.Number || "",
+        SocialHandle: customer.customer?.socialhandel || "",
+        emailMarketingConsent: "UNSUBSCRIBED",
+        Custoemrfrom: "Mongodb",
+        TotalSpent: customer.totalSpent || 0,
+        TotalOrders: customer.orderCount || 0,
+      });
+    }
 
+    for (const customer of shocus) {
+      mergedCustomers.push({
+        id: customer?.id?.split("/")[4],
+        Name:
+          customer?.Name ||
+          `${customer?.firstName || ""} ${customer?.lastName || ""}`.trim(),
+        Email: customer?.email || "",
+        Phone: customer?.phone || "",
+        SocialHandle: "",
+        Custoemrfrom: "Shopify",
+        emailMarketingConsent:
+          customer?.emailMarketingConsent?.marketingState || "UNSUBSCRIBED",
+        TotalSpent: parseFloat(customer?.amountspend || "0"), //here an ohter amounspend is comming which is amountSpent so if any ting with with amount check here first
+        TotalOrders: customer?.numberOfOrders || 0,
+      });
+    }
 
-for (const customer of shocus) {
-  
-  mergedCustomers.push({
-    id:customer?.id?.split('/')[4],
-    Name: customer?.Name || `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim(),
-    Email: customer?.email || '',
-    Phone: customer?.phone || '',
-    SocialHandle: '',
-    Custoemrfrom:'Shopify',
-     emailMarketingConsent:customer?.emailMarketingConsent?.marketingState ||'UNSUBSCRIBED' ,
-    TotalSpent: parseFloat(customer?.amountspend || '0'),  //here an ohter amounspend is comming which is amountSpent so if any ting with with amount check here first
-    TotalOrders: customer?.numberOfOrders || 0
-  });
-}
- 
-
-    return  res.status(201).json({data:mergedCustomers});
-
+    return res.status(201).json({ data: mergedCustomers });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error", err: err.message });
@@ -459,41 +450,34 @@ const Updatecusnewreq = async (req, res) => {
   }
 };
 
-const update_Customer_Crm=async(req,res)=>{
+const update_Customer_Crm = async (req, res) => {
+  const { Cust } = req.body;
+ 
+  try {
+    if (Cust.Custoemrfrom=== "Mongodb") {
+      const re=await Customer.findOneAndUpdate({_id:Cust.id},{$set:{
+         Name:Cust.Name,
+         Email:Cust.email,
+         Number:Cust.Number,
+         socialhandel:Cust.socialhandel,
+      }})
 
-   const {Customer}=req.body;
-   try{
-      if(Customer.customerfrom==='Mongodb')
-      {
-         
-      }
-      else
-      {
-     const re=await shopifycustomer(Customer)
+      
+      
+      return res.status(201).json({msg:"mongodb custoemr updated sucessfully"})
+    }
+     else {
+      const re = await shopifycustomer(Cust);  
+    return res.status(201).json({msg:"shopify custoemr updated sucessfully"})
+;
+    }
    
-      }
-      res.json(201);
-   }
-   catch(err)
-   {
-   
-     res.status(500).json({ message: "Server error", error: error.message });
-   }
-}
-
-
-
-
-
-
-
-
-
-
-
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 
 //FUNCTIONS
-
 
 const Get_mongo_byid = async (id) => {
   const d = await Customer.find({ _id: id });
@@ -572,7 +556,7 @@ const fetchShopifyCustomers = async (ids) => {
 
 const getcustoemrwithorders = async (shopifyMap) => {
   try {
-    const ids=[] 
+    const ids = [];
     shopifyMap.forEach((b) => ids.push(b.shopifyId.split("/").pop()));
     const chunks = [];
     for (let i = 0; i < ids.length; i += 50) {
@@ -580,52 +564,58 @@ const getcustoemrwithorders = async (shopifyMap) => {
     }
     // Fetch details per chunk
     const shopifycustomers = [];
-   for (const chunk of chunks) {
-  const fetches = await fetchShopifyCustomers(chunk);
-  shopifycustomers.push(fetches);
-}
-     const re= shopifycustomers.flat();
+    for (const chunk of chunks) {
+      const fetches = await fetchShopifyCustomers(chunk);
+      shopifycustomers.push(fetches);
+    }
+    const re = shopifycustomers.flat();
 
-      re.map((e)=>{
-       
-        e.numberOfOrders=shopifyMap.get(e.id.split('/')[4]).orderCount;
-        e.Name= e.lastName!=null? (e.firstName + ' '+ e.lastName):e.firstName;
-        e.amountspend=shopifyMap.get(e.id.split('/')[4]).totalSpent;
-         
-      })
-     
+    re.map((e) => {
+      e.numberOfOrders = shopifyMap.get(e.id.split("/")[4]).orderCount;
+      e.Name =
+        e.lastName != null ? e.firstName + " " + e.lastName : e.firstName;
+      e.amountspend = shopifyMap.get(e.id.split("/")[4]).totalSpent;
+    });
 
     return re;
-  } 
-  catch(err) {
-   console.error("Error fetching Shopify customers:", err.message);
+  } catch (err) {
+    console.error("Error fetching Shopify customers:", err.message);
   }
 };
 
-const shopifycustomer=async(Customer)=>{
-  try{
-       const client = new shopify.rest.Customer({ session });
-     const response = await shopify.rest.Customer.find({
-  session,
-  id: Customer.id, // numeric ID, not GID
-});
-response.first_name = "Haris";
-response.last_name = "test";
-response.phone = "+1234567890";
-response.email='test@gmail.com'   // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
-const t=await response.save({ update: true });
-    console.log(t)
+const shopifycustomer = async (Customer) => {
+  try {
+    const client = new shopify.rest.Customer({ session });
+    const response = await shopify.rest.Customer.find({
+      session,
+      id: Customer.id, // numeric ID, not GID
+    });
+
+    response.first_name = Customer.firstName;
+    response.last_name = Customer.lastName;
+    response.phone = Customer.phone;
+    response.email = Customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+    const t = await response.save({ update: true });
 
     return response;
-       
   }
-  catch(err)
-  {
-     console.log(err)
-    console.log("error on updating the shopify customer from customer crm")
-  }
-}
+   catch (err) {
+    const errors = err?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0]) {
 
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+        throw new Error(re);
+      } else if (errors?.email) {
+        const d = "email " + re;
+        throw new Error(d);
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+      throw new Error(re);
+    }
+  }
+};
 
 module.exports = {
   createCustomer,
@@ -639,5 +629,5 @@ module.exports = {
   get_shopify_byid,
   draftorder,
   getAllCustomerOrderStats,
-  update_Customer_Crm
+  update_Customer_Crm,
 };
