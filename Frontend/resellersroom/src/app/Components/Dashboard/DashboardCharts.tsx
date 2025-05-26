@@ -17,7 +17,7 @@ import {
 
 import {  DateRange } from "react-day-picker";
 import { Dashstats } from "../Small comps/Types";
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
+const COLORS =["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF", "#FF6699"];
 
 
 
@@ -181,8 +181,9 @@ const getpidata = async () => {
 
   return (
     <div className="w-full h-[76vh] flex gap-4">
-      <div className="w-[35%] h-full p-0  rounded-2xl flex justify-center items-center">
-        {pieData&&pieData.length>0&&<PieChart width={400} height={400}>
+      <div className="w-[35%] h-full p-0  rounded-2xl flex justify-center items-center overflow-auto">
+        {pieData&&pieData.length>0&&
+        <PieChart width={400} height={400}>
           <Pie
             data={pieData}
             cx="50%"
@@ -196,7 +197,10 @@ const getpidata = async () => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-      
+        <Tooltip 
+    formatter={(value: any, name: any) => [`${value}`, `${name}`]}
+    contentStyle={{ borderRadius: '8px', padding: '8px' }}
+  />
         </PieChart>
         }
       </div>
