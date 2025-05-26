@@ -322,23 +322,29 @@ const getAllCustomerOrderStats = async (req, res) => {
       agg.filter((r) => r.shopifyId).map((r) => [r.shopifyId, r])
     );
 
-    const mongoBuckets = agg.filter((r) => !r.shopifyId);
-
+    const mongoBuckets =new Map( agg.filter((r) => !r.shopifyId).map((r)=> [r?.customer?._id.toString(),r] ))
+    
+      
     const shocus = (await getcustoemrwithorders(shopifyMap)).flat();
-
+      
+    const dbm=await Customer.find({userid:userId});
     const mergedCustomers = [];
+  
+  //  console.log(mongoBuckets.get('682ee56c7c3e911370a40ab9'))
+  
 
-    for (const customer of mongoBuckets) {
+    for (const customer of dbm) {
+   // console.log(mongoBuckets.get(customer?._id.toString())) 
       mergedCustomers.push({
-        id: customer.customer?._id,
-        Name: customer.customer?.Name || "",
-        Email: customer.customer?.email || "",
-        Phone: customer.customer?.Number || "",
-        SocialHandle: customer.customer?.socialhandel || "",
+        id: customer?._id,
+        Name: customer?.Name || "",
+        Email: customer?.email || "",
+        Phone: customer?.Number || "",
+        SocialHandle: customer?.socialhandel || "",
         emailMarketingConsent: "UNSUBSCRIBED",
         Custoemrfrom: "Mongodb",
-        TotalSpent: customer.totalSpent || 0,
-        TotalOrders: customer.orderCount || 0,
+        TotalSpent:mongoBuckets?.get(customer?._id?.toString())?.totalSpent|| 0,
+        TotalOrders:mongoBuckets?.get(customer?._id?.toString())?.orderCount|| 0,
       });
     }
 
@@ -352,8 +358,7 @@ const getAllCustomerOrderStats = async (req, res) => {
         Phone: customer?.phone || "",
         SocialHandle: "",
         Custoemrfrom: "Shopify",
-        emailMarketingConsent:
-          customer?.emailMarketingConsent?.marketingState || "UNSUBSCRIBED",
+        emailMarketingConsent:   customer?.emailMarketingConsent?.marketingState || "UNSUBSCRIBED",
         TotalSpent: parseFloat(customer?.amountspend || "0"), //here an ohter amounspend is comming which is amountSpent so if any ting with with amount check here first
         TotalOrders: customer?.numberOfOrders || 0,
       });

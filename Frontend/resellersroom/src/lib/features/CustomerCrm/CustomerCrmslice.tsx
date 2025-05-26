@@ -12,6 +12,7 @@ interface CustomerState {
 const initialState: CustomerState = {
   Customers: [],
   Selected_customer:{
+  id:'',
   Name:'',
   Email:'',
   Phone:'',

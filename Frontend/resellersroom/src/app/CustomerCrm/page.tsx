@@ -7,8 +7,7 @@ import EditPopup from '../Components/Customer/Editpopup'
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus} from "../../lib/features/CustomerCrm/CustomerCrmslice"
-
-
+import NewCust from '../Components/Customer/NewCust'
 type Props = {}
   type hprops={
     search:string,
@@ -24,7 +23,7 @@ type Props = {}
                 <div className="flex items-center gap-2.5">
                
                         <div className="w-[40px] h-[40px]">
-                            <img src="/images/supplier.png" className=" w-full h-full" />
+                            <img src="/images/Crm.png" className=" w-full h-full" />
                         </div>
                        <h1 className=" text-3xl font-semibold text-[#888888] dark:text-[#888888]">Customer CRM</h1>
                              
@@ -45,171 +44,7 @@ type Props = {}
     )
   }
 
-  const customers = [
-  {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-   {
-    name: "John Doe",
-    number: "1234567890",
-    email: "john@example.com",
-    instagram: "@john_doe",
-    totalSpend: "$500",
-    totalOrders: 10,
-    tier: "Gold",
-    charlesOptIn: true,
-  },
-  {
-    name: "Jane Smith",
-    number: "9876543210",
-    email: "jane@example.com",
-    instagram: "@jane_smith",
-    totalSpend: "$250",
-    totalOrders: 5,
-    tier: "Silver",
-    charlesOptIn: false,
-  },
-];
-
-    function useIsSmallScreen() {
+     function useIsSmallScreen() {
         const [isSmallScreen, setIsSmallScreen] = useState(false);
     
         useEffect(() => {
@@ -285,6 +120,19 @@ const page = (props: Props) => {
         />}
 
         <EditPopup />
+        <NewCust />
+                {/*ADD new Supplier */}
+        <div className="w-full h-[8vh] mt-[2vh] bg-white flex justify-items-start items-end">
+            <button
+            className="lg:w-[25%]  h-full ml-5 bg-[#454545] text-white font-bold rounded-2xl cursor-pointer hover:border-black"
+            onClick={()=>{
+          dispatch(  Toogle_Newcus())
+            }}
+            >
+              Add New Customer
+            </button>
+        </div>
+ 
         
           {/*Fillters */}
 
@@ -336,7 +184,7 @@ const page = (props: Props) => {
                                 Klaviyo optin
                               </div>
                               <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center ">
-                              {Klaviyop}   %ha 
+                              {Klaviyop}   %
                               </div>
                     </div>                       
                   
@@ -345,7 +193,7 @@ const page = (props: Props) => {
           </div>
 
           {/**customer tabel */}
-          <div className="w-full h-[70vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
+          <div className="w-full h-[62vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
