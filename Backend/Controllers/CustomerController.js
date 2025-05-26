@@ -509,8 +509,9 @@ async function draftorder(customerid, product, tags, shiping) {
   const response = await draftOrder.save({
     update: true,
   });
-
-  // console.log("Draft Order Created:", response);
+   
+  
+   return draftOrder.id
 }
 
 //to get customers

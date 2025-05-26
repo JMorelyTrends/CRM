@@ -33,6 +33,7 @@ export type Suggest = {
 };
 
 export type additem={
+
   Name:string,
   createdAt:string,
   itempics:[string],
@@ -94,6 +95,7 @@ export type Task = {
   items?: additem[];
   email?: string;
   phone?: string;
+  shopifyorderid?:string,
 
   // New fields from OrderSchema (all optional)
   Orderrecived?: string;

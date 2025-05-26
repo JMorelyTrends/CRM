@@ -22,7 +22,6 @@ export function CompleteOrderPopup({
   task: Task;
   fetchallorders: () => void;
 }) {
-
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
   const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
@@ -50,7 +49,7 @@ export function CompleteOrderPopup({
     const getsuppliers=async()=>{
      const sup=await axios.get(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
      console.log(sup.data.supps)
-     setavailsuppliers(sup.data.supps)
+      setavailsuppliers(sup.data.supps)
     }
     getsuppliers();
 
@@ -210,14 +209,16 @@ export function CompleteOrderPopup({
     "bg-teal-400",
     "bg-indigo-400",
   ];
+const Orderreview =()=>{
 
-  const Submit=()=>{
+}
+  const Submit=async()=>{
    
 
     if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
      
-      axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
         {
          _id:task._id,
@@ -377,9 +378,11 @@ export function CompleteOrderPopup({
              </div>
              
              {/* Submit Button */}
-             <div className="flex justify-end">
+            { task.confirm==false?<div className="flex justify-end">
                <Button onClick={() =>Submit()}>Submit</Button>
-             </div>
+             </div>:<div className="flex justify-end">
+               <Button onClick={() =>Orderreview()}>Order review</Button>
+             </div>}
       </DialogContent>
     </Dialog>
 

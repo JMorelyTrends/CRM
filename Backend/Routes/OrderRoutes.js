@@ -20,6 +20,7 @@ router.post("/reqwondata",orderController.reqwondata);
 router.post("/wonloastdata",orderController.wonloastdata);
 router.post("/otherdetails",orderController.otherdetails);
 
+router.post("/Wonorders",orderController.Wonorders);
 
 
 module.exports=router;

@@ -61,6 +61,10 @@ const OrderSchema = new mongoose.Schema(
     ref:"Label",
     default:null,
   },
+  shopifyorderid:{
+    type:String,
+    default:null,
+  },
   Description:{
     type:String,
     default:null,

@@ -334,8 +334,7 @@ DealOwner,
         name: "Image",
         value: order.items[0].itempics[0]  
       }
-    ]
-        
+    ]  
       }]
     }
 
@@ -356,16 +355,34 @@ DealOwner,
       address1: order.shippingaddress,
     }
 
-
-   //console.log(product)
-    draftorder(customerid,product,tags,shiping)
-    res.status(201).json({data:order})
+if(order.confirm==false)
+{
+     const d=await draftorder(customerid,product,tags,shiping)
+    const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
+  res.status(201).json({data:o})
+ 
+}
+  res.status(201);  
   }
   catch(err)
   {
    
        res.status(500).json({message:"error on updating Description"})
   }
+}
+
+exports.Wonorders=async(req,res)=>{
+ try{
+          const {userid}=req.body;
+          const d=await Order.find({userid:userid,stage:'Won',confirm:true}).populate("items").populate("stockxitem");
+          
+          res.status(201).json({won:d})
+ }
+ catch(err)
+ {
+   
+       res.status(500).json({message:"error on updating Description"})
+ }
 }
 
 
