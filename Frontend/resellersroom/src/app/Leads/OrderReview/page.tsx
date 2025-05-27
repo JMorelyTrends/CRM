@@ -14,12 +14,13 @@ const OrdersPage = () => {
   const [userid,setuserid]=useState<string|null>("")
   
   //functions
-const getwons=()=>{
-    
+const getwons=async()=>{
+  const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getshopifyorders`,{
+    userid:userid,
+  });
+  console.log(re)
 }
-
-    
-  
+ 
   //useeefects
 
   useEffect(() => {
@@ -30,7 +31,8 @@ const getwons=()=>{
     }
   }, []);
   useEffect(()=>{
-    getwons()
+    if(userid){
+    getwons()}
   },[userid])
   return (
     <div className='w-[80vw]'>

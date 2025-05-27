@@ -2,9 +2,11 @@ process.env.SHOPIFY_LOG = "error";
 const Customer = require("../Models/Custormer");
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
+const Orderreview=require("../Models/Orderreview")
 require("@shopify/shopify-api/adapters/node");
 const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
 const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
+const { response } = require("express");
 
 const customLogger = {
   log: (severity, message) => {
@@ -466,21 +468,50 @@ const update_Customer_Crm = async (req, res) => {
          Number:Cust.Number,
          socialhandel:Cust.socialhandel,
       }})
-
-      
-      
+ 
       return res.status(201).json({msg:"mongodb custoemr updated sucessfully"})
     }
      else {
       const re = await shopifycustomer(Cust);  
-    return res.status(201).json({msg:"shopify custoemr updated sucessfully"})
-;
+    return res.status(201).json({msg:"shopify custoemr updated sucessfully"});
     }
    
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+const getshopifyorders=async(req,res)=>{
+  const {userid}=req.body;
+   const client = new shopify.clients.Graphql({ session });
+   let query=buildOrderQuery();
+  const totalorders=[];
+  try{
+    const result=await client.query({data:query})
+        let orders = result.body.data.orders.edges.map(edge => edge.node);
+        totalorders.push(orders)
+      //  console.log(result.body.data.orders.edges)
+       // console.log(result.body.data.orders.edges[orders.length-1].node.metafields.edges[0].node);
+       let hasnextpage=result.body.data.orders.pageInfo.hasNextPage ;
+       let nextcursor=result.body.data.orders.pageInfo.endCursor;
+       while(hasnextpage)
+       {
+             query=buildOrderQuery(nextcursor);
+             
+            
+             result=await client.query({data:query})
+             
+
+       }
+       res.status(201)
+ }
+catch(err)
+{
+   console.log(err)
+    res.status(500).json({ message: "Server error", error: err.message });
+}
+}
+
 
 //FUNCTIONS
 
@@ -545,7 +576,8 @@ function buildCustomerQuery(shopifyIds) {
     `;
   });
   return `query { ${queries.join("\n")} }`;
-}
+};
+
 const fetchShopifyCustomers = async (ids) => {
   const client = new shopify.clients.Graphql({ session });
   const query = buildCustomerQuery(ids);
@@ -623,6 +655,49 @@ const shopifycustomer = async (Customer) => {
   }
 };
 
+function buildOrderQuery(afterCursor = null, createdAfter = '2025-05-23T00:00:00Z') {
+  return {
+     query: `
+      {
+        orders(first: 1, query: "created_at:>=${createdAfter}"${afterCursor ? `, after: "${afterCursor}"` : ''}) {
+          edges {
+            cursor
+            node {
+              id
+              name
+              createdAt
+              totalPrice
+              email
+              customer {
+                id
+                firstName
+                lastName
+                email
+                phone
+              }
+              metafields(first: 3) {
+                edges {
+                  node {
+                    namespace
+                    value
+                  }
+                }
+              }
+            }
+          }
+       pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+        }
+        
+      }
+    `
+  };
+}
+
 module.exports = {
   createCustomer,
   getAllCustomers,
@@ -636,4 +711,5 @@ module.exports = {
   draftorder,
   getAllCustomerOrderStats,
   update_Customer_Crm,
+  getshopifyorders
 };

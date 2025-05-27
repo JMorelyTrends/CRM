@@ -9,7 +9,8 @@ const {
     getCustomers_from_shopify_mongo,
     Updatecusnewreq,
     getAllCustomerOrderStats,
-    update_Customer_Crm
+    update_Customer_Crm,
+     getshopifyorders
 
 } = require("../Controllers/CustomerController");
 
@@ -23,7 +24,7 @@ router.post("/getCustomersbyboth",getCustomers_from_shopify_mongo)
 router.post("/Updatecusnewreq",Updatecusnewreq)
 router.post("/getAllCustomerOrderStats", getAllCustomerOrderStats);          // Get all customers
 router.post("/update_Customer_Crm",update_Customer_Crm)
-
+router.post("/getshopifyorders", getshopifyorders);
 module.exports = router;
 
 
