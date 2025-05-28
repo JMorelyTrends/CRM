@@ -10,6 +10,11 @@ import { useIsSmallScreen } from "../../Components/Small comps/Issmall";
 import { useDispatch } from "react-redux";
 import { OrderRpr } from '../../Components/Small comps/Types';
 import { Slinedata } from '../../Components/Small comps/Types';
+import ReviewEdits from '@/app/Components/OrderReview/ReviewEdits';
+import { UseDispatch,useSelector } from 'react-redux';
+import { RootState } from '@/lib/Resellerstore';
+import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderReviewSlice';
+
 const OrdersPage = () => {
     const dispatch=useDispatch()
   const [search, setSearch] = useState('');
@@ -33,12 +38,17 @@ const getwons=async()=>{
       setuserid(id);
     }
   }, []);
+
+
   useEffect(()=>{
     if(userid){
     getwons()}
   },[userid])
+
+
   return (
     <div className='w-[80vw]'>
+      <ReviewEdits/>
       {/* Header */}
       <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
@@ -122,10 +132,10 @@ const getwons=async()=>{
     <td className="px-4 py-2">${order.Revenue?.toFixed(2)}</td>
     <td className="px-4 py-2">${order.shipingfee?.toFixed(2)}</td>
     <td className="px-4 py-2">${order.processingfee?.toFixed(2)}</td>
-    <td className="px-4 py-2">$25</td>
-    <td className="px-4 py-2"></td>
-    <td className="px-4 py-2"></td>
-    <td className="px-4 py-2"></td>
+    <td className="px-4 py-2">${order.profit||0}</td>
+    <td className="px-4 py-2">${order.Traffic_Source||""}</td>
+    <td className="px-4 py-2">${order.Source_of_truth||""}</td>
+    <td className="px-4 py-2">${order.Supplier_Name||""}</td>
     <td className="px-4 py-2">
       <span className=   {`  ${order.approved?"bg-[#B7CBAF]":"bg-[#D79A58]"}   px-2 py-1 rounded-full`}>
         
@@ -134,7 +144,12 @@ const getwons=async()=>{
         }</span>
     </td>
     <td className="px-4 py-2">
-      <button className="bg-blue-500 text-white px-4 py-1 rounded-full">Edit</button>
+      <button
+      onClick={()=>{
+        dispatch(AddSelectedOrder(order))
+        dispatch(ToogleEdit())
+      }}
+      className="bg-blue-500 text-white px-4 py-1 rounded-full">Edit</button>
     </td>
   </tr>
 ))}

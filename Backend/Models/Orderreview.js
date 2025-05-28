@@ -28,6 +28,11 @@ const OrderreviewSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    profit:
+    {
+     type:Number,
+     default:0
+    },
     processingfee: {
       type: Number,
       default: 0,

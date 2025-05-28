@@ -150,6 +150,10 @@ export type OrderRpr={
     name?: string;
     value?: number;
   }[];
+  Supplier_Name?:string,
+  Source_of_truth?:string,
+  Traffic_Source?:string,
+  profit?:number,
   userid?: string;
   shopifycreatedat?: Date;
   createdAt?: Date; // from timestamps: true

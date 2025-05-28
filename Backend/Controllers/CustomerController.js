@@ -534,10 +534,10 @@ const getshopifyorders = async (req, res) => {
         ),
       }));
 
-      const metadata = order.metafields.edges.map((m) => ({
-        name: m.node.namespace,
-        value: parseFloat(m.node.value) || 0,
-      }));
+      // const metadata = order.metafields.edges.map((m) => ({
+      //   name: m.node.namespace,
+      //   value: parseFloat(m.node.value) || 0,
+      // }));
 
       const shipfee = parseFloat(order.shippingLine?.originalPriceSet?.shopMoney?.amount || 0);
   
@@ -551,7 +551,6 @@ const getshopifyorders = async (req, res) => {
         shipingfee: shipfee,
         linedata: lineItems,
         shopifycreatedat:order.createdAt,
-        metadata,
         userid,
       });
      return dbOrder.save();
@@ -762,14 +761,6 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
                      lastName
                      email
                      phone
-                   }
-                   metafields(first: 3) {
-                     edges {
-                       node {
-                         namespace
-                         value
-                       }
-                     }
                    }
                  }
           }
