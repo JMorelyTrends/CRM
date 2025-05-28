@@ -481,37 +481,91 @@ const update_Customer_Crm = async (req, res) => {
   }
 };
 
-const getshopifyorders=async(req,res)=>{
-  const {userid}=req.body;
-   const client = new shopify.clients.Graphql({ session });
-   let query=buildOrderQuery();
-  const totalorders=[];
-  try{
-    const result=await client.query({data:query})
-        let orders = result.body.data.orders.edges.map(edge => edge.node);
-        totalorders.push(orders)
-      //  console.log(result.body.data.orders.edges)
-       // console.log(result.body.data.orders.edges[orders.length-1].node.metafields.edges[0].node);
-       let hasnextpage=result.body.data.orders.pageInfo.hasNextPage ;
-       let nextcursor=result.body.data.orders.pageInfo.endCursor;
-       while(hasnextpage)
-       {
-             query=buildOrderQuery(nextcursor);
-             
-            
-             result=await client.query({data:query})
-             
+const getshopifyorders = async (req, res) => {
+  const { userid } = req.body;
 
-       }
-       res.status(201)
- }
-catch(err)
-{
-   console.log(err)
-    res.status(500).json({ message: "Server error", error: err.message });
-}
-}
+  try {
+    // Get last createdAt from DB
+    const latestOrder = await Orderreview.findOne({ userid })
+      .sort({ shopifycreatedat: -1 })
+      .lean();
 
+    const createdAfter = latestOrder
+      ? new Date(latestOrder.createdAt).toISOString()
+      : '2025-05-22T00:00:00Z';
+      
+
+    const client = new shopify.clients.Graphql({ session });
+
+    let query = buildOrderQuery(null, createdAfter);
+    let totalorders = [];
+
+    let result = await client.query({ data: query });
+    let orders = result.body.data.orders.edges.map(edge => edge.node);
+    totalorders.push(orders);
+
+    let hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
+    let nextCursor = result.body.data.orders.pageInfo.endCursor;
+    let i = 0;
+
+    while (hasNextPage && i < 8) {
+      i++;
+      query = buildOrderQuery(nextCursor, shopifycreatedat);
+      result = await client.query({ data: query });
+
+      orders = result.body.data.orders.edges.map(edge => edge.node);
+      totalorders.push(orders);
+
+      hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
+      nextCursor = result.body.data.orders.pageInfo.endCursor;
+    }
+
+    const shopifyOrders = totalorders.flat();
+  
+    // Populate into DB
+    const savePromises = shopifyOrders.map(async (order) => {
+      const lineItems = order.lineItems.edges.map((item) => ({
+        title: item.node.title,
+        quantity: item.node.quantity.toString(),
+        costprice: parseFloat(
+          item.node.discountedUnitPriceSet?.shopMoney?.amount ||
+          item.node.originalUnitPriceSet?.shopMoney?.amount ||
+          0
+        ),
+      }));
+
+      const metadata = order.metafields.edges.map((m) => ({
+        name: m.node.namespace,
+        value: parseFloat(m.node.value) || 0,
+      }));
+
+      const shipfee = parseFloat(order.shippingLine?.originalPriceSet?.shopMoney?.amount || 0);
+  
+      const dbOrder = new Orderreview({
+        soid: order.id,
+        name: order.name,
+        firstName: order.customer?.firstName || '',
+        lastName: order.customer?.lastName || '',
+        phone: order.customer?.phone || '',
+        Revenue:order.totalPrice,
+        shipingfee: shipfee,
+        linedata: lineItems,
+        shopifycreatedat:order.createdAt,
+        metadata,
+        userid,
+      });
+     return dbOrder.save();
+    });
+
+    await Promise.all(savePromises);
+    const sendingorders=await Orderreview.find().sort({shopifycreatedat:-1});
+    
+    res.status(201).json({ data: sendingorders, count: shopifyOrders.length });
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
 
 //FUNCTIONS
 
@@ -519,6 +573,8 @@ const Get_mongo_byid = async (id) => {
   const d = await Customer.find({ _id: id });
   return d;
 };
+
+
 const get_shopify_byid = async (id) => {
   const d = await shopify.rest.Customer.search({ session, id: id });
   return d;
@@ -543,7 +599,7 @@ async function draftorder(customerid, product, tags, shiping) {
    
   
    return draftOrder.id
-}
+};
 
 //to get customers
 
@@ -655,11 +711,13 @@ const shopifycustomer = async (Customer) => {
   }
 };
 
-function buildOrderQuery(afterCursor = null, createdAfter = '2025-05-23T00:00:00Z') {
+function buildOrderQuery(afterCursor = null, createdAfter) {
   return {
-     query: `
+    query: `
       {
-        orders(first: 1, query: "created_at:>=${createdAfter}"${afterCursor ? `, after: "${afterCursor}"` : ''}) {
+        orders(first: 100, query: "created_at:>=${createdAfter}"${
+      afterCursor ? `, after: "${afterCursor}"` : ""
+    }) {
           edges {
             cursor
             node {
@@ -668,22 +726,52 @@ function buildOrderQuery(afterCursor = null, createdAfter = '2025-05-23T00:00:00
               createdAt
               totalPrice
               email
-              customer {
-                id
-                firstName
-                lastName
-                email
-                phone
-              }
-              metafields(first: 3) {
-                edges {
-                  node {
-                    namespace
-                    value
-                  }
-                }
-              }
-            }
+       lineItems(first: 10) {
+                       edges {
+                         node {
+                           title
+                           quantity
+                           originalUnitPriceSet {
+                             shopMoney {
+                               amount
+                               currencyCode
+                             }
+                           }
+                           discountedUnitPriceSet {
+                             shopMoney {
+                               amount
+                               currencyCode
+                             }
+                           }
+                         }
+                       }
+        }
+              
+         shippingLine {
+                      title
+                      originalPriceSet  {
+                        shopMoney {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                   customer {
+                     id
+                     firstName
+                     lastName
+                     email
+                     phone
+                   }
+                   metafields(first: 3) {
+                     edges {
+                       node {
+                         namespace
+                         value
+                       }
+                     }
+                   }
+                 }
           }
        pageInfo {
         hasNextPage
@@ -694,9 +782,9 @@ function buildOrderQuery(afterCursor = null, createdAfter = '2025-05-23T00:00:00
         }
         
       }
-    `
+    `,
   };
-}
+};
 
 module.exports = {
   createCustomer,

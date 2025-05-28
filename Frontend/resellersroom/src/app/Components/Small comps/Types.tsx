@@ -128,7 +128,34 @@ export type statetype={
   columnOrder:string[]
 }
 
+export type Slinedata= {
+    title?: string;
+    quantity?: string;
+    costprice?: number;
+  }
 
+export type OrderRpr={
+   _id?: string; // Mongoose will generate this automatically
+  soid?: string;
+  name?: string;
+  totalPrice?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  Revenue?: number;
+  shipingfee?: number;
+  processingfee?: number;
+  linedata?:Slinedata[];
+  metadata?: {
+    name?: string;
+    value?: number;
+  }[];
+  userid?: string;
+  shopifycreatedat?: Date;
+  createdAt?: Date; // from timestamps: true
+  updatedAt?: Date;
+  approved?:Boolean, // from timestamps: true
+}
 
 
 //suppliers types

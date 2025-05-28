@@ -8,17 +8,20 @@ import { statetype, Task } from "../../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../../Components/Leads_panel/CompleteOrderPopup"
 import { useIsSmallScreen } from "../../Components/Small comps/Issmall";
 import { useDispatch } from "react-redux";
+import { OrderRpr } from '../../Components/Small comps/Types';
+import { Slinedata } from '../../Components/Small comps/Types';
 const OrdersPage = () => {
     const dispatch=useDispatch()
   const [search, setSearch] = useState('');
   const [userid,setuserid]=useState<string|null>("")
-  
+  const [Orders,setOrders]=useState<OrderRpr[]|null>(null);
   //functions
 const getwons=async()=>{
   const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getshopifyorders`,{
     userid:userid,
   });
   console.log(re)
+  setOrders(re.data.data)
 }
  
   //useeefects
@@ -82,9 +85,8 @@ const getwons=async()=>{
               <th className="px-4 py-2">Date</th>
               <th className="px-4 py-2">Customer Name</th>
               <th className="px-4 py-2">Order Overview</th>
-              <th className="px-4 py-2">Payment Method</th>
-              <th className="px-4 py-2">Revenue</th>
               <th className="px-4 py-2">Cost</th>
+              <th className="px-4 py-2">Revenue</th>
               <th className="px-4 py-2">Shipping Fee</th>
               <th className="px-4 py-2">Processing Fees</th>
               <th className="px-4 py-2">Profit</th>
@@ -97,29 +99,47 @@ const getwons=async()=>{
           </thead>
           <tbody>
             {/* Dummy rows (replace with mapped data later) */}
-            <tr className="border-b border-black">
-              <td className="px-4 py-2">#0001</td>
-              <td className="px-4 py-2">2025-01-01</td>
-              <td className="px-4 py-2">John Doe</td>
-              <td className="px-4 py-2">Sneakers x1</td>
-              <td className="px-4 py-2">
-                <span className="bg-gray-200 px-2 py-1 rounded-full">Card</span>
-              </td>
-              <td className="px-4 py-2">$120</td>
-              <td className="px-4 py-2">$80</td>
-              <td className="px-4 py-2">$10</td>
-              <td className="px-4 py-2">$5</td>
-              <td className="px-4 py-2">$25</td>
-              <td className="px-4 py-2">Instagram</td>
-              <td className="px-4 py-2">Shopify</td>
-              <td className="px-4 py-2">Nike</td>
-              <td className="px-4 py-2">
-                <span className="bg-green-200 px-2 py-1 rounded-full">Approved</span>
-              </td>
-              <td className="px-4 py-2">
-                <button className="bg-blue-500 text-white px-4 py-1 rounded-full">Edit</button>
-              </td>
-            </tr>
+    {Orders && Orders.length > 0 && Orders.map((order: OrderRpr, index: number) => (
+  <tr key={index} className="border-b border-black align-top">
+    <td className="px-4 py-2">{order.name}</td>
+    <td className="px-4 py-2">{order.shopifycreatedat?.toString()?.split("T")[0]}</td>
+    <td className="px-4 py-2">{`${order.firstName} ${order.lastName}`}</td>
+
+    {/* Line Items Title */}
+    <td className="px-4 py-2">
+      {order.linedata?.map((item:Slinedata, i:number) => (
+        <div key={i} className="mb-1">{item.title} x{item.quantity}</div>
+      ))}
+    </td>
+
+    {/* Line Items Cost */}
+    <td className="px-4 py-2">
+      {order.linedata?.map((item:Slinedata, i:number) => (
+        <div key={i} className="mb-1">${item.costprice?.toFixed(2)}</div>
+      ))}
+    </td>
+
+    <td className="px-4 py-2">${order.Revenue?.toFixed(2)}</td>
+    <td className="px-4 py-2">${order.shipingfee?.toFixed(2)}</td>
+    <td className="px-4 py-2">${order.processingfee?.toFixed(2)}</td>
+    <td className="px-4 py-2">$25</td>
+    <td className="px-4 py-2"></td>
+    <td className="px-4 py-2"></td>
+    <td className="px-4 py-2"></td>
+    <td className="px-4 py-2">
+      <span className=   {`  ${order.approved?"bg-[#B7CBAF]":"bg-[#D79A58]"}   px-2 py-1 rounded-full`}>
+        
+        {
+        order.approved?"Approved":"Review"
+        }</span>
+    </td>
+    <td className="px-4 py-2">
+      <button className="bg-blue-500 text-white px-4 py-1 rounded-full">Edit</button>
+    </td>
+  </tr>
+))}
+
+        
           </tbody>
         </table>
       </div>
