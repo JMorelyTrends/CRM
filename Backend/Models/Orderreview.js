@@ -4,9 +4,11 @@ const OrderreviewSchema = new mongoose.Schema(
   {
     soid: {
       type: String,
+      unique:true,
     },
     name: {
       type: String,
+      unique:true,
     },
     totalPrice: {
       type: String,

@@ -21,7 +21,7 @@ router.post("/wonloastdata",orderController.wonloastdata);
 router.post("/otherdetails",orderController.otherdetails);
 
 router.post("/Wonorders",orderController.Wonorders);
-
+router.post("/getordersfortabel",orderController.getordersfortabel)
 
 module.exports=router;
 

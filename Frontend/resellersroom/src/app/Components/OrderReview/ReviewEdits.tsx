@@ -10,7 +10,9 @@ import { RootState } from '@/lib/Resellerstore';
 import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderReviewSlice';
 import { Slinedata,OrderRpr } from "../Small comps/Types";
 import axios from "axios";
-export default function ReviewEdits() {
+
+
+export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetStateAction<void>>}) {
     const dispatch=useDispatch()
     const open=useSelector((state:RootState)=>state.Rew.isOpen)
     const order=useSelector((state:RootState)=>state.Rew.selectedOrder)
@@ -19,17 +21,25 @@ export default function ReviewEdits() {
   const [processingfee,setprocessingfee]=useState<string>("");
   const [Source,setSource]=useState<string>("")
   const [Supplier,setSupplier]=useState<string>("");
-  const [Traffic,setTraffic]=useState<string>("")
+  const [Traffic,setTraffic]=useState<string>("shopify")
   const close=()=>{
+       setshippingfee("0") 
+   setprocessingfee("0")
+  setDummyLinedata(null)
+  setTraffic("shopify");
+  setSource("");
+  setSupplier("");
+  getwons()
     dispatch(ToogleEdit())
   }
   let f=false;
   useEffect(()=>{
-  console.log(order)
+ 
   if(order && order.linedata && !f){
-    
+   setshippingfee(order.shipingfee?order.shipingfee?.toString():"0") 
+   setprocessingfee(order.processingfee?order.processingfee.toString():"0")
   setDummyLinedata(order?.linedata)
-  setTraffic(order.Traffic_Source?order?.Traffic_Source:"");
+  setTraffic("shopify");
   setSource(order?.Source_of_truth?order?.Source_of_truth:"");
   setSupplier(order?.Supplier_Name?order.Supplier_Name:"");
   f=true
@@ -66,11 +76,17 @@ export default function ReviewEdits() {
   };
 
   console.log("🛠 Final payload to send:", payload);
-
- const t=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/UpdateReview`,{
+try
+ {const t=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/UpdateReview`,{
     payload
-  })
-  console.log(t.data)
+})
+close()
+}
+
+  catch(err)
+  {
+    console.log(err,"error updating order")
+  }
   }
 
   return (
@@ -102,15 +118,29 @@ export default function ReviewEdits() {
                   }} />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <Label>Traffic Source</Label>
-            <Input value={Traffic} onChange={(e)=>{setTraffic(e.target.value)}} />
-          </div>
+     <div className="flex flex-col gap-1">
+  
+ <Label>Source of Truth</Label>
+  <select
+    value={Source}
+    onChange={(e) => setSource(e.target.value)}
+    className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">Select Traffic Source</option>
+    <option value="Whatsapp broadcast">Whatsapp broadcast</option>
+    <option value="B2B client">B2B client</option>
+    <option value="IG organic">IG organic</option>
+    <option value="Meta paid">Meta paid</option>
+    <option value="Google paid">Google paid</option>
+    <option value="Organic search">Organic search</option>
+    <option value="Word of mouth referral">Word of mouth referral</option>
+    <option value="Returning client">Returning client</option>
+    <option value="Email marketing">Email marketing</option>
+    <option value="Website">Website</option>
+  </select>
+</div>
 
-          <div className="flex flex-col gap-1">
-            <Label>Source of Truth</Label>
-            <Input value={Source} onChange={(e)=>{setSource(e.target.value)}} />
-          </div>
+        
 
           <div className="flex flex-col gap-1">
             <Label>Supplier Name</Label>

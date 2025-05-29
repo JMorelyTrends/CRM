@@ -50,6 +50,7 @@ const Sideoptions = () => {
         <Slide img="/images/Lead.png" name="Lead Management" number={"54"} link="/Leads" />
         <Slide img="/images/supplier.png" name="Supplier CRM" number={null} link="/SupplierCRM" />
         <Slide img="/images/Crm.png" name="Customer CRM" number={null} link="/CustomerCrm" />
+        <Slide img="/images/Crm.png" name="Order Review CRM" number={null} link="/OrderReview" />
     </div>
   )
 }

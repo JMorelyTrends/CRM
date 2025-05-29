@@ -1,5 +1,5 @@
 // components/DealDialog.tsx
-'use client';
+"use client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Check, X } from "lucide-react";
@@ -11,6 +11,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import axios from "axios";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 export function CompleteOrderPopup({
   open,
   setOpen,
@@ -34,7 +35,7 @@ export function CompleteOrderPopup({
   const [paymentMethod, setPaymentMethod] = useState<string>(task.paymentmethod?task.paymentmethod:'');
  
 //usestates for feautres
-  const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task.labels);
+  const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task?.labels ?? []);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
   const [createLabelOpen, setCreateLabelOpen] = useState(false);
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
@@ -45,6 +46,7 @@ export function CompleteOrderPopup({
   let item:any=task&& task.stockxitem.length>0?task.stockxitem[0]: task.items&&task.items?.length>0?task.items[0]:{};//change this 
 
 
+const router=useRouter()
   useEffect(()=>{
     const getsuppliers=async()=>{
      const sup=await axios.get(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
@@ -67,7 +69,7 @@ export function CompleteOrderPopup({
       setDealOwner(task.DealOwner?task.DealOwner:'');
       setSourceOfTruth(task.Sourceofthruth?task.Sourceofthruth:'');
       setPaymentMethod(task.paymentmethod?task.paymentmethod:'');
-      setSelectedLabels(task.labels);
+      setSelectedLabels(task.labels??[]);
  
 
 
@@ -120,8 +122,9 @@ export function CompleteOrderPopup({
 
   const Labeltoggle = async (label: labeltype) => {
     if (!task?._id) return;
-  
-     console.log(label)
+   
+    console.log(selectedLabels)
+    
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
       ? selectedLabels.filter((l) => l._id !== label._id)
@@ -211,6 +214,7 @@ export function CompleteOrderPopup({
   ];
 const Orderreview =()=>{
 
+       router.push('/Leads/OrderReview')
 }
   const Submit=async()=>{
    
@@ -236,7 +240,7 @@ const Orderreview =()=>{
       );
       fetchallorders()
        setOpen(false)
-
+       router.push('/Leads/OrderReview')
     }
     else{
       toast("Fill all fields")
@@ -281,7 +285,7 @@ const Orderreview =()=>{
         value={size} onChange={(e) => setSize(e.target.value)} />
     </div>
     <div>
-      <label className="block text-sm font-medium">Cost Price</label>
+      <label className="block text-sm font-medium">Sell Price</label>
       <input type="string" className="w-full border rounded px-3 py-2 mt-1"
         value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
     </div>

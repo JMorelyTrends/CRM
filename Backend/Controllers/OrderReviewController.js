@@ -2,14 +2,14 @@ const Orderreview=require("../Models/Orderreview")
 
 
 const updateorders=async(req,res)=>{
-
+    
     const{payload}=req.body;
-    const shippingfee=parseFloat(payload.shipingfee)
-    const processingfee=parseFloat(payload.processingfee)
+    try{
+    const shippingfee=parseFloat(payload.shipingfee)||0
+    const processingfee=parseFloat(payload.processingfee)||0
 
     const profit=payload.Revenue- payload.AcutalCog-shippingfee-processingfee;
  
-    try{
 const order=await     Orderreview.findOneAndUpdate({_id:payload._id},{$set:{
       shipingfee:shippingfee,
       processingfee:processingfee,
@@ -24,6 +24,7 @@ const order=await     Orderreview.findOneAndUpdate({_id:payload._id},{$set:{
     }
     catch(err)
     {
+        console.log(err)
         res.status(500).json({message:"error updating Review Orders"})
     }
 }

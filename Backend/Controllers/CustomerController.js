@@ -510,7 +510,7 @@ const getshopifyorders = async (req, res) => {
 
     while (hasNextPage && i < 8) {
       i++;
-      query = buildOrderQuery(nextCursor, shopifycreatedat);
+      query = buildOrderQuery(nextCursor, createdAfter);
       result = await client.query({ data: query });
 
       orders = result.body.data.orders.edges.map(edge => edge.node);
@@ -524,6 +524,11 @@ const getshopifyorders = async (req, res) => {
   
     // Populate into DB
     const savePromises = shopifyOrders.map(async (order) => {
+      const check=await Orderreview.find({name:order.name});
+      if(check.length>0)
+      {
+        return ;
+      }
       const lineItems = order.lineItems.edges.map((item) => ({
         title: item.node.title,
         quantity: item.node.quantity.toString(),
@@ -556,11 +561,12 @@ const getshopifyorders = async (req, res) => {
      return dbOrder.save();
     });
 
-    await Promise.all(savePromises);
+    await Promise.allSettled(savePromises);
     const sendingorders=await Orderreview.find().sort({shopifycreatedat:-1});
     
     res.status(201).json({ data: sendingorders, count: shopifyOrders.length });
-  } catch (err) {
+  } 
+  catch (err) {
     console.log(err)
     res.status(500).json({ message: 'Server error', error: err.message });
   }

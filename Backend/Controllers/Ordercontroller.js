@@ -750,6 +750,87 @@ exports.otherdetails=async(req,res)=>{
 }
 
 
+//for the order overview
+exports.getordersfortabel=async(req,res)=>{
+
+try {
+  const { internval, startdate, enddate, userid } = req.body;
+  const userIdObj = new mongoose.Types.ObjectId(userid);
+
+  // Determine time range
+  let start = startdate;
+  let end = enddate;
+  const detectedInterval = (!internval && startdate && enddate)
+    ? giveinterval(null, startdate, enddate)
+    : internval;
+
+  if (detectedInterval) {
+    const range = calculateDateRange(detectedInterval, startdate, enddate);
+    start = range.start;
+    end = range.end;
+  }
+
+  // Get all orders with populated fields
+  const orders = await Order.find({
+    userid: userIdObj,
+    createdAt: { $gte: new Date(start), $lte: new Date(end) }
+  })
+    .populate("items stockxitem labels Supplierid cusid")
+    .sort({ createdAt: -1 });
+
+  // Enrich orders with phone and email
+  const enrichedOrders = await Promise.all(
+    orders.map(async (data) => {
+      let phone = null;
+      let email = null;
+
+      if (!data.cusid) {
+        const h = await get_shopify_byid(data.shopifycustomerid);
+        const customer = h?.customers?.[0] || {};
+        phone = customer.phone || null;
+        email = customer.email || null;
+      } else {
+        const h = await Get_mongo_byid(data.cusid);
+        phone = h?.[0]?.Number || null;
+        email = h?.[0]?.email || null;
+      }
+
+      const plainData = data.toObject();
+      plainData.phone = phone;
+      plainData.email = email;
+      return plainData;
+    })
+  );
+
+  // Calculate total profit and unfulfilled count from already fetched orders
+  let totalProfit = 0;
+  let unfulfilledCount = 0;
+
+  for (const order of orders) {
+    if (order.confirm) {
+      const price = order.price || 0;
+      const processing = order.processingfee || 0;
+      const shipping = order.Shippingfee || 0;
+      totalProfit += price - processing - shipping;
+    } else {
+      unfulfilledCount++;
+    }
+  }
+
+  res.status(201).json({
+    data: enrichedOrders,
+    profit: totalProfit.toFixed(2),
+    unfulfilled: unfulfilledCount
+  });
+
+} catch (err) {
+  console.error("Error fetching orders:", err);
+  res.status(500).json({ message: "Error fetching orders" });
+}
+
+}
+
+
 function getLast24HourLabels(step = 3) {
   const now = new Date();
   const labels = [];
@@ -911,7 +992,6 @@ function buildMatchQuery(stage, userid, start, end) {
   return query;
 }
 
-
 async function countOrdersByStage(stage, userid = null, start = null, end = null) {
   const match = buildMatchQuery(stage, userid, start, end);
 
@@ -933,7 +1013,6 @@ async function getWonRevenue(userid = null, start = null, end = null) {
 
   return result[0]?.total || 0;
 }
-
 
 async function getWonProfit(userid = null, start = null, end = null) {
   const match = buildMatchQuery("Won", userid, start, end);

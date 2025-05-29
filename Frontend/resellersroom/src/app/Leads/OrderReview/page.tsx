@@ -14,19 +14,58 @@ import ReviewEdits from '@/app/Components/OrderReview/ReviewEdits';
 import { UseDispatch,useSelector } from 'react-redux';
 import { RootState } from '@/lib/Resellerstore';
 import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderReviewSlice';
-
+import CustomDateRangePicker from "../.././Components/Dashboard/CustomDateRangePicker";
+import { DayPicker, DateRange } from "react-day-picker";
+import { Dashstats } from "../.././Components/Small comps/Types";
 const OrdersPage = () => {
     const dispatch=useDispatch()
   const [search, setSearch] = useState('');
   const [userid,setuserid]=useState<string|null>("")
   const [Orders,setOrders]=useState<OrderRpr[]|null>(null);
+  const [active, setactive] = useState<string>("year");
+  const [range, setRange] = React.useState<DateRange | undefined>();
+ const [internval, setinternval] = useState<string>("");
+ const [Unfulfilled,setUnfulfilled]=useState<number>(0)
+ const [tprofit,settprofit]=useState<number>(0)
   //functions
 const getwons=async()=>{
-  const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getshopifyorders`,{
-    userid:userid,
+
+  let response;
+
+    if (range && range.from === range.to) {
+  const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getordersfortabel`,{
+    internval: internval ? internval : "today",
+        userid: userid,
   });
+  
   console.log(re)
   setOrders(re.data.data)
+  setUnfulfilled(re.data.unfullfiled)
+  settprofit(re.data.profit)
+}
+else if (range){
+  const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getordersfortabel`,{
+    startdate: range.from,
+        enddate: range.to,
+        userid: userid,
+  });
+  
+  console.log(re)
+  setOrders(re.data.data)
+  setUnfulfilled(re.data.unfullfiled)
+  settprofit(re.data.profit)
+}
+else{
+ const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getordersfortabel`,{
+    internval: internval ? internval : "year",
+        userid: userid,
+  });
+  
+  console.log(re)
+  setOrders(re.data.data)
+  setUnfulfilled(re.data.unfullfiled)
+  settprofit(re.data.profit)
+}
 }
  
   //useeefects
@@ -43,12 +82,12 @@ const getwons=async()=>{
   useEffect(()=>{
     if(userid){
     getwons()}
-  },[userid])
+  },[userid,internval,range])
 
 
   return (
     <div className='w-[80vw]'>
-      <ReviewEdits/>
+      <ReviewEdits getwons={getwons}/>
       {/* Header */}
       <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
@@ -65,7 +104,50 @@ const getwons=async()=>{
           className="w-full lg:w-54 px-4 py-2 border-2 text-xs p-4 text-black border-gray-300 rounded-lg"
         />
       </div>
+    <div className="w-full h-[10vh]  flex items-center  overflow-hidden text-black gap-3 px-3 font-semibold">
+          <CustomDateRangePicker
+           active={active}
+           setactive={setactive}
+            range={range}
+            setRange={setRange}
+          />
+          <button
+            onClick={() => {
+              setactive("year");
+              setinternval("year");
+            }}
+            className={`h-[80%] w-[10%] cursor-pointer rounded-2xl shadow-md border border-black ${
+              active === "year" ? "bg-black text-white" : ""
+            }`}
+          >
+            This Year
+          </button>
 
+          <button
+            onClick={() => {
+              setactive("week");
+              setinternval("week");
+            }}
+            className={`h-[80%] w-[10%] cursor-pointer rounded-2xl shadow-md border border-black ${
+              active === "week" ? "bg-black text-white" : ""
+            }`}
+          >
+            This Month
+          </button>
+
+          <button
+            onClick={() => {
+              setactive("day");
+              setinternval("day");
+            }}
+            className={`h-[80%] w-[10%] cursor-pointer rounded-2xl shadow-md border border-black ${
+              active === "day" ? "bg-black text-white" : ""
+            }`}
+          >
+            This Day
+          </button>
+          {/* <button onClick={()=>setinternval("year")} className="h-[80%] w-[10%] rounded-2xl shadow-md border border-black">Last Quarter</button> */}
+        </div>
       {/* Filters and Summary */}
       <div className="w-full h-[12vh] mt-[3vh] gap-2 flex items-start text-black">
         <div className="w-[35%] h-full flex flex-col justify-around items-start ml-4">
@@ -84,78 +166,142 @@ const getwons=async()=>{
             </div>
           </div>
         </div>
+ <div className="w-[65%] h-full flex items-center justify-end gap-4 pr-6">
+    {/* Capsule 1 */}
+    <div className="w-[130px] h-[80%] text-center bg-gray-200 rounded-full flex flex-col justify-between p-2 shadow-sm">
+      <div className="text-xs font-semibold text-gray-600">Total Orders</div>
+      <div className="text-lg font-bold text-black">{Orders?.length||0}</div>
+    </div>
+
+    {/* Capsule 2 */}
+    <div className="w-[130px] h-[80%] bg-gray-200 text-center rounded-full flex flex-col justify-between p-2 shadow-sm">
+      <div className="text-xs font-semibold text-gray-600">Unfulfilled Orders</div>
+      <div className="text-lg font-bold text-black">{Unfulfilled||0}</div>
+    </div>
+
+    {/* Capsule 3 */}
+    <div className="w-[130px] h-[80%] bg-gray-200 rounded-full text-center flex flex-col justify-between p-2 shadow-sm">
+      <div className="text-xs font-semibold text-gray-600">Total Profit</div>
+      <div className="text-lg font-bold text-black">${tprofit||0}</div>
+    </div>
+  </div>
       </div>
 
+
+       
+
       {/* Orders Table */}
-      <div className="w-full h-[71vh] overflow-auto mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
-        <table className="w-[1500px] table-auto text-sm text-left text-black border-collapse">
+      <div className="w-full h-[61vh] overflow-auto mt-6 overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
+        <table className="w-[1500px] table-auto text-sm text-left text-black border-collapse text-nowrap ">
           <thead className="bg-white sticky top-0 z-10">
             <tr>
               <th className="px-4 py-2">Order Id</th>
               <th className="px-4 py-2">Date</th>
               <th className="px-4 py-2">Customer Name</th>
+              <th className="px-4 py-2">Number</th>
               <th className="px-4 py-2">Order Overview</th>
               <th className="px-4 py-2">Cost</th>
               <th className="px-4 py-2">Revenue</th>
-              <th className="px-4 py-2">Shipping Fee</th>
-              <th className="px-4 py-2">Processing Fees</th>
+             
               <th className="px-4 py-2">Profit</th>
               <th className="px-4 py-2">Traffic Source</th>
               <th className="px-4 py-2">Source of Truth</th>
               <th className="px-4 py-2">Supplier Name</th>
               <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Edit</th>
+              {/* <th className="px-4 py-2">Edit</th> */}
             </tr>
           </thead>
-          <tbody>
-            {/* Dummy rows (replace with mapped data later) */}
-    {Orders && Orders.length > 0 && Orders.map((order: OrderRpr, index: number) => (
-  <tr key={index} className="border-b border-black align-top">
-    <td className="px-4 py-2">{order.name}</td>
-    <td className="px-4 py-2">{order.shopifycreatedat?.toString()?.split("T")[0]}</td>
-    <td className="px-4 py-2">{`${order.firstName} ${order.lastName}`}</td>
+ <tbody>
+  {Orders && Orders.length > 0 && Orders.map((order: any, index: number) => (
+    <tr key={index} className="border-b border-black align-top ">
+      <td className="px-4 py-2 truncate max-w-[60px]">{order._id || "N/A"}</td>
+      <td className="px-4 py-2 ">{order.createdAt?.split("T")[0] || "N/A"}</td>
 
-    {/* Line Items Title */}
-    <td className="px-4 py-2">
-      {order.linedata?.map((item:Slinedata, i:number) => (
-        <div key={i} className="mb-1">{item.title} x{item.quantity}</div>
-      ))}
-    </td>
+      {/* Customer Name */}
+      <td className="px-4 py-2 truncate ">
+        {order.Name || "Unlinked"}
+      </td>
+     
+      <td  className="px-4 py-2 ">
+       {order?.phone||"n/A"}
+      </td>
 
-    {/* Line Items Cost */}
-    <td className="px-4 py-2">
-      {order.linedata?.map((item:Slinedata, i:number) => (
-        <div key={i} className="mb-1">${item.costprice?.toFixed(2)}</div>
-      ))}
-    </td>
+      {/* Order Overview from items or stockxitem */}
+      <td className="px-4 py-2 truncate max-w-[100px]">
+        {(order.items?.length > 0
+          ? order.items.map((item: any, i: number) => (
+              <div key={i} className="mb-1">{item.Name || "Unnamed"} </div>
+            ))
+          : order.stockxitem?.length > 0
+          ? order.stockxitem.map((item: any, i: number) => (
+              <div key={i} className="mb-1">{item.name || "Unnamed"} </div>
+            ))
+          : <div>No Items</div>
+        )}
+      </td>
 
-    <td className="px-4 py-2">${order.Revenue?.toFixed(2)}</td>
-    <td className="px-4 py-2">${order.shipingfee?.toFixed(2)}</td>
-    <td className="px-4 py-2">${order.processingfee?.toFixed(2)}</td>
-    <td className="px-4 py-2">${order.profit||0}</td>
-    <td className="px-4 py-2">${order.Traffic_Source||""}</td>
-    <td className="px-4 py-2">${order.Source_of_truth||""}</td>
-    <td className="px-4 py-2">${order.Supplier_Name||""}</td>
-    <td className="px-4 py-2">
-      <span className=   {`  ${order.approved?"bg-[#B7CBAF]":"bg-[#D79A58]"}   px-2 py-1 rounded-full`}>
-        
-        {
-        order.approved?"Approved":"Review"
-        }</span>
-    </td>
-    <td className="px-4 py-2">
-      <button
-      onClick={()=>{
-        dispatch(AddSelectedOrder(order))
-        dispatch(ToogleEdit())
-      }}
-      className="bg-blue-500 text-white px-4 py-1 rounded-full">Edit</button>
-    </td>
-  </tr>
-))}
+      {/* Cost (price) */}
+      <td className="px-4 py-2 truncate ">${order.price?.toFixed(2) || "0.00"}</td>
 
-        
-          </tbody>
+      {/* Revenue (assuming calculated from price or not present) */}
+      <td className="px-4 py-2">${order.price?.toFixed(2) || "0.00"}</td>
+
+     
+
+      {/* Profit (price - fees as an example calculation) */}
+      <td className="px-4 py-2">
+        ${(
+          order.price -
+          parseFloat(order.Shippingfee || "0") -
+          parseFloat(order.processingfee || "0")
+        ).toFixed(2)}
+      </td>
+
+     <td className="px-4 py-2">
+  <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
+    { "Shopify"}
+  </span>
+</td>
+<td className="px-4 py-2">
+  <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
+    {order.Sourceofthruth || "N/A"}
+  </span>
+</td>
+<td className="px-4 py-2">
+  <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
+    {order?.Supplierid?.Name || "N/A"}
+  </span>
+</td>
+
+      {/* Status */}
+      <td className="px-4 py-2">
+        <span className={
+          order.confirm
+            ? "bg-[#B7CBAF] px-2 py-1 rounded-full"
+            : "bg-[#D79A58] px-2 py-1 rounded-full"
+        }>
+          {parseFloat(order.Shippingfee || "0") > 0 && parseFloat(order.processingfee || "0") > 0
+            ? "Approved"
+            : "in progress"}
+        </span>
+      </td>
+
+      {/* Edit Button
+      <td className="px-4 py-2">
+        <button
+          onClick={() => {
+            dispatch(AddSelectedOrder(order));
+            dispatch(ToogleEdit());
+          }}
+          className="bg-blue-500 text-white px-4 py-1 rounded-full"
+        >
+          Edit
+        </button>
+      </td> */}
+    </tr>
+  ))}
+</tbody>
+
         </table>
       </div>
     </div>
