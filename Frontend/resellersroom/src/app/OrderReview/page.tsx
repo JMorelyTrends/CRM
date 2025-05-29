@@ -46,7 +46,19 @@ const getwons=async()=>{
     getwons()}
   },[userid])
 
+const filteredOrders = Orders?.filter((order: OrderRpr) => {
+  const searchTerm = search.toLowerCase();
 
+  return (
+  order.name?.toLowerCase().includes(searchTerm) ||
+  `${order.firstName} ${order.lastName}`.toLowerCase().includes(searchTerm) ||
+  order.Supplier_Name?.toLowerCase().includes(searchTerm) ||
+  order.Source_of_truth?.toLowerCase().includes(searchTerm) ||
+  order.linedata?.some((item: Slinedata) =>
+    item.title?.toLowerCase().includes(searchTerm)
+  )
+  );
+});
   return (
     <div className='w-[80vw]'>
       <ReviewEdits getwons={getwons}/>
@@ -114,7 +126,7 @@ const getwons=async()=>{
           </thead>
           <tbody>
             {/* Dummy rows (replace with mapped data later) */}
-    {Orders && Orders.length > 0 && Orders.map((order: OrderRpr, index: number) => (
+    {filteredOrders && filteredOrders.length > 0 && filteredOrders.map((order: OrderRpr, index: number) => (
   <tr key={index} className="border-b border-black align-top">
     <td className="px-4 py-2">{order.name}</td>
     <td className="px-4 py-2">{order.shopifycreatedat?.toString()?.split("T")[0]}</td>
@@ -138,9 +150,9 @@ const getwons=async()=>{
     <td className="px-4 py-2">${order.shipingfee?.toFixed(2)}</td>
     <td className="px-4 py-2">${order.processingfee?.toFixed(2)}</td>
     <td className="px-4 py-2">${order.profit||0}</td>
-    <td className="px-4 py-2">${order.Traffic_Source||""}</td>
-    <td className="px-4 py-2">${order.Source_of_truth||""}</td>
-    <td className="px-4 py-2">${order.Supplier_Name||""}</td>
+    <td className="px-4 py-2">{order.Traffic_Source||""}</td>
+    <td className="px-4 py-2">{order.Source_of_truth||""}</td>
+    <td className="px-4 py-2">{order.Supplier_Name||""}</td>
     <td className="px-4 py-2">
       <span className=   {`  ${order.shipingfee!=0 && order.processingfee!=0?"bg-[#B7CBAF]":"bg-[#D79A58]"}   px-2 py-1 rounded-full`}>
         

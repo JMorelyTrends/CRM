@@ -16,6 +16,7 @@ export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetS
     const dispatch=useDispatch()
     const open=useSelector((state:RootState)=>state.Rew.isOpen)
     const order=useSelector((state:RootState)=>state.Rew.selectedOrder)
+    console.log(order)
   const [dummyLinedata, setDummyLinedata] = useState<Slinedata[]|null>(null);
   const [shipingfee,setshippingfee]=useState<string>("");
   const [processingfee,setprocessingfee]=useState<string>("");
@@ -42,6 +43,7 @@ export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetS
   setTraffic("shopify");
   setSource(order?.Source_of_truth?order?.Source_of_truth:"");
   setSupplier(order?.Supplier_Name?order.Supplier_Name:"");
+  
   f=true
 }
   },[order])
@@ -75,7 +77,7 @@ export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetS
     metadata,
   };
 
-  console.log("🛠 Final payload to send:", payload);
+  //console.log("🛠 Final payload to send:", payload);
 try
  {const t=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/UpdateReview`,{
     payload
@@ -126,7 +128,7 @@ close()
     onChange={(e) => setSource(e.target.value)}
     className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
   >
-    <option value="">Select Traffic Source</option>
+    <option value="">Select  Source</option>
     <option value="Whatsapp broadcast">Whatsapp broadcast</option>
     <option value="B2B client">B2B client</option>
     <option value="IG organic">IG organic</option>

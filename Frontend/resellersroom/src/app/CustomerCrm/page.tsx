@@ -141,7 +141,7 @@ const page = (props: Props) => {
                   <div className=" w-[15%]  h-full flex ml-13 flex-col justify-around items-start ">
                     <div className="flex w-full h-[40%]">
                     <div className="tex-3xl font-bold">All Customer</div>
-                    <div className="text-[10px] font-extralight flex items-end"><div className="">(250)</div></div>
+                    <div className="text-[10px] font-extralight flex items-end"><div className="">({noofcus})</div></div>
                    </div>
 
                    <div className="flex justify-start gap-8 w-full h-[60%]   ">

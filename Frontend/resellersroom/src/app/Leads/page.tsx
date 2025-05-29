@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -38,6 +38,7 @@ export default function Page({}: Props) {
   const [wonpopup,setwonpopup]=useState<boolean>(false)
   const [wontask,setwontask]=useState<Task|null>(null)
 
+const lockRef = useRef(false);
 
   
 
@@ -74,7 +75,7 @@ export default function Page({}: Props) {
       ).data;
       console.log(mongodata);
       setstate(mongodata);
-    //  getprices(mongodata); // pass fresh state to getprices
+      getprices(mongodata); // pass fresh state to getprices
     }
   };
 
@@ -83,70 +84,59 @@ export default function Page({}: Props) {
       fetchallorders();
     }
   }, [userid]);
-  function isOlderThanOneMonth(dateString?: string): boolean {
-    if (!dateString) return true; // treat undefined as "too old"
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-    return diffInDays > 30;
-  }
+
 
   const getprices = async (currentState: statetype) => {
-    if (currentState ) {
-      let pricesUpdated = false; // Flag to check if we updated any price
- 
-      const stateCopy = { ...currentState }; // optional: not mutating original state
-      const columnOrder = stateCopy.columnOrder;
-  
-      for (const ColumnId of columnOrder) {
-        const column = stateCopy.columns[ColumnId];
-        const tasks = column.taskIds.map((taskId) => stateCopy.tasks[taskId]);
-  
-        for (const task of tasks) {
-          if (
-            task?.stockxitem?.length > 0 &&
-            (task?.stockxitem[0]?.last_sale_price==0 ||
-              isOlderThanOneMonth(task?.stockxitem[0]?.last_sale_update_date )
-            
-            )
-          ) {
-        
-           try{ 
-            await axios.post(
-              `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
-              {
-                itemid: task.stockxitem[0]._id,
-                search: task.stockxitem[0].slug,
-              }
-            );
-            pricesUpdated = true;
-          
-          }
-            catch (error) {
-              console.error("Error fetching prices:", error);
-            }// Mark that we updated at least one price
-          }
-        }
-      }
-  
-      // Only fetch orders again if we actually updated prices
-      if (pricesUpdated) {
-      try{  const mongodata = (
+  if (!currentState || lockRef.current) return;
+
+  const stateCopy = { ...currentState };
+  const columnOrder = stateCopy.columnOrder;
+
+  for (const ColumnId of columnOrder) {
+    const column = stateCopy.columns[ColumnId];
+    const tasks = column.taskIds.map((taskId) => stateCopy.tasks[taskId]);
+
+    for (const task of tasks) {
+      const item = task?.stockxitem?.[0];
+      if (item && item.last_sale_price === 0 && !lockRef.current) {
+        lockRef.current = true; // 🔒 Lock
+
+        try {
           await axios.post(
-            `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`,
+            `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
             {
-              id: userid,
+              itemid: item._id,
+              search: item.slug,
             }
-          )
-        ).data;
-        console.log(mongodata);
-        setstate(mongodata);}
-        catch (error) {
-          console.error("Error fetching orders:", error);
+          );
+
+          const mongodata = (
+            await axios.post(
+              `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`,
+              {
+                id: userid,
+              }
+            )
+          ).data;
+
+          setstate(mongodata);
+
+          // 🕐 Wait then call getprices again with fresh state
+          setTimeout(() => {
+            lockRef.current = false; // 🔓 Unlock before next call
+            getprices(mongodata); // Call recursively with new state
+          }, 1000); // delay 1s
+
+        } catch (err) {
+          console.error("Error fetching price or orders:", err);
+          lockRef.current = false; // Always release lock
+          return;
         }
       }
     }
+  }
+
+  console.log("No more items needing price updates.");
   };
   const isSmallScreen = useIsSmallScreen();
 
@@ -363,7 +353,7 @@ function timeout(ms: number) {
     <DndContext onDragStart={DragStart} onDragEnd={DragEnd} sensors={sensors}>
        {/* Header with Leads label and search bar */}
      {/* Header with Leads label and search bar */}
-     {wonpopup && wontask &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} />}
+     {wonpopup && wontask &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} update={false} />}
    {!isSmallScreen&& 
    
    <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">

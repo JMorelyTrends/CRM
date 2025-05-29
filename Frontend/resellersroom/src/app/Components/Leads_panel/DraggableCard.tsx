@@ -90,7 +90,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag 
 
   return (
  <>  
-  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={task} />}
+  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={task} update={false} />}
   <div
       ref={setNodeRef}
       onPointerDown={handleClickDown}

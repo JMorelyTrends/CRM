@@ -118,6 +118,7 @@ if (data.ordersend != null)  tasks[counter].ordersend = data.ordersend;
 if (data.Supplierid != null)  tasks[counter].Supplierid = data.Supplierid;
 if (data.userid != null)  tasks[counter].userid = data.userid;
 if (data.price != null)  tasks[counter].price = data.price;
+if(data.sellprice!=null) tasks[counter].sellprice=data.sellprice;
 if (data.Shippingfee != null)  tasks[counter].Shippingfee = data.Shippingfee;
 if (data.processingfee != null)  tasks[counter].processingfee = data.processingfee;
 if (data.shippingaddress != null)  tasks[counter].shippingaddress = data.shippingaddress;
@@ -273,6 +274,7 @@ exports.Confrimorder=async(req,res)=>{
   const {
 _id,
 price,
+sell,
 Name,
 size,
 Supplierid,
@@ -285,8 +287,12 @@ DealOwner,
 }=req.body;
   
   try{
-    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:Shippingfee,processingfee:processingfee,shippingaddress:shippingaddress,
-    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:price,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
+    const rev=parseFloat(sell)||0;
+    const cog=parseFloat(price)||0;
+    const pp=parseFloat(processingfee)||0;
+    const sh=parseFloat(Shippingfee)||0
+    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress,
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
    
     let customerid;
     let product;
@@ -357,16 +363,17 @@ DealOwner,
 
 if(order.confirm==false)
 {
+ 
      const d=await draftorder(customerid,product,tags,shiping)
     const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
-  res.status(201).json({data:o})
+  return res.status(201).json({data:o})
  
 }
-  res.status(201);  
+  res.status(201).json({data:"orderupdated"});  
   }
   catch(err)
   {
-   
+  console.log(err) 
        res.status(500).json({message:"error on updating Description"})
   }
 }
@@ -811,7 +818,8 @@ try {
       const price = order.price || 0;
       const processing = order.processingfee || 0;
       const shipping = order.Shippingfee || 0;
-      totalProfit += price - processing - shipping;
+      const sellprice=order.sellprice;
+      totalProfit += sellprice-price  - processing - shipping;
     } else {
       unfulfilledCount++;
     }

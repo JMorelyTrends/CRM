@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { statetype, Task } from "../../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../../Components/Leads_panel/CompleteOrderPopup"
+import { TaskPanel } from '@/app/Components/Leads_panel/TaskPanel';
 import { useIsSmallScreen } from "../../Components/Small comps/Issmall";
 import { useDispatch } from "react-redux";
 import { OrderRpr } from '../../Components/Small comps/Types';
@@ -17,6 +18,7 @@ import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderRe
 import CustomDateRangePicker from "../.././Components/Dashboard/CustomDateRangePicker";
 import { DayPicker, DateRange } from "react-day-picker";
 import { Dashstats } from "../.././Components/Small comps/Types";
+
 const OrdersPage = () => {
     const dispatch=useDispatch()
   const [search, setSearch] = useState('');
@@ -27,20 +29,20 @@ const OrdersPage = () => {
  const [internval, setinternval] = useState<string>("");
  const [Unfulfilled,setUnfulfilled]=useState<number>(0)
  const [tprofit,settprofit]=useState<number>(0)
+ const [selectedtask,setselectedtask]=useState<Task|null>(null)
+ const [wonpopup,setwonpopup]=useState<boolean>(false);
+ const [panelopen,setpanelopen]=useState<boolean>(false);
   //functions
 const getwons=async()=>{
-
-  let response;
-
     if (range && range.from === range.to) {
   const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getordersfortabel`,{
     internval: internval ? internval : "today",
         userid: userid,
   });
   
-  console.log(re)
+console.log(re.data.data)
   setOrders(re.data.data)
-  setUnfulfilled(re.data.unfullfiled)
+  setUnfulfilled(re.data.unfulfilled)
   settprofit(re.data.profit)
 }
 else if (range){
@@ -50,9 +52,9 @@ else if (range){
         userid: userid,
   });
   
-  console.log(re)
+
   setOrders(re.data.data)
-  setUnfulfilled(re.data.unfullfiled)
+  setUnfulfilled(re.data.unfullfilled)
   settprofit(re.data.profit)
 }
 else{
@@ -61,13 +63,25 @@ else{
         userid: userid,
   });
   
-  console.log(re)
+
   setOrders(re.data.data)
-  setUnfulfilled(re.data.unfullfiled)
+  setUnfulfilled(re.data.unfulfilled)
   settprofit(re.data.profit)
 }
 }
  
+
+const Editoptions=(order:Task)=>{
+  setselectedtask(order)
+  if(order.confirm){
+    
+    setwonpopup(true)
+  }
+  else{
+    setpanelopen(true)
+  }
+}
+
   //useeefects
 
   useEffect(() => {
@@ -87,7 +101,11 @@ else{
 
   return (
     <div className='w-[80vw]'>
-      <ReviewEdits getwons={getwons}/>
+      {/* <ReviewEdits getwons={getwons}/>
+  */}
+
+    { selectedtask&&<CompleteOrderPopup fetchallorders={getwons} open={wonpopup} setOpen={setwonpopup} task={selectedtask} update={true} />}
+    {selectedtask&&<TaskPanel   setopenlabeldialog={()=>false}  openlabeldialog={false} open={panelopen} setOpen={setpanelopen} task={selectedtask} fetchallorders={getwons}  />}
       {/* Header */}
       <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white sticky top-0 z-40">
         <div className="flex items-center gap-2.5">
@@ -208,7 +226,7 @@ else{
               <th className="px-4 py-2">Source of Truth</th>
               <th className="px-4 py-2">Supplier Name</th>
               <th className="px-4 py-2">Status</th>
-              {/* <th className="px-4 py-2">Edit</th> */}
+              <th className="px-4 py-2">Edit</th>
             </tr>
           </thead>
  <tbody>
@@ -244,16 +262,17 @@ else{
       <td className="px-4 py-2 truncate ">${order.price?.toFixed(2) || "0.00"}</td>
 
       {/* Revenue (assuming calculated from price or not present) */}
-      <td className="px-4 py-2">${order.price?.toFixed(2) || "0.00"}</td>
+      <td className="px-4 py-2">${order.sellprice?.toFixed(2) || "0.00"}</td>
 
      
 
       {/* Profit (price - fees as an example calculation) */}
       <td className="px-4 py-2">
         ${(
-          order.price -
-          parseFloat(order.Shippingfee || "0") -
-          parseFloat(order.processingfee || "0")
+          order.sellprice -  //revenue
+          order.price-       //cost price
+          parseFloat(order.Shippingfee || "0") -  //shipping fee
+          parseFloat(order.processingfee || "0") //processing fee
         ).toFixed(2)}
       </td>
 
@@ -286,18 +305,18 @@ else{
         </span>
       </td>
 
-      {/* Edit Button
+      {/* Edit Button */}
       <td className="px-4 py-2">
         <button
           onClick={() => {
-            dispatch(AddSelectedOrder(order));
-            dispatch(ToogleEdit());
+          Editoptions(order) 
+           
           }}
           className="bg-blue-500 text-white px-4 py-1 rounded-full"
         >
           Edit
         </button>
-      </td> */}
+      </td>
     </tr>
   ))}
 </tbody>

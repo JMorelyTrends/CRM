@@ -104,6 +104,7 @@ export type Task = {
   Supplierid?: Supplier | null;
   userid?: string[]; // assuming ObjectId array
   price?: number;
+  sellprice?:number;
   Shippingfee?: string | null;
   processingfee?: string | null;
   shippingaddress?: string | null;

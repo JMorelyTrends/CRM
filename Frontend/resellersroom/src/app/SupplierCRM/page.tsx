@@ -82,7 +82,18 @@ const page: React.FC<pageProps> = () => {
  
   const [search,setsearch ]=useState<string>("")
   const [Newopen,setNewopen]=useState<boolean>(false)
-
+  
+  const fillterdata=suppliers?.filter((data: Sup) => {
+    const searchTerm = search.toLowerCase();
+    return (
+      data.Name?.toLowerCase().includes(searchTerm) ||
+      data.Email?.toLowerCase().includes(searchTerm) ||
+      data.Number?.toLowerCase().includes(searchTerm) ||
+      data.Website?.toLowerCase().includes(searchTerm) ||
+      data.Brand?.some((b: string) => b.toLowerCase().includes(searchTerm))
+    );
+  })
+  
   return (
     <>
       <div className="w-[80vw] h-[100vh]  flex flex-col">
@@ -91,6 +102,7 @@ const page: React.FC<pageProps> = () => {
      <NewSup
      Newopen={Newopen}
      setNewopen={setNewopen}
+     getallsups={getallsups}
      />
 
         {/**Header */}
@@ -158,7 +170,7 @@ const page: React.FC<pageProps> = () => {
     dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
   {
     suppliers && suppliers.length > 0 &&
-    suppliers.map((data: Sup, index: number) => {
+    fillterdata&&fillterdata.length>0&&fillterdata.map((data: Sup, index: number) => {
       return (
         <div key={index} className="relative w-full h-[190px] bg-white rounded-lg flex flex-col p-3 text-black shadow hover:shadow-lg transition">
           <button

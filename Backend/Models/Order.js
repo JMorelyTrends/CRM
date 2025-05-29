@@ -56,6 +56,10 @@ const OrderSchema = new mongoose.Schema(
     type:Number,
     default:0,
   },
+  sellprice:{
+   type:Number,
+   default:0 
+  },
   labels:{
     type:[mongoose.Schema.Types.ObjectId],
     ref:"Label",

@@ -84,16 +84,11 @@ const LeadCols = (props: Props) => {
         >
           <div className="flex  flex-col items-center gap-5  transition-all duration-300 ease-in-out">
             {
-
-
             props.tasks
             .filter(task => taskMatchesSearch(task, props.search))
             .map((task: Task) => (
                 <DraggableCard key={task.id} task={task} search={props.search}  disableDrag={props.disableDrag} Manualcolchange={props.Manualcolchange} fetchallorders={props.fetchallorders}/>
            )
-           
-           
-           
            )}
           </div>
         </SortableContext>

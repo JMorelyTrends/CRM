@@ -16,12 +16,14 @@ export function CompleteOrderPopup({
   open,
   setOpen,
   task,
-  fetchallorders
+  fetchallorders,
+  update,
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   task: Task;
   fetchallorders: () => void;
+  update:boolean
 }) {
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
@@ -33,7 +35,7 @@ export function CompleteOrderPopup({
   const [dealOwner, setDealOwner] = useState<string>(task.DealOwner?task.DealOwner:'');
   const [sourceOfTruth, setSourceOfTruth] = useState<string>(task.Sourceofthruth?task.Sourceofthruth:'');
   const [paymentMethod, setPaymentMethod] = useState<string>(task.paymentmethod?task.paymentmethod:'');
- 
+  const [sell,setsell]=useState<string>(task.sellprice?task.sellprice.toString():"")
 //usestates for feautres
   const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task?.labels ?? []);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
@@ -45,7 +47,7 @@ export function CompleteOrderPopup({
   const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
   let item:any=task&& task.stockxitem.length>0?task.stockxitem[0]: task.items&&task.items?.length>0?task.items[0]:{};//change this 
 
-
+console.log(task)
 const router=useRouter()
   useEffect(()=>{
     const getsuppliers=async()=>{
@@ -61,8 +63,14 @@ const router=useRouter()
     if (open && task) {
       setProductName(task.Name);
       setSize(task.size);
+      if(task.price==0){
       setCostPrice(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
-      setShippingFee(task.Shippingfee?task.Shippingfee:'');
+}
+else{
+  setCostPrice(task.price?task.price?.toString():"undefined")
+}
+
+setShippingFee(task.Shippingfee?task.Shippingfee:'');
       setProcessingFee(task.processingfee?task.processingfee:'');
       setSupplierUsed((task.Supplierid&&task.Supplierid?._id)?task.Supplierid._id:'');
       setShippingAddress(task.shippingaddress?task.shippingaddress:'');
@@ -70,10 +78,7 @@ const router=useRouter()
       setSourceOfTruth(task.Sourceofthruth?task.Sourceofthruth:'');
       setPaymentMethod(task.paymentmethod?task.paymentmethod:'');
       setSelectedLabels(task.labels??[]);
- 
-
-
-      //
+      setsell(task.sellprice?task.sellprice.toString():'') 
     
       if(task.stockxitem.length>0)
       {
@@ -82,8 +87,6 @@ const router=useRouter()
       else if(task.items){
         item=task.items[0];
       }
-
-     
     }
     
   }, [task, open]);
@@ -153,7 +156,7 @@ const router=useRouter()
      
     }
     catch{
-
+      console.log("error del label")
     }
   }
 
@@ -222,11 +225,12 @@ const Orderreview =()=>{
     if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
      
-      await axios.post(
+      const r=await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
         {
          _id:task._id,
          price:costPrice,
+         sell:sell,
          Name:productName,
          size:size,
          Supplierid:supplierUsed,
@@ -239,13 +243,18 @@ const Orderreview =()=>{
         }
       );
       fetchallorders()
+   toast.success("order updated")
        setOpen(false)
+       if(update==false){
        router.push('/Leads/OrderReview')
+      }
+       
     }
     else{
       toast("Fill all fields")
     }
   }
+
  
   return (
 
@@ -284,10 +293,28 @@ const Orderreview =()=>{
       <input type="text" className="w-full border rounded px-3 py-2 mt-1"
         value={size} onChange={(e) => setSize(e.target.value)} />
     </div>
+
     <div>
       <label className="block text-sm font-medium">Sell Price</label>
       <input type="string" className="w-full border rounded px-3 py-2 mt-1"
-        value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
+        value={sell} onChange={(e) =>
+        {
+ const val = e.target.value;
+                      if (/^\d*$/.test(val)) {
+          setsell(e.target.value)}
+        }}
+        />
+    </div>
+
+ <div>
+      <label className="block text-sm font-medium">Cost Price</label>
+      <input type="string" className="w-full border rounded px-3 py-2 mt-1"
+        value={costPrice} onChange={(e) =>
+{         const val = e.target.value;
+                      if (/^\d*$/.test(val)) {
+        setCostPrice(e.target.value)}
+                      } 
+        }/>
     </div>
 <div>
   <label className="block text-sm font-medium">Supplier Used</label>
@@ -320,12 +347,29 @@ const Orderreview =()=>{
     <div>
       <label className="block text-sm font-medium">Shipping Fee</label>
       <input type="string" className="w-full border rounded px-3 py-2 mt-1"
-        value={shippingFee} onChange={(e) => setShippingFee(e.target.value)} />
+        value={shippingFee} onChange={(e) =>
+          {
+           const val = e.target.value;
+                      if (/^\d*$/.test(val)) {
+          setShippingFee(e.target.value)
+        }
+      } 
+         
+         } />
     </div>
     <div>
       <label className="block text-sm font-medium">Processing Fee</label>
       <input type="string" className="w-full border rounded px-3 py-2 mt-1"
-        value={processingFee} onChange={(e) => setProcessingFee(e.target.value)} />
+        value={processingFee} onChange={(e) => {
+          
+      const val = e.target.value;
+      if (/^\d*$/.test(val)) 
+          {
+          setProcessingFee(e.target.value)
+        }
+      }  
+    } 
+        />
     </div>
     <div>
       <label className="block text-sm font-medium">Confirm Shipping Address</label>
@@ -336,10 +380,17 @@ const Orderreview =()=>{
       <label className="block text-sm font-medium">Source of Truth</label>
       <select className="w-full border rounded px-3 py-2 mt-1"
         value={sourceOfTruth} onChange={(e) => setSourceOfTruth(e.target.value)}>
-        <option value="">Select Source</option>
-        <option value="Source A">Source A</option>
-        <option value="Source B">Source B</option>
-        <option value="Source C">Source C</option>
+         <option value="">Select  Source</option>
+    <option value="Whatsapp broadcast">Whatsapp broadcast</option>
+    <option value="B2B client">B2B client</option>
+    <option value="IG organic">IG organic</option>
+    <option value="Meta paid">Meta paid</option>
+    <option value="Google paid">Google paid</option>
+    <option value="Organic search">Organic search</option>
+    <option value="Word of mouth referral">Word of mouth referral</option>
+    <option value="Returning client">Returning client</option>
+    <option value="Email marketing">Email marketing</option>
+    <option value="Website">Website</option>
       </select>
     </div>
     <div>
@@ -382,11 +433,19 @@ const Orderreview =()=>{
              </div>
              
              {/* Submit Button */}
-            { task.confirm==false?<div className="flex justify-end">
+            {
+             update==false&& (task.confirm==false?<div className="flex justify-end">
                <Button onClick={() =>Submit()}>Submit</Button>
              </div>:<div className="flex justify-end">
                <Button onClick={() =>Orderreview()}>Order review</Button>
-             </div>}
+             </div>)
+             }
+             {
+              update==true&&task&&
+              <div className="flex justify-end">
+                <Button onClick={()=>Submit()}>Update</Button>
+              </div>
+             }
       </DialogContent>
     </Dialog>
 

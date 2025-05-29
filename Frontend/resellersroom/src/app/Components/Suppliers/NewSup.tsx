@@ -19,6 +19,7 @@ import { CloudDownload } from "lucide-react";
 type Props = {
   Newopen: boolean;
   setNewopen: React.Dispatch<React.SetStateAction<boolean>>;
+  getallsups:  React.Dispatch<React.SetStateAction<void>>; 
 };
 
 const NewSup = (props: Props) => {
@@ -49,6 +50,8 @@ const NewSup = (props: Props) => {
     setNumber("");
     setSupplierName("")
     setSelectedBrands([]);
+
+
   };
 
   const Submit = async () => {
@@ -103,6 +106,7 @@ const NewSup = (props: Props) => {
           }
         );
         toast.success("Supplier created successfully!");
+        props.getallsups()
         close();
       } catch (error) {
         toast.error("Supplier creation failed. Please try again.");

@@ -11,7 +11,6 @@ const options = {
   fetch(url, options)
     .then(res => res.json())
     .then(data =>{
-       console.log(data)
       return data
     })
     .catch(err =>{ console.error('Fetch error:', err)

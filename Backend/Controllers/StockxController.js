@@ -34,7 +34,6 @@ try
         const data = await fetch(url, options)
         .then(res => res.json())
         .then(async(d) =>{
-            console.log(d)
             const products = [];
     
             d.length>0&&
@@ -141,7 +140,7 @@ exports.Getproductprice = async (req, res) => {
       }
     };
 
-    return res.status(404).json({ message: 'Retail price not found in API response' });
+   
 
     const searchTerm = search;
     const currency = 'GBP';
@@ -149,29 +148,46 @@ exports.Getproductprice = async (req, res) => {
 
     const response = await fetch(url, options);
     const data = await response.json();
-    const d = new Date().toISOString();
-    const retailPriceTrait = data.traits.find(trait => trait.name === 'Retail Price');
-    const retailPrice = retailPriceTrait ? retailPriceTrait.value : null;
-
-    if (!retailPrice) {
-      return res.status(404).json({ message: 'Retail price not found in API response' });
-    }
-
-    const updatedStockx = await StockxDatabase.findOneAndUpdate(
-      { _id: itemid },
-      {
-        $set: {
-          last_sale_price: retailPrice,
-          last_sale_update_date: d
-        }
-      },
-      { new: true }
-    );
    
+    const d = new Date().toISOString();
+    const retailPriceTrait = data?.traits?.find(trait => trait.name === 'Retail Price');
+    let retailPrice = retailPriceTrait ? retailPriceTrait.value : null;
+   
+// Step 2: Fallback logic
+if (!retailPrice || retailPrice === 0) {
+  const lastSale = data.market?.sales?.last_sale;
+  const highestBid = data.market?.bids?.highest_bid;
+  const lowestAsk = data.market?.bids?.lowest_ask;
 
-    res.status(201).json({ price: updatedStockx });
+  if (lastSale && lastSale !== 0) {
+    retailPrice = lastSale;
+  } else if (highestBid && highestBid !== 0) {
+    retailPrice = highestBid;
+  } else if (lowestAsk && lowestAsk !== 0) {
+    retailPrice = lowestAsk;
+  } else {
+    retailPrice = 0; // Default if no value found
+  }
+}
 
+if (retailPrice === 0) {
+  console.warn(`No price found for itemid=${itemid}, search="${search}"`);
+}
+
+const updatedStockx = await StockxDatabase.findOneAndUpdate(
+  { _id: itemid },
+  {
+    $set: {
+      last_sale_price: retailPrice,
+      last_sale_update_date: d
+    }
+  },
+  { new: true }
+);
+
+return res.status(201).json({ price: updatedStockx });
   } catch (err) {
+    console.log(err)
     res.status(500).json({ message: err.message || 'Something went wrong' });
   }
 };
