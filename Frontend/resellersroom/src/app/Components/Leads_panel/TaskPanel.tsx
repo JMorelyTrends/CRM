@@ -9,13 +9,12 @@ import {
   DialogOverlay
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, X, Flag } from "lucide-react";
+import { Plus, Check, X } from "lucide-react";
 import axios from "axios";
 import { labeltype,Task } from "../Small comps/Types";
 
-import {  useDispatch, useSelector } from 'react-redux';
+import {  useDispatch  } from 'react-redux';
 import {addLabel}from "../../../lib/features/Leads/LeadsSlice"
-import { RootState } from "@/lib/Resellerstore";
 
 
 export function TaskPanel({

@@ -33,7 +33,6 @@ export default function Page({}: Props) {
   const [activeCard, setActiveCard] = useState<Task | null>(null);
   const [smcolumn, setsmcolumn] = useState<string>("New Lead");
   const [userid, setuserid] = useState<string | null>("");
-  const [Dragging, setDragging] = useState<boolean>(false);
   const [search,setserach]=useState<string>("")
   const [wonpopup,setwonpopup]=useState<boolean>(false)
   const [wontask,setwontask]=useState<Task|null>(null)
@@ -141,7 +140,6 @@ const lockRef = useRef(false);
   const isSmallScreen = useIsSmallScreen();
 
   const DragStart = (event: DragStartEvent) => {
-    setDragging(true);
     if (state) {
       const { active } = event;
       const taskId = parseInt(active.id as string);
@@ -221,7 +219,6 @@ function timeout(ms: number) {
             },
           },
         };
-        setDragging(false);
         setstate(newState);
         setActiveCard(null);
  
@@ -266,7 +263,7 @@ function timeout(ms: number) {
 
       setstate(newState);
       setActiveCard(null);
-      try{const d=await axios.post(
+      try{await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateStages`,
         {
           taskid: currenttask,
@@ -456,7 +453,6 @@ function timeout(ms: number) {
         {activeCard ? (
           <DraggableCard
             task={activeCard}
-            search=""
             disableDrag
             Manualcolchange={Manualcolchange}
             fetchallorders={fetchallorders}

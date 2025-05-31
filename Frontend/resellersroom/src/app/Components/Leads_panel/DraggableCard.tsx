@@ -10,14 +10,13 @@ import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
 
 interface DraggableCardProps {
   task: Task;
-search:string;
   disableDrag?: boolean;
   Manualcolchange: (newStage: string, oldstage: string, taskid: number, task: Task) => void;
   fetchallorders: () => void;
 }
 const columnOptions = ["NewLead", "NeedToSource", "Offered", "WarmLead", "Won", "Lost"];
 
-const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag = false, Manualcolchange, fetchallorders }) => {
+const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false, Manualcolchange, fetchallorders }) => {
   const {
     attributes,
     listeners,
@@ -42,8 +41,6 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, search,disableDrag 
   const [clickedTask, setClickedTask] = useState<Task |null>(null);
   const [creationdate, setCreationDate] = useState<string>(task?.stockxitem[0]?.image);
     const [wonpopup,setwonpopup]=useState<boolean>(false)
-    const [wontask,setwontask]=useState<Task|null>(null)
-  const [openlabeldialog,setopenlabeldialog]=useState<boolean>(false)
   const [image,setimage]=useState<string>("")
  
   useEffect(() => {

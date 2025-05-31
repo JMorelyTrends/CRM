@@ -4,15 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Funnel, ArrowUpNarrowWide } from "lucide-react";
 import axios from 'axios';
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
-import { statetype, Task } from "../Components/Small comps/Types";
-import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
-import { useIsSmallScreen } from "../Components/Small comps/Issmall";
 import { useDispatch } from "react-redux";
 import { OrderRpr } from '../Components/Small comps/Types';
 import { Slinedata } from '../Components/Small comps/Types';
 import ReviewEdits from '@/app/Components/OrderReview/ReviewEdits';
-import { UseDispatch,useSelector } from 'react-redux';
-import { RootState } from '@/lib/Resellerstore';
 import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderReviewSlice';
 
 const OrdersPage = () => {

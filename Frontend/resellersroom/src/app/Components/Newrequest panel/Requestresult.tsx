@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {Suggest} from "../Small comps/Types"
 import {  useDispatch } from 'react-redux';
 import Addproduct from "./Addproduct";
-import axios from "axios";
 // import { Reseller, RootState } from "@/lib/Resellerstore";
 import {addItem,Toggleleadsrenderstep,Addflow} from '@/lib/features/Newrequest/NewRequestSlice'
 const Spinner = () => (
@@ -10,36 +9,11 @@ const Spinner = () => (
     <div className="w-6 h-6 border-4 border-black border-t-transparent rounded-full animate-spin" />
   </div>
 );
-function isOlderThanOneMonth(dateString?: string): boolean {
-  if (!dateString) return true; // treat undefined as "too old"
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-  return diffInDays > 30;
-}
+
 
 const RCard = ({item}:{item:Suggest}) => {
   const dispatch =useDispatch()
-  const getprices = async (item: any) => {
-    try{
-      if (
-        
-       1
-      ) 
-     {  axios.post(
-      `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
-      {
-        itemid: item._id,
-        search: item.slug,
-      }
-    );}
-   }
-    catch (error) {
-      console.error("Error fetching prices:", error);
-    }
-  };
-
+ 
   return (
     <div className="w-full bg-white min-h-[90px] rounded-2xl shadow-xl flex gap-4 p-3 mb-3">
      
@@ -74,7 +48,6 @@ const RCard = ({item}:{item:Suggest}) => {
 
 const Requestresult = ({suggesteddata,spin}: {suggesteddata:Suggest[], spin:boolean
 }) => {
-  const dispatch =useDispatch()
   const [resutls,setresult]=useState<Suggest[]>([])
   const [notfound,setnotfound]=useState<boolean>(false);
     useEffect(()=>{

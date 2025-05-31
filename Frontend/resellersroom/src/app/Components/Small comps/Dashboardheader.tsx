@@ -1,8 +1,7 @@
 import React from 'react'
 
-type Props = {}
 
-const Dashboardheader = (props: Props) => {
+const Dashboardheader = () => {
   return (
     <div className='w-full h-[10vh] flex justify-start items-center gap-3 '>
         <div className=" ml-8  h-[70%]">

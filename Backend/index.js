@@ -26,7 +26,6 @@ app.use("/api/Stockx/",StockXRoutes)
 app.use("/api/features/",FeatureRoutes)
 app.use("/api/S3",S3Routes);
 app.use("/api/Review",OrderReviewRoute)
-console.log(process.env.PORT)
 const Port = process.env.PORT;
 app.listen(Port, () => {
   console.log(`server is listing on ${Port}`);

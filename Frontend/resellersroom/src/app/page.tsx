@@ -4,7 +4,7 @@ import { useIsSmallScreen } from "./Components/Small comps/Issmall";
 import Dashboardheader from "./Components/Small comps/Dashboardheader";
 import DashboardCharts from "./Components/Dashboard/DashboardCharts";
 import CustomDateRangePicker from "./Components/Dashboard/CustomDateRangePicker";
-import { DayPicker, DateRange } from "react-day-picker";
+import {DateRange } from "react-day-picker";
 import { Dashstats } from "./Components/Small comps/Types";
 const Page: React.FC = () => {
   const isSmallScreen = useIsSmallScreen();
@@ -103,7 +103,7 @@ useEffect(() => setIsClient(true), []);
         </div>
       </div>
 
-      <DashboardCharts internval={internval} setinternval={setinternval} range={range} otherdetails={otherdetails} setotherdetails={setotherdetails}  />
+      <DashboardCharts internval={internval} range={range} setotherdetails={setotherdetails}  />
     </div>
     )}
     </>

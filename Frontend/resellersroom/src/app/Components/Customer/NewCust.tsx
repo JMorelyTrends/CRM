@@ -75,7 +75,7 @@ export default function NewCust() {
         dispatch(Toggleleadsrenderstep(2));
         dispatch(Toogle_Newcus());
       }
-    } catch (error) {
+    } catch  {
       toast.error("Something went wrong");
     }
   };

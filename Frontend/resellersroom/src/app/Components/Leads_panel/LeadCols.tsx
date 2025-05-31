@@ -87,7 +87,7 @@ const LeadCols = (props: Props) => {
             props.tasks
             .filter(task => taskMatchesSearch(task, props.search))
             .map((task: Task) => (
-                <DraggableCard key={task.id} task={task} search={props.search}  disableDrag={props.disableDrag} Manualcolchange={props.Manualcolchange} fetchallorders={props.fetchallorders}/>
+                <DraggableCard key={task.id} task={task} disableDrag={props.disableDrag} Manualcolchange={props.Manualcolchange} fetchallorders={props.fetchallorders}/>
            )
            )}
           </div>

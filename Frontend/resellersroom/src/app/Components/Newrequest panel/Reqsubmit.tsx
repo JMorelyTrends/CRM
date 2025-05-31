@@ -3,17 +3,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Custprop, dCustomerArray } from "../Small comps/Types";
-import { redirect } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder} from "@/lib/features/Newrequest/NewRequestSlice";
 
-function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
+const debounce = <T extends unknown[]>( func: (...args: T) => void,delay: number ) => {
+    let timer: ReturnType< typeof setTimeout>;
+    return (...args: T) => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => { func.call(null, ...args) }, delay);
+    };
 }
 
 interface FirstHalfProps {
@@ -225,7 +224,6 @@ const Secondhalf = ({
   selectedcustomer,
   setselectedcustomer,
   Submit_Request,
-  searchclient,
   setsearchclient,
 }: SecondHalfProps) => {
   const dispatch = useDispatch();

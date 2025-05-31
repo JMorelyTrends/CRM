@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Plus, Check, X } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import axios from "axios";
-import { labeltype, Task } from "../Small comps/Types";
+import { labeltype } from "../Small comps/Types";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import {
   Toggleleadsrenderstep,
-  Addshopifycustomer,
-  Addmongodbcustomer,
   Addselectedcusotmer,
   addItem,
 } from "@/lib/features/Newrequest/NewRequestSlice";
@@ -20,8 +18,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogPortal,
-  DialogOverlay,
 } from "@/components/ui/dialog";
 export function AddtagsDes({ sideopen }: { sideopen: boolean }) {
   const dispatch = useDispatch();
@@ -86,13 +82,13 @@ export function AddtagsDes({ sideopen }: { sideopen: boolean }) {
 
     try {
       const cleanlabel = updatedLabels.map(({ _id }) => _id);
-     task&&( await axios.post(
+     if(task){ await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/updatelabels`,
         {
           newlabels: cleanlabel,
           orderid: task._id,
         })
-      );
+      ;}
     } catch (err) {
       console.error("Failed to update labels", err);
     }
@@ -119,7 +115,7 @@ export function AddtagsDes({ sideopen }: { sideopen: boolean }) {
 
     try {
      
-    const r=  await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateDescription`,
         {
           Description,

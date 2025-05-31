@@ -14,9 +14,8 @@ import { RootState } from "@/lib/Resellerstore";
 import { Tooglemongopopup,AddSubmitingCustomer,ADD_Matched_cutomer,Addselectedcusotmer,Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice';
 import { Custprop } from '../Small comps/Types';
 import { toast } from 'sonner';
-type Props = {}
 
-const DBMatched = (props: Props) => {
+const DBMatched = () => {
         const dispatch = useDispatch();
         const flag = useSelector((state: RootState) => state.NewReq.OpenMongomatch);
         const customer:Custprop|null = useSelector((state: RootState) => state.NewReq.MatchedCustomer);
@@ -40,25 +39,7 @@ const DBMatched = (props: Props) => {
          }
        }, [formcusotmer]);
 
-       const Saveupdate=async()=>{
-        console.log(customer)
-       
-   
-   try {    const newc=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/Updatecusnewreq`,
-          {
-
-            newCustomer:customer
-          }
-        )
-     //   dispatch(Tooglemongopopup())
-
-     }
-     catch(err){
-      toast.error("error on updating Customer")
-     }
-       }
-
-       const updateField = async (fieldName: string, updatedValue: string, customerId: string) => {
+           const updateField = async (fieldName: string, updatedValue: string, customerId: string) => {
         try {
           const res = await  axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/Updatecusnewreq`, {
             customerId,
@@ -71,13 +52,17 @@ const DBMatched = (props: Props) => {
           }
          
           return res.data.customer; // updated customer
-        } catch (err: any) {
-          if (err.response?.status === 409) {
-            toast.error(err.response.data.message);
-          } else {
-            toast.error("Error updating field");
-          }
-          return null;
+        } catch (err: unknown) {
+ if (axios.isAxiosError(err)) {
+    if (err.response?.status === 409) {
+      toast.error(err.response.data.message);
+    } else {
+      toast.error("Error updating field");
+    }
+  } else {
+    toast.error("An unexpected error occurred");
+  }
+  return null;
         }
       };
       

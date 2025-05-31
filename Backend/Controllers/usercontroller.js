@@ -28,7 +28,6 @@ exports.getUserById = async (req, res) => {
 // Create a new user
 exports.createUser = async (req, res) => {
   try {
-    //console.log(req.body)
     const {
       username,
       email,
@@ -39,8 +38,7 @@ exports.createUser = async (req, res) => {
       SHOPIFY_STORE_DOMAIN,
     } = req.body;
 
-    console.log(
-     req.body)
+   
 
     const e = await User.findOne({ email: email });
 
@@ -63,7 +61,6 @@ exports.createUser = async (req, res) => {
         SHOPIFY_STORE_DOMAIN,
       });
 
-      console.log("first",newUser._id)
       return res.status(201).json(newUser);
 
       //   const Token=GenToken(newUser._id.toString());
@@ -85,7 +82,6 @@ exports.createUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-  //  console.log(req.body);
     // Find user by email
     const user = await User.findOne({ email: email });
     if (!user) {

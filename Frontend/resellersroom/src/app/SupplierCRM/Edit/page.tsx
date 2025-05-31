@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
-import { AddselectedSup } from "@/lib/features/Supplier/SupplierSlice";
 import { Pencil,Store } from "lucide-react"
 import { Supplier, Task } from "@/app/Components/Small comps/Types";
 import axios from "axios";
@@ -10,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import { format, toZonedTime } from 'date-fns-tz';
 import UpSup from "@/app/Components/Suppliers/UpSup";
 
-type Props = {};
 
 const Header = () => {
   return (
@@ -44,7 +42,7 @@ function useIsSmallScreen() {
   return isSmallScreen;
 }
 
-function Page({}: Props) {
+function Page() {
   const router=useRouter()
   const isSmallScreen = useIsSmallScreen();
   const [orders,setorders]=useState<Task[]>()

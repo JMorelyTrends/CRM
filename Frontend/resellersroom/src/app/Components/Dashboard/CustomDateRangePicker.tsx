@@ -8,7 +8,6 @@ import {
 } from "@material-tailwind/react";
 import { format } from "date-fns";
 import { DayPicker, DateRange } from "react-day-picker";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import "react-day-picker/dist/style.css";
 
 export default function CustomDateRangePicker({active,setactive,range,setRange}:{active:string,setactive:React.Dispatch<React.SetStateAction<string>>,range:DateRange|undefined,setRange:React.Dispatch<React.SetStateAction<DateRange|undefined>>}) {
@@ -33,6 +32,8 @@ export default function CustomDateRangePicker({active,setactive,range,setRange}:
             }  `}
               value={formattedValue}
               size={"md"}
+              onPointerEnterCapture={undefined}
+              onPointerLeaveCapture={undefined}
               readOnly
               crossOrigin="anonymous" 
               onClick={()=>{setactive("Range")}}

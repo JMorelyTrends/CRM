@@ -67,7 +67,7 @@ export type additem={
 export type dCustomerArray = Custprop[];
 
 
-interface StockXItem {
+export interface StockXItem {
   _id:string,
   image: string;
   name: string;
@@ -157,9 +157,9 @@ export type OrderRpr={
   profit?:number,
   userid?: string;
   shopifycreatedat?: Date;
-  createdAt?: Date; // from timestamps: true
+  createdAt?: string|Date; // from timestamps: true
   updatedAt?: Date;
-  approved?:Boolean, // from timestamps: true
+  approved?:boolean, // from timestamps: true
 }
 
 

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import BrandSelector from "./BrandSelector";
@@ -13,7 +13,7 @@ import {
   DialogOverlay,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, X, Flag } from "lucide-react";
+import {  X } from "lucide-react";
 import { CloudDownload } from "lucide-react";
 
 type Props = {
@@ -99,7 +99,7 @@ const NewSup = (props: Props) => {
         ...(imageUrl && { image: imageUrl }),
       };
       try {
-        const newsu = await axios.post(
+        await axios.post(
           `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/CreateSupplier`,
           {
             newSupplier,
@@ -108,7 +108,7 @@ const NewSup = (props: Props) => {
         toast.success("Supplier created successfully!");
         props.getallsups()
         close();
-      } catch (error) {
+      } catch  {
         toast.error("Supplier creation failed. Please try again.");
       }
     } else {
@@ -186,7 +186,6 @@ const NewSup = (props: Props) => {
                           (file.type === "image/jpeg" ||
                             file.type === "image/png")
                         ) {
-                          const reader = new FileReader();
                           setfiledata(file);
                           setPreviewUrl(URL.createObjectURL(file));
                         } else {

@@ -21,7 +21,7 @@ const COLORS =["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF", "#FF6699"]
 
 
 
-const DashboardCharts = ({internval,setinternval,range, otherdetails,setotherdetails}:{internval:string,setinternval:React.Dispatch<React.SetStateAction<string>>,range:DateRange|undefined,otherdetails:Dashstats,setotherdetails:React.Dispatch<React.SetStateAction<Dashstats>>}) => {
+const DashboardCharts = ({internval,range,setotherdetails}:{internval:string,range:DateRange|undefined,setotherdetails:React.Dispatch<React.SetStateAction<Dashstats>>}) => {
    
 
 //states
@@ -42,7 +42,6 @@ const DashboardCharts = ({internval,setinternval,range, otherdetails,setotherdet
            { name: "Apr", Won: 278, Lost: 390 },
       ])
 
-  const [revenue,setrevenue]=useState<number>(0);
 
 
 const getpidata = async () => {
@@ -198,7 +197,7 @@ const getpidata = async () => {
             ))}
           </Pie>
         <Tooltip 
-    formatter={(value: any, name: any) => [`${value}`, `${name}`]}
+    formatter={(value: number, name: number) => [`${value}`, `${name}`]}
     contentStyle={{ borderRadius: '8px', padding: '8px' }}
   />
         </PieChart>

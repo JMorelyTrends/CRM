@@ -4,26 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { Funnel, ArrowUpNarrowWide } from "lucide-react";
 import axios from 'axios';
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
-import { statetype, Task } from "../../Components/Small comps/Types";
+import { Task,StockXItem,additem } from "../../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../../Components/Leads_panel/CompleteOrderPopup"
 import { TaskPanel } from '@/app/Components/Leads_panel/TaskPanel';
-import { useIsSmallScreen } from "../../Components/Small comps/Issmall";
 import { useDispatch } from "react-redux";
-import { OrderRpr } from '../../Components/Small comps/Types';
-import { Slinedata } from '../../Components/Small comps/Types';
-import ReviewEdits from '@/app/Components/OrderReview/ReviewEdits';
-import { UseDispatch,useSelector } from 'react-redux';
-import { RootState } from '@/lib/Resellerstore';
-import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderReviewSlice';
 import CustomDateRangePicker from "../.././Components/Dashboard/CustomDateRangePicker";
-import { DayPicker, DateRange } from "react-day-picker";
-import { Dashstats } from "../.././Components/Small comps/Types";
+import { DateRange } from "react-day-picker";
 
 const OrdersPage = () => {
     const dispatch=useDispatch()
   const [search, setSearch] = useState('');
   const [userid,setuserid]=useState<string|null>("")
-  const [Orders,setOrders]=useState<OrderRpr[]|null>(null);
+  const [Orders,setOrders]=useState<Task[]|null>(null);
   const [active, setactive] = useState<string>("year");
   const [range, setRange] = React.useState<DateRange | undefined>();
  const [internval, setinternval] = useState<string>("");
@@ -62,8 +54,6 @@ else{
     internval: internval ? internval : "year",
         userid: userid,
   });
-  
-
   setOrders(re.data.data)
   setUnfulfilled(re.data.unfulfilled)
   settprofit(re.data.profit)
@@ -83,7 +73,6 @@ const Editoptions=(order:Task)=>{
 }
 
   //useeefects
-
   useEffect(() => {
     dispatch(Toggleleadsrenderstep(0));
     if (typeof window !== "undefined") {
@@ -230,7 +219,7 @@ const Editoptions=(order:Task)=>{
             </tr>
           </thead>
  <tbody>
-  {Orders && Orders.length > 0 && Orders.map((order: any, index: number) => (
+  {Orders && Orders.length > 0 && Orders.map((order: Task, index: number) => (
     <tr key={index} className="border-b border-black align-top ">
       <td className="px-4 py-2 truncate max-w-[60px]">{order._id || "N/A"}</td>
       <td className="px-4 py-2 ">{order.createdAt?.split("T")[0] || "N/A"}</td>
@@ -246,15 +235,15 @@ const Editoptions=(order:Task)=>{
 
       {/* Order Overview from items or stockxitem */}
       <td className="px-4 py-2 truncate max-w-[100px]">
-        {(order.items?.length > 0
-          ? order.items.map((item: any, i: number) => (
+        {(order.items&&order.items?.length > 0
+          ? order.items.map((item: additem, i: number) => (
               <div key={i} className="mb-1">{item.Name || "Unnamed"} </div>
             ))
           : order.stockxitem?.length > 0
-          ? order.stockxitem.map((item: any, i: number) => (
+          ? order.stockxitem.map((item: StockXItem, i: number) => (
               <div key={i} className="mb-1">{item.name || "Unnamed"} </div>
             ))
-          : <div>No Items</div>
+          :<div>No Items</div>
         )}
       </td>
 
@@ -264,28 +253,29 @@ const Editoptions=(order:Task)=>{
       {/* Revenue (assuming calculated from price or not present) */}
       <td className="px-4 py-2">${order.sellprice?.toFixed(2) || "0.00"}</td>
 
-     
-
       {/* Profit (price - fees as an example calculation) */}
       <td className="px-4 py-2">
-        ${(
+      { order.sellprice && order.price && order.Shippingfee && order.processingfee? ` ${(
           order.sellprice -  //revenue
           order.price-       //cost price
           parseFloat(order.Shippingfee || "0") -  //shipping fee
           parseFloat(order.processingfee || "0") //processing fee
-        ).toFixed(2)}
+          
+        ).toFixed(2)}`:""}
       </td>
 
      <td className="px-4 py-2">
   <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
     { "Shopify"}
   </span>
-</td>
+   </td>
+
 <td className="px-4 py-2">
   <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
     {order.Sourceofthruth || "N/A"}
   </span>
 </td>
+
 <td className="px-4 py-2">
   <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
     {order?.Supplierid?.Name || "N/A"}

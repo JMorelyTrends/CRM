@@ -548,7 +548,6 @@ try {
           formatted[index].Request += entry.Req;
         }
         else{
-          console.log("prev",label)
             for(i=0;i<2;i++)
             {
                bucket+=1;
@@ -562,7 +561,6 @@ try {
             }
           formatted[index].Won += entry.Won;
           formatted[index].Request += entry.Req;
-            console.log(label)
         }
       });
       // console.log(formatted);

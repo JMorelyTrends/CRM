@@ -1,6 +1,5 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { CloudDownload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {Suggest} from "../Small comps/Types"
-import {  useDispatch, useSelector } from 'react-redux';
+import {  useDispatch  } from 'react-redux';
 import {addItem,Toggleleadsrenderstep,Addflow} from '@/lib/features/Newrequest/NewRequestSlice'
-import { RootState } from "@/lib/Resellerstore";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -29,7 +26,6 @@ const Addproduct = (props: Props) => {
   const [filedata, setfiledata] = useState<File |null>(null);
   const [Name, setName] = useState<string>("");
   const [price, setprice] = useState<string>("");
-  const initial = useSelector((state:RootState)=>state.NewReq.selectedItems)
   const [userid,setuserid]=useState<string|null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   useEffect(()=>{
@@ -184,7 +180,6 @@ const Addproduct = (props: Props) => {
                       file &&
                       (file.type === "image/jpeg" || file.type === "image/png")
                     ) {
-                      const reader = new FileReader();
                     setfiledata(file)
                     setPreviewUrl(URL.createObjectURL(file));
                     } else {

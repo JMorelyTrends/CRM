@@ -65,12 +65,12 @@ console.log(customer)
 
           }
         }
-        catch(err:any)
+        catch(err:unknown)
         {
-          if(err.response)
+          if(axios.isAxiosError(err))
           {
-          console.log(err.response.data.error)
-          toast.error(err.response.data.error)
+         
+           toast.error(err.response?.data?.error || "An error occurred");
                 
           }
 

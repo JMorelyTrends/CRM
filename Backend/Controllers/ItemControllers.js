@@ -67,7 +67,6 @@ exports.getstockxitems=async(req,res)=>
 {
 try{
    const {search}=req.body;
-   console.log(search);
 }
 catch(err)
 {

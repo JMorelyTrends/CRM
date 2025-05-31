@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { useDispatch, UseDispatch,useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/lib/Resellerstore';
-import { ToogleEdit,AddSelectedOrder } from '@/lib/features/OrederReview/OrderReviewSlice';
-import { Slinedata,OrderRpr } from "../Small comps/Types";
+import { ToogleEdit } from '@/lib/features/OrederReview/OrderReviewSlice';
+import { Slinedata } from "../Small comps/Types";
 import axios from "axios";
 
 
@@ -79,7 +79,7 @@ export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetS
 
   //console.log("🛠 Final payload to send:", payload);
 try
- {const t=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/UpdateReview`,{
+ {await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/UpdateReview`,{
     payload
 })
 close()
@@ -160,7 +160,7 @@ close()
                     className="w-32"
                     defaultValue={item.costprice}
                     onChange={(e)=>{
-                        const updateline=[...order?.linedata!];
+                        const updateline=[...order?.linedata??[]];
                         updateline[i]={
                             ...updateline[i],
                             costprice:parseFloat(e.target.value)

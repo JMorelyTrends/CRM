@@ -4,11 +4,9 @@ import {ArrowUpNarrowWide,Funnel } from "lucide-react"
 import axios from 'axios'
 import { Customerprop } from '../Components/Small comps/Types'
 import EditPopup from '../Components/Customer/Editpopup'
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/lib/Resellerstore";
+import { useDispatch } from "react-redux";
 import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus} from "../../lib/features/CustomerCrm/CustomerCrmslice"
 import NewCust from '../Components/Customer/NewCust'
-type Props = {}
   type hprops={
     search:string,
     setsearch:React.Dispatch<React.SetStateAction<string>>
@@ -61,7 +59,7 @@ type Props = {}
       }
 
 
-const page = (props: Props) => {
+const Page = () => {
         const dispatch=useDispatch();
         const isSmallScreen=useIsSmallScreen();
 
@@ -72,7 +70,6 @@ const page = (props: Props) => {
         const [Klaviyop,setKlaviyop]=useState<number>(0)
         //functions
        const    calKlaviyop=(data:Customerprop[])=>{
-          let optout=0;
           let optin=0;
           data.map((d:Customerprop)=>{
             if(d.emailMarketingConsent==='SUBSCRIBED')
@@ -251,4 +248,4 @@ const page = (props: Props) => {
   )
 }
 
-export default page
+export default Page

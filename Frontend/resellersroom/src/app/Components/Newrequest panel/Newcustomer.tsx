@@ -18,9 +18,9 @@ const Newcustomer = (props: Props) => {
   const [name, setName] = useState<string>('');
   const [number, setNumber] = useState<string>('');
   const [email, setEmail] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [postcode, setPostcode] = useState<string>('');
-  const [city,setcity]=useState<string>('');
+  //const [address, setAddress] = useState<string>('');
+  //const [postcode, setPostcode] = useState<string>('');
+  //const [city,setcity]=useState<string>('');
   const [userid,setuserid]=useState<string|null>('')
   const [social,setsocial]=useState<string>('')
   useEffect(()=>{
@@ -85,9 +85,9 @@ const Newcustomer = (props: Props) => {
       setName('');
       setNumber('');
       setEmail('');
-      setAddress('');
-      setPostcode('');
-      setcity('')
+    //  setAddress('');
+      //setPostcode('');
+      //setcity('')
       dispatch(Toggleleadsrenderstep(2));
     }
   };

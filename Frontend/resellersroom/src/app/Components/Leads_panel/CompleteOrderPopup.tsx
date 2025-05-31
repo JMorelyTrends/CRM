@@ -6,9 +6,6 @@ import { Plus, Check, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Task, labeltype } from "../Small comps/Types";
 import { Supplier } from "../Small comps/Types";
-import { TaskPanel } from "./TaskPanel";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/lib/Resellerstore";
 import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -45,9 +42,8 @@ export function CompleteOrderPopup({
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
 
   const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
-  let item:any=task&& task.stockxitem.length>0?task.stockxitem[0]: task.items&&task.items?.length>0?task.items[0]:{};//change this 
 
-console.log(task)
+
 const router=useRouter()
   useEffect(()=>{
     const getsuppliers=async()=>{
@@ -80,13 +76,7 @@ setShippingFee(task.Shippingfee?task.Shippingfee:'');
       setSelectedLabels(task.labels??[]);
       setsell(task.sellprice?task.sellprice.toString():'') 
     
-      if(task.stockxitem.length>0)
-      {
-        item=task.stockxitem[0]
-      }
-      else if(task.items){
-        item=task.items[0];
-      }
+ 
     }
     
   }, [task, open]);
@@ -225,7 +215,7 @@ const Orderreview =()=>{
     if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
      
-      const r=await axios.post(
+      await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
         {
          _id:task._id,

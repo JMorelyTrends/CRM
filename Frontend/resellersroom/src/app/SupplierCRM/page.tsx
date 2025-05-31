@@ -3,12 +3,10 @@ import React,{useEffect,useState} from "react";
 import {ArrowUpNarrowWide,Funnel } from "lucide-react"
 import NewSup from "../Components/Suppliers/NewSup";
 import axios from "axios";
-import BrandSelector from "../Components/Suppliers/BrandSelector";
 import { Sup } from "../Components/Small comps/Types";
 import { Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import {  useDispatch, useSelector } from 'react-redux';
-import { RootState } from "@/lib/Resellerstore";
+import {  useDispatch} from 'react-redux';
 import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
   type pageProps = object;
  
@@ -49,7 +47,7 @@ import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
 
 
 
-const page: React.FC<pageProps> = () => {
+const Page: React.FC<pageProps> = () => {
   const dispatch=useDispatch()
   const router = useRouter();
   const [suppliers,setsuppliers]=useState<Sup[]>();
@@ -247,4 +245,4 @@ const page: React.FC<pageProps> = () => {
     </>
   );
 };
-export default page;
+export default Page;

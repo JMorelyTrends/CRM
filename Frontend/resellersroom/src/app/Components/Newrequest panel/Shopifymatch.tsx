@@ -11,9 +11,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from "@/lib/Resellerstore";
 import { Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice';
 import { Custprop } from '../Small comps/Types';
-type Props = {};
 
-const Shopifymatch = (props: Props) => {
+const Shopifymatch = () => {
     const dispatch = useDispatch();
     const flag = useSelector((state: RootState) => state.NewReq.Openshopifymatch);
     const customer:Custprop|null = useSelector((state: RootState) => state.NewReq.MatchedCustomer);

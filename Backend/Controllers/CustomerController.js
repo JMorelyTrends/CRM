@@ -545,7 +545,6 @@ const getshopifyorders = async (req, res) => {
       // }));
 
       const shipfee = parseFloat(order.shippingLine?.originalPriceSet?.shopMoney?.amount || 0);
-    console.log(order.sellprice)
       const dbOrder = new Orderreview({
         soid: order.id,
         name: order.name,
