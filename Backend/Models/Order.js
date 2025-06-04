@@ -52,7 +52,7 @@ const OrderSchema = new mongoose.Schema(
     ref:"User",
     required:true,
   },
-  price:{  //coast price
+  price:{  //coast price  testing
     type:Number,
     default:0,
   },
