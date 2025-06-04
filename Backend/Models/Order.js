@@ -52,11 +52,11 @@ const OrderSchema = new mongoose.Schema(
     ref:"User",
     required:true,
   },
-  price:{
+  price:{  //coast price
     type:Number,
     default:0,
   },
-  sellprice:{
+  sellprice:{  //Revenuew
    type:Number,
    default:0 
   },

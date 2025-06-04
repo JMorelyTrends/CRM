@@ -222,7 +222,7 @@ function Page() {
                   {order.shippingaddress ? order.shippingaddress : "N/A"}
                 </div>
                 <div className="font-bold text-xl line-clamp-3 break-words text-[#4774B1]">
-                  £ {order.price ? order.price : "N/A"} Profits
+                  £ {order.price && order.sellprice && order.Shippingfee && order.processingfee ?  order.sellprice-order.price - parseFloat (order.Shippingfee )- parseFloat(order.processingfee)  : "N/A"} Profits
                 </div>
               </div>
             </div>

@@ -274,7 +274,7 @@ const Orderreview =()=>{
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
   <div className="space-y-4">
     <div>
-      <label className="block text-sm font-medium">Confirm Product Name</label>
+      <label className="block text-sm font-medium">Confirm Customer Name</label>
       <input type="text" className="w-full border rounded px-3 py-2 mt-1"
         value={productName} onChange={(e) => setProductName(e.target.value)} />
     </div>

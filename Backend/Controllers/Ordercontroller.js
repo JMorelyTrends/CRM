@@ -259,7 +259,7 @@ exports.Getorderofsuppliers=async(req,res)=>{
       if(o?.length>0)
       {
         o.map((or)=>{
-         spend+=or.price;
+         spend+=or.sellprice-or.price-or.Shippingfee-or.processingfee;
         })
       }
       res.status(201).json({data:o,spend:spend})
@@ -1012,28 +1012,37 @@ async function getWonRevenue(userid = null, start = null, end = null) {
     {
       $group: {
         _id: null,
-        total: { $sum: "$price" }
+        total:{$sum:"$sellprice"},
+      
       }
     }
   ]);
-
+  
+  
   return result[0]?.total || 0;
 }
 
 async function getWonProfit(userid = null, start = null, end = null) {
   const match = buildMatchQuery("Won", userid, start, end);
 
-  const result = await Order.aggregate([
+ const result = await Order.aggregate([
     { $match: match },
     {
       $addFields: {
         processingFeeNum: { $toDouble: { $ifNull: ["$processingfee", "0"] } },
-        shippingFeeNum: { $toDouble: { $ifNull: ["$Shippingfee", "0"] } }
+        shippingFeeNum: { $toDouble: { $ifNull: ["$Shippingfee", "0"] } },
+        sellPriceNum: { $toDouble: { $ifNull: ["$sellprice", "0"] } },
+        priceNum: { $toDouble: { $ifNull: ["$price", "0"] } }
       }
     },
     {
       $project: {
-        profit: { $subtract: ["$price", { $add: ["$processingFeeNum", "$shippingFeeNum"] }] }
+        profit: {
+          $subtract: [
+            { $subtract: ["$sellPriceNum", "$priceNum"] },
+            { $add: ["$shippingFeeNum", "$processingFeeNum"] }
+          ]
+        }
       }
     },
     {
@@ -1044,5 +1053,6 @@ async function getWonProfit(userid = null, start = null, end = null) {
     }
   ]);
 
-  return result[0]?.totalProfit || 0;
+  // Return totalProfit or 0 if no result
+  return result.length > 0 ? result[0].totalProfit : 0;
 }
