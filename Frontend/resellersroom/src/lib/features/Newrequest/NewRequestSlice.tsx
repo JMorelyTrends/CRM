@@ -1,5 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit'
-import { Task } from '@/app/Components/Small comps/Types'
+import { Custprop, Task } from '@/app/Components/Small comps/Types'
  type Suggest={
     _id: string,
     Stockxid?: string,
@@ -31,7 +31,7 @@ import { Task } from '@/app/Components/Small comps/Types'
       zip:string,
       country:string,
     },
-  socialhandel:string,
+  socialhandel?:string,
   
   }
    type dCustArray = Cust[];
@@ -45,11 +45,16 @@ import { Task } from '@/app/Components/Small comps/Types'
     Selectedonecustomer:Cust|null,
     Openshopifymatch:boolean,
     OpenMongomatch:boolean,
-    MatchedCustomer:Cust|null,
+    MatchedCustomer:Custprop|null,
     SubmitingCustomer:Cust|null,
     Ordercreated:Task|null,
     flow:string,
+    Shflag:boolean
+    
+   // UpShCus:Cust        // to hold the custoemrs which going to be updated from crm 
   };
+  
+  
   
   
  export  const initialState: NewReqState = {
@@ -93,7 +98,8 @@ import { Task } from '@/app/Components/Small comps/Types'
     MatchedCustomer:null,
     SubmitingCustomer:null,
     Ordercreated:null,
-    flow:"stockx"
+    flow:"stockx",
+    Shflag:false
   };
   
  export const NewRequestSlice= createSlice({
@@ -133,11 +139,18 @@ reducers:{
     }),
     Addflow:((state , action)=>{
      state.flow=action.payload;              //this thing is to tell is the flow is from stockx or manuall
-    })
+    }),
+    Updating_Customer_shopify:((state,action)=>{
+      state.Custprop=action.payload
+    }),
+    ToogleShflag:((state)=>{
+     state.Shflag=!state.Shflag
+    }),
 
 }
 },
 );
 export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,
-  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer,Addcreatedorder,Addflow}=NewRequestSlice.actions;
+  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,
+  AddSubmitingCustomer,Addcreatedorder,Addflow,Updating_Customer_shopify,ToogleShflag}=NewRequestSlice.actions;
 export default NewRequestSlice.reducer

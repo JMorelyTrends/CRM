@@ -9,15 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from "@/lib/Resellerstore";
-import { Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice';
+import { Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep,Updating_Customer_shopify,ToogleShflag } from '@/lib/features/Newrequest/NewRequestSlice';
 import { Custprop } from '../Small comps/Types';
+import { isEqualStrings } from '../Small comps/isEqualStrings';
 
 const Shopifymatch = () => {
     const dispatch = useDispatch();
     const flag = useSelector((state: RootState) => state.NewReq.Openshopifymatch);
     const customer:Custprop|null = useSelector((state: RootState) => state.NewReq.MatchedCustomer);
+    const edata=useSelector((state:RootState)=>state.NewReq.SubmitingCustomer)
+  
 
-
+    //function too see which fields are equal
     return (
         <>
             <Dialog open={flag} onOpenChange={() => dispatch(Toogleshopifypopup())}>
@@ -30,44 +33,62 @@ const Shopifymatch = () => {
                                 </DialogTitle>
                             </DialogHeader>
 
-                            {/* Customer Information */}
-                        { customer&&    <div className="p-4">
-                                <div className="text-lg font-semibold">Name: {customer.first_name} {customer.last_name}</div>
-                             
-                                <div className="text-lg font-semibold mt-2">Email: {customer.email}</div>
-                            
+                           
+                       {customer && (
+                            <table className="w-full text-left text-gray-700 border border-collapse border-gray-200 rounded">
+                                <tbody>
+                                    <tr className="border-b border-gray-200">
+                                        <td className= {`p-2 font-semibold `} >Name</td>
+                                        <td className="p-2">{customer.first_name} {customer.last_name}</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200">
+                                        <td className="p-2 font-semibold">Email</td>
+                                        <td className= {` p-2 ${edata?.email&&isEqualStrings(customer.email,edata?.email)?' text-blue-400':''}`} >{customer.email}</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200">
+                                        <td className="p-2 font-semibold">Phone</td>
+                                        <td className={` p-2 ${edata?.Number&&customer.Number&&isEqualStrings(customer.Number,edata?.Number)?' text-blue-400':''}`} >{customer.Number || "N/A"}</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200">
+                                        <td className="p-2 font-semibold">Total Spent</td>
+                                        <td className="p-2">£{customer.total_spent}</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200">
+                                        <td className="p-2 font-semibold">Orders Count</td>
+                                        <td className="p-2">{customer.orders_count}</td>
+                                    </tr>
+                                    <tr className="border-b border-gray-200">
+                                        <td className="p-2 font-semibold">Address</td>
+                                        <td className="p-2">
+                                            <div>{customer.address.adress1}</div>
+                                            <div>{customer.address.city}, {customer.address.zip}, {customer.address.country}</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        )}
 
-                                <div className="text-lg font-semibold mt-2">Phone: {customer.Number ? customer.Number : "N/A"}</div>
-                              
-
-                                <div className="text-lg font-semibold mt-2">Total Spent: {customer.total_spent}</div>
-                              
-
-                                <div className="text-lg font-semibold mt-2">Orders Count: {customer.orders_count}</div>
-                             
-
-                                <div className="text-lg font-semibold mt-2">Address:</div>
-                                <div>{customer.address.adress1}</div>
-                                <div>{customer.address.city}, {customer.address.zip}, {customer.address.country}</div>
-
-                               
-                            </div>}
-
-                            {/* Update Button */}
-                            <div className="flex justify-center mt-4">
-                                <button
-                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg"
-                                    onClick={() => {
-                                        dispatch(Toogleshopifypopup())
-                                         dispatch(Addselectedcusotmer(customer))
-                                      
-                                         dispatch(Toggleleadsrenderstep(2));
-                                        console.log('Update button clicked');
-                                    }}
-                                >
-                                    Use
-                                </button>
-                            </div>
+                        <div className="mt-6 flex justify-center gap-10 ">
+                            <button
+                                className="px-6 py-2 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                                onClick={() => {
+                                    dispatch(Toogleshopifypopup());
+                                    dispatch(Addselectedcusotmer(customer));
+                                    dispatch(Toggleleadsrenderstep(2));
+                                }}
+                            >
+                                Use
+                            </button>
+<button
+                                className="px-6 py-2 bg-gray-700 cursor-pointer hover:bg-gray-600 text-white rounded-lg font-medium transition"
+                                onClick={() => {
+                                    dispatch(Updating_Customer_shopify(customer))
+                                   dispatch(ToogleShflag())
+                                }}
+                            >
+                               Edit 
+                            </button>
+                        </div>
                         </DialogContent>
                     </DialogOverlay>
                 </DialogPortal>

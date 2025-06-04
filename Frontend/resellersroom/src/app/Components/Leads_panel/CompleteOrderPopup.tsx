@@ -9,6 +9,7 @@ import { Supplier } from "../Small comps/Types";
 import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import SupplierDropdown from "./SupplierDropdown";
 export function CompleteOrderPopup({
   open,
   setOpen,
@@ -42,15 +43,16 @@ export function CompleteOrderPopup({
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
 
   const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
-
+  
 
 const router=useRouter()
-  useEffect(()=>{
-    const getsuppliers=async()=>{
+ const getsuppliers=async()=>{
      const sup=await axios.get(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
      console.log(sup.data.supps)
       setavailsuppliers(sup.data.supps)
     }
+  useEffect(()=>{
+   
     getsuppliers();
 
   },[])
@@ -66,7 +68,7 @@ else{
   setCostPrice(task.price?task.price?.toString():"undefined")
 }
 
-setShippingFee(task.Shippingfee?task.Shippingfee:'');
+      setShippingFee(task.Shippingfee?task.Shippingfee:'');
       setProcessingFee(task.processingfee?task.processingfee:'');
       setSupplierUsed((task.Supplierid&&task.Supplierid?._id)?task.Supplierid._id:'');
       setShippingAddress(task.shippingaddress?task.shippingaddress:'');
@@ -247,7 +249,6 @@ const Orderreview =()=>{
 
  
   return (
-
     <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
@@ -306,7 +307,11 @@ const Orderreview =()=>{
                       } 
         }/>
     </div>
-<div>
+
+  {
+    availsuppliers && availsuppliers.length>0 && <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
+  }
+{/* <div>
   <label className="block text-sm font-medium">Supplier Used</label>
   <select
     className="w-full border rounded px-3 py-2 mt-1"
@@ -320,7 +325,7 @@ const Orderreview =()=>{
       </option>
     ))}
   </select>
-</div>
+</div> */}
     <div>
       <label className="block text-sm font-medium">Deal Owner</label>
       <select className="w-full border rounded px-3 py-2 mt-1"

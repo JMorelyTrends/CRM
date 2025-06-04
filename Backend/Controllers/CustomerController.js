@@ -135,7 +135,7 @@ const createCustomer = async (req, res) => {
       customer: createdCustomer,
     });
   } catch (error) {
-    console.error(error);
+//    console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -587,6 +587,70 @@ const getshopifyorders = async (req, res) => {
 };
 
 
+const updateshopifycustomer=async(req,res)=>{
+ try {
+    const {customer}=req.body;
+    console.log(customer)
+   
+       // console.log(id)
+    const response = await shopify.rest.Customer.find({
+      session,
+      id:customer.id , // numeric ID, not GID
+    });
+
+    response.first_name = customer.firstName;
+    response.last_name = customer.lastName;
+    response.phone = customer.phone;
+    response.email = customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+    const t = await response.save({ update: true });
+    const re=await shopify.rest.Customer.find({
+      session,
+      id:customer.id , // numeric ID, not GID
+    });
+    const ur = {
+      _id:customer.id, 
+      first_name: re.first_name,
+      last_name: re.last_name,
+      Name: `${re.first_name} ${re.last_name}`,
+      email: re.email,
+      total_spent: re.total_spent,
+      orders_count: re.orders_count.toString(),
+      customerfrom: "shopify", // Assuming you’re marking the source
+      Number: re.phone || null,
+      address: {
+        adress1: re.default_address?.address1 || "",
+        city: re.default_address?.city || "",
+        zip: re.default_address?.zip || "",
+        country: re.default_address?.country || "",
+      },
+      // Optional field (uncomment if you have social handle)
+      // socialhandel: updatedCustomer.socialhandel,
+    };
+
+    //console.log(response)
+    res.status(201).json({data:ur})
+  }
+   catch (err) {
+    const errors = err?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0]) {
+
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+     
+        res.status(501).json({data:d})
+
+      } else if (errors?.email) {
+        const d = "email " + re;
+        res.status(501).json({data:d})
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+
+        res.status(501).json({data:d})
+    }
+  }
+}
+
 
 const createshopifycustoemr=async(req,res)=>{
 try{
@@ -753,7 +817,7 @@ const shopifycustomer = async (Customer) => {
     response.phone = Customer.phone;
     response.email = Customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
     const t = await response.save({ update: true });
-
+    
     return t;
   }
    catch (err) {
@@ -854,6 +918,7 @@ module.exports = {
   draftorder,
   getAllCustomerOrderStats,
   update_Customer_Crm,
+  updateshopifycustomer,
   getshopifyorders,
 createshopifycustoemr
 };

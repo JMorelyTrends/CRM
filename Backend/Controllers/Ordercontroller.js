@@ -259,7 +259,7 @@ exports.Getorderofsuppliers=async(req,res)=>{
       if(o?.length>0)
       {
         o.map((or)=>{
-         spend+=or.sellprice-or.price-or.Shippingfee-or.processingfee;
+         spend+=or.price
         })
       }
       res.status(201).json({data:o,spend:spend})

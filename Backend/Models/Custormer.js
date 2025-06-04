@@ -9,7 +9,8 @@ const CustomerSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-     
+      trim:true,
+      default:"" 
      
     },
     customerfrom:{

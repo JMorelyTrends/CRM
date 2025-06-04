@@ -248,14 +248,14 @@ const Editoptions=(order:Task)=>{
       </td>
 
       {/* Cost (price) */}
-      <td className="px-4 py-2 truncate ">${order.price?.toFixed(2) || "0.00"}</td>
+      <td className="px-4 py-2 truncate ">£{order.price?.toFixed(2) || "0.00"}</td>
 
       {/* Revenue (assuming calculated from price or not present) */}
-      <td className="px-4 py-2">${order.sellprice?.toFixed(2) || "0.00"}</td>
+      <td className="px-4 py-2">£{order.sellprice?.toFixed(2) || "0.00"}</td>
 
       {/* Profit (price - fees as an example calculation) */}
       <td className="px-4 py-2">
-      { order.sellprice && order.price && order.Shippingfee && order.processingfee? ` ${(
+      £{ order.sellprice && order.price && order.Shippingfee && order.processingfee? ` ${(
           order.sellprice -  //revenue
           order.price-       //cost price
           parseFloat(order.Shippingfee || "0") -  //shipping fee

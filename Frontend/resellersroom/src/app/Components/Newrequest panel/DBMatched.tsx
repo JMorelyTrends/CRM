@@ -81,7 +81,7 @@ const DBMatched = () => {
                            <DialogContent className="sm:max-w-[600px] bg-[#EDEDED] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-90 z-50">
                                <DialogHeader>
                                    <DialogTitle className="w-full text-center text-2xl">
-                                       DB Customer Information Matched
+                                        Customer Information Matched
                                    </DialogTitle>
                                </DialogHeader>
                                {customer && (

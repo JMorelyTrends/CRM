@@ -7,6 +7,7 @@ import {  RootState } from "@/lib/Resellerstore";
 import {Toggleleadsrenderstep,Addselectedcusotmer,ADD_Matched_cutomer,Toogleshopifypopup,Tooglemongopopup,AddSubmitingCustomer} from '@/lib/features/Newrequest/NewRequestSlice'
 import Shopifymatch from './Shopifymatch';
 import DBMatched from './DBMatched';
+import Shopifyupdatepopup from './Shopifyupdatepopup';
 type Props = {
   sideopen: boolean;
 };
@@ -61,7 +62,15 @@ const Newcustomer = (props: Props) => {
     if(newc.data?.alert==="Exists in Shopify database")
     {
       
+      const submitteddata = {
+        name,
+        Number:number,
+        email,
+        userid,
+        socialhandel:social
+      };
 
+      dispatch(AddSubmitingCustomer(submitteddata))
       dispatch(ADD_Matched_cutomer(newc.data.customer))
       dispatch(Toogleshopifypopup())
       toast.error(`${newc.data?.alert}`)
@@ -100,6 +109,7 @@ const Newcustomer = (props: Props) => {
           : 'lg:w-[40%] md:w-[70%] w-[90%]'
       } h-[85vh] bg-white flex flex-col text-black rounded-xl overflow-hidden`}
     >
+<Shopifyupdatepopup/>
 <Shopifymatch/>
 <DBMatched />
       <div className="relative  w-full flex flex-col items-center pt-6  ">

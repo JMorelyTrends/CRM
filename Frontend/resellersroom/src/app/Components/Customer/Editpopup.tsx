@@ -29,12 +29,10 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
 
   useEffect(() => {
     if (customer) {
-      //setName(customer.firstName + " " +customer.lastName || "");
       setFirstName(customer.firstName)
       setLastName(customer.lastName)
       setEmail(customer.email || "");
       setPhone(customer.phone || "");
-   //   setSocialHandle(customer.SocialHandle || "");
       setEmailMarketingConsent(customer.emailMarketingConsent.marketingState || "");
     }
   }, [customer, ]);
@@ -57,21 +55,15 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
             setName("")
             getcustomers()
             dispatch(Toogle_Editopen())
-            
           }
         }
         catch(err:unknown)
         {
           if(axios.isAxiosError(err))
           {
-         
            toast.error(err.response?.data?.error || "An error occurred");
-                
           }
-
         }
-  
-      
   };
 
   const isMongo = false;

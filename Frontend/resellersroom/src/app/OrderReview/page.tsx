@@ -137,14 +137,14 @@ const filteredOrders = Orders?.filter((order: OrderRpr) => {
     {/* Line Items Cost */}
     <td className="px-4 py-2">
       {order.linedata?.map((item:Slinedata, i:number) => (
-        <div key={i} className="mb-1">${item.costprice?.toFixed(2)}</div>
+        <div key={i} className="mb-1">£{item.costprice?.toFixed(2)}</div>
       ))}
     </td>
 
-    <td className="px-4 py-2">${order.Revenue?.toFixed(2)}</td>
-    <td className="px-4 py-2">${order.shipingfee?.toFixed(2)}</td>
-    <td className="px-4 py-2">${order.processingfee?.toFixed(2)}</td>
-    <td className="px-4 py-2">${order.profit||0}</td>
+    <td className="px-4 py-2">£{order.Revenue?.toFixed(2)}</td>
+    <td className="px-4 py-2">£{order.shipingfee?.toFixed(2)}</td>
+    <td className="px-4 py-2">£{order.processingfee?.toFixed(2)}</td>
+    <td className="px-4 py-2">£{order.profit||0}</td>
     <td className="px-4 py-2">{order.Traffic_Source||""}</td>
     <td className="px-4 py-2">{order.Source_of_truth||""}</td>
     <td className="px-4 py-2">{order.Supplier_Name||""}</td>
