@@ -1,5 +1,6 @@
 process.env.SHOPIFY_LOG = "error";
 const Customer = require("../Models/Custormer");
+const ShopifyCustomer=require("../Models/ShopifyCustomers")
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 const Orderreview=require("../Models/Orderreview")
@@ -461,20 +462,34 @@ const update_Customer_Crm = async (req, res) => {
   const { Cust } = req.body;
  
   try {
-    if (Cust.Custoemrfrom=== "Mongodb") {
-      const re=await Customer.findOneAndUpdate({_id:Cust.id},{$set:{
-         Name:Cust.Name,
-         Email:Cust.email,
-         Number:Cust.Number,
-         socialhandel:Cust.socialhandel,
-      }})
+
+    // if (Cust.Custoemrfrom=== "Mongodb") {
+    //   const re=await Customer.findOneAndUpdate({_id:Cust.id},{$set:{
+    //      Name:Cust.Name,
+    //      Email:Cust.email,
+    //      Number:Cust.Number,
+    //      socialhandel:Cust.socialhandel,
+    //   }})
  
-      return res.status(201).json({msg:"mongodb custoemr updated sucessfully"})
-    }
-     else {
-      const re = await shopifycustomer(Cust);  
-    return res.status(201).json({msg:"shopify custoemr updated sucessfully"});
-    }
+    //   return res.status(201).json({msg:"mongodb custoemr updated sucessfully"})
+    // }
+    //  else {
+    //   const re = await shopifycustomer(Cust);  
+    // return res.status(201).json({msg:"shopify custoemr updated sucessfully"});
+    // }
+
+    await shopifycustomer(Cust)
+    const c=await ShopifyCustomer.findOneAndUpdate({_id:Cust._id},{
+      $set:{
+         firstName:Cust.firstName,
+         lastName:Cust.lastName,
+         email:Cust.email,
+         phone:Cust.phone
+      }
+    })
+    
+    res.status(201).json({msg:"shopify custoemr updated sucessfully"});
+
    
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -571,6 +586,45 @@ const getshopifyorders = async (req, res) => {
   }
 };
 
+
+
+const createshopifycustoemr=async(req,res)=>{
+try{
+   const {data}=req.body;
+   
+    const client = new shopify.rest.Customer({ session });
+
+    const response = await client.create({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          email_marketing_consent: {
+            marketing_opt_in_level: 'SINGLE_OPT_IN',
+            marketing_state: 'SUBSCRIBED',
+            consent_updated_at: new Date().toISOString(),
+          },
+        });
+
+}
+  catch (err) {
+    const errors = err?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0]) {
+
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+        throw new Error(re);
+      } else if (errors?.email) {
+        const d = "email " + re;
+        throw new Error(d);
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+      throw new Error(re);
+    }
+  }
+}
+
 //FUNCTIONS
 
 const Get_mongo_byid = async (id) => {
@@ -583,6 +637,9 @@ const get_shopify_byid = async (id) => {
   const d = await shopify.rest.Customer.search({ session, id: id });
   return d;
 };
+
+
+
 
 //Draf order here becasue our shopify session is here i should make it sepearte module in near future
 
@@ -684,9 +741,11 @@ const getcustoemrwithorders = async (shopifyMap) => {
 const shopifycustomer = async (Customer) => {
   try {
     const client = new shopify.rest.Customer({ session });
+        const id= parseFloat (Customer.id.split('/')[4])
+       // console.log(id)
     const response = await shopify.rest.Customer.find({
       session,
-      id: Customer.id, // numeric ID, not GID
+      id: id, // numeric ID, not GID
     });
 
     response.first_name = Customer.firstName;
@@ -695,7 +754,7 @@ const shopifycustomer = async (Customer) => {
     response.email = Customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
     const t = await response.save({ update: true });
 
-    return response;
+    return t;
   }
    catch (err) {
     const errors = err?.response?.body.errors;
@@ -795,5 +854,6 @@ module.exports = {
   draftorder,
   getAllCustomerOrderStats,
   update_Customer_Crm,
-  getshopifyorders
+  getshopifyorders,
+createshopifycustoemr
 };

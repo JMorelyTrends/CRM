@@ -1,3 +1,4 @@
+
 "use client"
 import React,{useState,useEffect} from 'react'
 import {ArrowUpNarrowWide,Funnel } from "lucide-react"
@@ -5,15 +6,17 @@ import axios from 'axios'
 import { Customerprop } from '../Components/Small comps/Types'
 import EditPopup from '../Components/Customer/Editpopup'
 import { useDispatch } from "react-redux";
-import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus} from "../../lib/features/CustomerCrm/CustomerCrmslice"
-import NewCust from '../Components/Customer/NewCust'
+import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus, Toogle_Newcuscrm} from "../../lib/features/CustomerCrm/CustomerCrmslice"
+import NewCustomerFormUI from '../Components/Customer/NewCustomerFormUI'
+import { IShopifyCustomer } from '../Components/Small comps/Types'
+import { ArrowLeft, ArrowRight } from "lucide-react";
+
   type hprops={
     search:string,
     setsearch:React.Dispatch<React.SetStateAction<string>>
   }
 
   const Header=(props:hprops)=>{
-
      
     return(
         < >   
@@ -65,35 +68,50 @@ const Page = () => {
 
         const [search,setsearch ]=useState<string>("")
         const [userid, setuserid] = useState<string | null>("");
-        const [custo,setcusto]=useState<Customerprop[]|null>(null)
+        const [custo,setcusto]=useState<IShopifyCustomer[]|null>(null)
         const [noofcus,setnoofcus]=useState<number>(0);
         const [Klaviyop,setKlaviyop]=useState<number>(0)
+        const [cpage,setcpage]=useState<number>(1)
+        const [totalPages,settotalpages]=useState<number>(1)
+      
         //functions
-       const    calKlaviyop=(data:Customerprop[])=>{
-          let optin=0;
-          data.map((d:Customerprop)=>{
-            if(d.emailMarketingConsent==='SUBSCRIBED')
-            {
-              optin++;
-            }
-          } )
-          
-          const per= ((optin/data.length)*100);
-          const n=Math.round(per*10)/10
-          setKlaviyop(n)
-
-       }  
         const getcustomers=async()=>{
-          const re=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getAllCustomerOrderStats`,
+        try
+          {  const re=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/shcustomer/getcustomers`,
           {
-            userId: userid,
+            userid: userid,
+            currentpage:cpage,
+            searchText:search
           })
-          setcusto(re.data.data)
-          console.log(re.data.data)
-          setnoofcus(re.data.data.length);
-          dispatch(AddCustomers(re.data.data))
-          calKlaviyop(re.data.data);
+          setcusto(re.data.customers)
+         
+          setnoofcus(re.data.totalCustomers);
+          dispatch(AddCustomers(re.data.customers))
+          settotalpages(re.data.totalPages)
+          setKlaviyop(re.data.optin)
+          if(cpage>re.data.totalPages)
+          {
+            setcpage(1);
+          }
         }
+        catch(e){
+          console.log("something wrong with customer fetching",e)
+        }
+        }
+        const goToNextPage = () => {
+          if (cpage < totalPages) {
+            setcpage((prev) => prev + 1);
+            
+          }
+        };
+        
+        const goToPreviousPage = () => {
+          if (cpage > 1) {
+            setcpage((prev) => prev - 1);
+        
+          }
+        };
+
 
         //useeffects
         useEffect(() => {
@@ -107,8 +125,14 @@ const Page = () => {
         useEffect(()=>{
           if(userid!==""){
           getcustomers()}
-        },[userid])
-      
+        },[userid,search])
+        
+      useEffect(() => {
+  if (userid !== "") {
+    getcustomers();
+  }
+}, [cpage]);
+
   return (
     <div className=' w-[80vw]'>
          { !isSmallScreen&& <Header
@@ -116,14 +140,16 @@ const Page = () => {
              setsearch={setsearch}
         />}
 
-        <EditPopup />
-        <NewCust />
+        <EditPopup
+        getcustomers={getcustomers}
+        />
+        <NewCustomerFormUI />
                 {/*ADD new Supplier */}
         <div className="w-full h-[8vh] mt-[2vh] bg-white flex justify-items-start items-end">
             <button
             className="lg:w-[25%]  h-full ml-5 bg-[#454545] text-white font-bold rounded-2xl cursor-pointer hover:border-black"
             onClick={()=>{
-          dispatch(  Toogle_Newcus())
+          dispatch(  Toogle_Newcuscrm())
             }}
             >
               Add New Customer
@@ -190,7 +216,7 @@ const Page = () => {
           </div>
 
           {/**customer tabel */}
-          <div className="w-full h-[62vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
+          <div className="w-full h-[53vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
@@ -201,7 +227,6 @@ const Page = () => {
                   <th className="px-4 py-2">Customer Name</th>
                   <th className="px-4 py-2">Number</th>
                   <th className="px-4 py-2">Email</th>
-                  <th className="px-4 py-2">Instagram Handle</th>
                   <th className="px-4 py-2">Total Spend</th>
                   <th className="px-4 py-2">Total Orders</th>
                   <th className="px-4 py-2">Tier</th>
@@ -213,21 +238,21 @@ const Page = () => {
               <tbody>
                 {custo &&custo.length>0 &&custo.map((customer, idx) => (
                   <tr key={idx} className="border-b border-black">
-                    <td className="px-4 py-2">{customer.Name}</td>
-                    <td className="px-4 py-2">{customer.Phone}</td>
-                    <td className="px-4 py-2">{customer.Email}</td>
-                    <td className="px-4 py-2">{customer.SocialHandle}</td>
-                    <td className="px-4 py-2">{customer.TotalSpent}</td>
-                    <td className="px-4 py-2">{customer.TotalOrders}</td>
+                    <td className="px-4 py-2">{customer.firstName+" "+customer.lastName}</td>
+                    <td className="px-4 py-2">{customer.phone}</td>
+                    <td className="px-4 py-2">{customer.email}</td>
+                    
+                    <td className="px-4 py-2">{customer.amountSpent.amount}</td>
+                    <td className="px-4 py-2">{customer.numberOfOrders}</td>
                     <td className="px-4 py-2">
                       <button className="bg-gray-200 px-2 py-1 rounded-full">tier</button>
                     </td>
                    
                     <td className="px-4 py-2">
                       <button
-                        className={`px-2 py-1 rounded-full text-nowrap cursor-pointer ${customer.emailMarketingConsent==='SUBSCRIBED'?'bg-[#B7CBAF]':'bg-[#272626] text-white'} `}
+                        className={`px-2 py-1 rounded-full text-nowrap cursor-pointer ${customer.emailMarketingConsent.marketingState==='SUBSCRIBED'?'bg-[#B7CBAF]':'bg-[#272626] text-white'} `}
                       >
-                       {customer.emailMarketingConsent==='SUBSCRIBED'?'Opt-in':'Opt-out'}
+                       {customer.emailMarketingConsent.marketingState==='SUBSCRIBED'?'Opt-in':'Opt-out'}
                       </button>
                     </td>
                     <td className="px-4 py-2">
@@ -243,6 +268,31 @@ const Page = () => {
               </tbody>
             </table>
           </div>
+            {/* Pagination Buttons */}
+            <div className="flex justify-center items-start gap-4 mt-4">
+              <button
+                onClick={goToPreviousPage}
+                disabled={cpage === 1}
+                className={`w-[100px] h-[30px] ml-5 bg-[#454545] text-white font-bold rounded-xl cursor-pointer ${
+                  cpage === 1 ? "opacity-50 cursor-not-allowed" : "hover:border-black"
+                }`}
+              >
+                Previous
+              </button>
+              <span className="font-bold text-black text-md">
+                Page {cpage} of {totalPages}
+              </span>
+              <button
+                onClick={goToNextPage}
+                disabled={cpage === totalPages}
+                className={`w-[100px] h-[30px] ml-5 bg-[#454545] text-white font-bold rounded-xl cursor-pointer ${
+                  cpage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:border-black"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+
     </div>
 
   )

@@ -11,6 +11,8 @@ const FeatureRoutes=require("./Routes/FeatureRoutes")
 const S3Routes=require("./Routes/S3routes")
 const SupplierRoute=require("./Routes/SupplierRoute")
 const OrderReviewRoute=require("./Routes/OrderReviewRoute")
+const shcustomerRoutes=require("./Routes/shcustomerRoutes")
+const shopifyhookRoutes=require("./Routes/shopifyhooksRoute");
 app.use(express.json()); 
 app.use(cors({ origin: "*" }));
 const DB_ConnectDB = require("./utils/DBconnect"); 
@@ -26,6 +28,9 @@ app.use("/api/Stockx/",StockXRoutes)
 app.use("/api/features/",FeatureRoutes)
 app.use("/api/S3",S3Routes);
 app.use("/api/Review",OrderReviewRoute)
+app.use("/api/shcustomer",shcustomerRoutes);
+//routes for hooks
+app.use("/api/webhooks/shopify",shopifyhookRoutes);
 const Port = process.env.PORT;
 app.listen(Port, () => {
   console.log(`server is listing on ${Port}`);

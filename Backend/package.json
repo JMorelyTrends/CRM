@@ -17,6 +17,7 @@
     "@shopify/shopify-api": "^11.12.0",
     "@vlourme/stockx-api": "^1.0.3",
     "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
@@ -26,6 +27,7 @@
     "mongoose": "^8.13.1",
     "node-fetch": "^2.7.0",
     "nodemon": "^3.1.9",
+    "raw-body": "^3.0.0",
     "sneaks-api": "^1.2.3"
   }
 }

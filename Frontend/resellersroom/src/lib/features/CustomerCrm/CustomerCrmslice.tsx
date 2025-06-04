@@ -1,29 +1,48 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Customerprop } from "@/app/Components/Small comps/Types";
+import { Customerprop,IShopifyCustomer } from "@/app/Components/Small comps/Types";
 
 
 interface CustomerState {
-  Customers: Customerprop[];
-  Selected_customer:Customerprop;
+  Customers: IShopifyCustomer[];
+  Selected_customer:IShopifyCustomer;
   openedit:boolean,
   opennewcus:boolean,
+  Newcuscrm:boolean
 }
 
-const initialState: CustomerState = {
+export const initialState: CustomerState = {
   Customers: [],
-  Selected_customer:{
-  id:'',
-  Name:'',
-  Email:'',
-  Phone:'',
-  SocialHandle:'',
-  emailMarketingConsent:'',
-  Custoemrfrom:'',
-  TotalSpent:0,
-  TotalOrders:0
+  Selected_customer: {
+    _id: '',
+    shopify_id: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    shopifyCreatedAt: null,
+    numberOfOrders: 0,
+    amountSpent: {
+      amount: 0,
+      currencyCode: ''
+    },
+    defaultAddress: {
+      address1: '',
+      city: '',
+      zip: ''
+    },
+    userid: '',
+    emailMarketingConsent: {
+      consentUpdatedAt: null,
+      marketingOptInLevel: '',
+      marketingState: ''
+    },
+    lastUpdatedAt:"",
+    createdAt: undefined,
+    updatedAt: undefined
   },
-  openedit:false,
-  opennewcus:false
+  openedit: false,
+  opennewcus: false,
+  Newcuscrm:false
 };
 
 const CustoemrSlice=createSlice({
@@ -41,10 +60,13 @@ const CustoemrSlice=createSlice({
         },
         Toogle_Newcus:(state)=>{
             state.opennewcus=!state.opennewcus;
-        }
+        },
+        Toogle_Newcuscrm:(state)=>{
+            state.Newcuscrm=!state.Newcuscrm;
+        },
     }
 })
 
-export const {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus}=CustoemrSlice.actions;
+export const {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus,Toogle_Newcuscrm}=CustoemrSlice.actions;
 
 export default CustoemrSlice.reducer;

@@ -4,13 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import { Toogle_Editopen } from "../../../lib/features/CustomerCrm/CustomerCrmslice";
 import axios from "axios";
 import { toast } from "sonner";
-export default function EditPopup() {
+export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<React.SetStateAction<void>>}) {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.Cus.openedit);
   const customer = useSelector((state: RootState) => state.Cus.Selected_customer);
@@ -29,27 +29,21 @@ export default function EditPopup() {
 
   useEffect(() => {
     if (customer) {
-      setName(customer.Name || "");
-      if(customer.Custoemrfrom!=="Mongodb")
-      {
-        setFirstName(customer?.Name?.split(' ')[0]||"");
-        setLastName(customer?.Name?.split(' ')[1]||"")
-      }
-      setEmail(customer.Email || "");
-      setPhone(customer.Phone || "");
-      setSocialHandle(customer.SocialHandle || "");
-      setEmailMarketingConsent(customer.emailMarketingConsent || "");
+      //setName(customer.firstName + " " +customer.lastName || "");
+      setFirstName(customer.firstName)
+      setLastName(customer.lastName)
+      setEmail(customer.email || "");
+      setPhone(customer.phone || "");
+   //   setSocialHandle(customer.SocialHandle || "");
+      setEmailMarketingConsent(customer.emailMarketingConsent.marketingState || "");
     }
   }, [customer, ]);
-console.log(customer)
+
   const handleSubmit = async() => {
     const data =
-      customer.Custoemrfrom === "Mongodb"
-        ? { id:customer.id, Name:name, email, Number:phone, socialhandel:socialHandle, Custoemrfrom:'Mongodb' }
-        : {id:customer.id, firstName, lastName, email, phone, emailMarketingConsent, Custoemrfrom:'shopify' };
-         
+        {_id:customer._id,id:customer.shopify_id, firstName, lastName, email, phone, emailMarketingConsent, Custoemrfrom:'shopify' };  
         try{
-               const re= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/update_Customer_Crm`,
+          const re= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/update_Customer_Crm`,
           {
             Cust:data,
           })
@@ -61,8 +55,9 @@ console.log(customer)
             setLastName("")
             setPhone("")
             setName("")
+            getcustomers()
             dispatch(Toogle_Editopen())
-
+            
           }
         }
         catch(err:unknown)
@@ -79,7 +74,7 @@ console.log(customer)
       
   };
 
-  const isMongo = customer?.Custoemrfrom === "Mongodb";
+  const isMongo = false;
 
   return (
     <Dialog open={open} onOpenChange={close}>

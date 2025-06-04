@@ -10,7 +10,8 @@ const {
     Updatecusnewreq,
     getAllCustomerOrderStats,
     update_Customer_Crm,
-     getshopifyorders
+     getshopifyorders,
+createshopifycustoemr
 
 } = require("../Controllers/CustomerController");
 
@@ -25,6 +26,7 @@ router.post("/Updatecusnewreq",Updatecusnewreq)
 router.post("/getAllCustomerOrderStats", getAllCustomerOrderStats);          // Get all customers
 router.post("/update_Customer_Crm",update_Customer_Crm)
 router.post("/getshopifyorders", getshopifyorders);
+router.post("/cratenewhsopifycustomer",createshopifycustoemr)
 module.exports = router;
 
 

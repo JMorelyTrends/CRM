@@ -210,3 +210,33 @@ export type Customerprop={
   Custoemrfrom:string,
   id:string,
 }
+
+//CustomerCrm
+export interface IShopifyCustomer {
+  _id?: string; // MongoDB document ID
+  shopify_id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  shopifyCreatedAt: Date | null;
+  numberOfOrders: number;
+  amountSpent: {
+    amount: number;
+    currencyCode: string;
+  };
+  defaultAddress: {
+    address1: string;
+    city: string;
+    zip: string;
+  };
+  userid: string; // or Types.ObjectId[] if using an array in your schema
+  emailMarketingConsent: {
+    consentUpdatedAt: Date | null;
+    marketingOptInLevel: string;
+    marketingState: string;
+  };
+  lastUpdatedAt: string;
+  createdAt?: Date; // createdAt from { timestamps: true }
+  updatedAt?: Date; // updatedAt from { timestamps: true }
+}
