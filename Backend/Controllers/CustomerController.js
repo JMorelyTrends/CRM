@@ -498,20 +498,20 @@ const update_Customer_Crm = async (req, res) => {
 
 const getshopifyorders = async (req, res) => {
   const { userid } = req.body;
-
+console.log(userid)
   try {
     // Get last createdAt from DB
     const latestOrder = await Orderreview.findOne({ userid })
       .sort({ shopifycreatedat: -1 })
       .lean();
 
+      
     const createdAfter = latestOrder
       ? new Date(latestOrder.createdAt).toISOString()
-      : '2025-05-22T00:00:00Z';
+      : '2025-02-22T00:00:00Z';
       
 
     const client = new shopify.clients.Graphql({ session });
-
     let query = buildOrderQuery(null, createdAfter);
     let totalorders = [];
 
@@ -536,7 +536,7 @@ const getshopifyorders = async (req, res) => {
     }
 
     const shopifyOrders = totalorders.flat();
-  
+  //   console.log(shopifyOrders) 
     // Populate into DB
     const savePromises = shopifyOrders.map(async (order) => {
       const check=await Orderreview.find({name:order.name});
@@ -558,7 +558,7 @@ const getshopifyorders = async (req, res) => {
       //   name: m.node.namespace,
       //   value: parseFloat(m.node.value) || 0,
       // }));
-
+      
       const shipfee = parseFloat(order.shippingLine?.originalPriceSet?.shopMoney?.amount || 0);
       const dbOrder = new Orderreview({
         soid: order.id,
@@ -566,7 +566,7 @@ const getshopifyorders = async (req, res) => {
         firstName: order.customer?.firstName || '',
         lastName: order.customer?.lastName || '',
         phone: order.customer?.phone || '',
-        Revenue:order.sellprice,
+        Revenue:order.totalPrice,
         shipingfee: shipfee,
         linedata: lineItems,
         shopifycreatedat:order.createdAt,
@@ -576,7 +576,9 @@ const getshopifyorders = async (req, res) => {
     });
 
     await Promise.allSettled(savePromises);
-    const sendingorders=await Orderreview.find().sort({shopifycreatedat:-1});
+    const sendingorders=await Orderreview.find({userid:userid})
+      .populate("Supplier_Name")
+    .sort({shopifycreatedat:-1});
     
     res.status(201).json({ data: sendingorders, count: shopifyOrders.length });
   } 

@@ -23,7 +23,12 @@ const SupplierSchema= new mongoose.Schema({
     image:{
         type:String,
         default:null
-    }
+    },
+  userid:{
+    type:[mongoose.Schema.Types.ObjectId],
+    ref:"User",
+    required:true,
+  },
 },
  { timestamps: true })
 

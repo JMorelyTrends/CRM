@@ -21,7 +21,7 @@ const getwons=async()=>{
   const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getshopifyorders`,{
     userid:userid,
   });
-  console.log(re)
+  console.log(re.data.data)
   setOrders(re.data.data)
 }
  
@@ -47,7 +47,7 @@ const filteredOrders = Orders?.filter((order: OrderRpr) => {
   return (
   order.name?.toLowerCase().includes(searchTerm) ||
   `${order.firstName} ${order.lastName}`.toLowerCase().includes(searchTerm) ||
-  order.Supplier_Name?.toLowerCase().includes(searchTerm) ||
+  order.Supplier_Name?.Name?.toLowerCase().includes(searchTerm) ||
   order.Source_of_truth?.toLowerCase().includes(searchTerm) ||
   order.linedata?.some((item: Slinedata) =>
     item.title?.toLowerCase().includes(searchTerm)
@@ -80,7 +80,7 @@ const filteredOrders = Orders?.filter((order: OrderRpr) => {
   <div className="w-[35%] h-full flex flex-col justify-around items-start ml-4">
     <div className="flex w-full h-[40%]">
       <div className="text-2xl font-bold">All Orders</div>
-      <div className="text-[10px] font-extralight flex items-end ml-2">(0)</div>
+      <div className="text-[10px] font-extralight flex items-end ml-2">({filteredOrders?.length||0})</div>
     </div>
     <div className="flex justify-start gap-8 w-full h-[60%]">
       <div className="w-[25%] h-full flex items-end">
@@ -122,7 +122,7 @@ const filteredOrders = Orders?.filter((order: OrderRpr) => {
           <tbody>
             {/* Dummy rows (replace with mapped data later) */}
     {filteredOrders && filteredOrders.length > 0 && filteredOrders.map((order: OrderRpr, index: number) => (
-  <tr key={index} className="border-b border-black align-top">
+  <tr key={index} className={`border-b ${order.profit!=0?"text-black":"text-red-800"}  border-black align-top`}>
     <td className="px-4 py-2">{order.name}</td>
     <td className="px-4 py-2">{order.shopifycreatedat?.toString()?.split("T")[0]}</td>
     <td className="px-4 py-2">{`${order.firstName} ${order.lastName}`}</td>
@@ -147,12 +147,12 @@ const filteredOrders = Orders?.filter((order: OrderRpr) => {
     <td className="px-4 py-2">£{order.profit||0}</td>
     <td className="px-4 py-2">{order.Traffic_Source||""}</td>
     <td className="px-4 py-2">{order.Source_of_truth||""}</td>
-    <td className="px-4 py-2">{order.Supplier_Name||""}</td>
+    <td className="px-4 py-2">{order.Supplier_Name?.Name||""}</td>
     <td className="px-4 py-2">
-      <span className=   {`  ${order.shipingfee!=0 && order.processingfee!=0?"bg-[#B7CBAF]":"bg-[#D79A58]"}   px-2 py-1 rounded-full`}>
+      <span className=   {`  ${order.profit!=0?"bg-[#B7CBAF]":"text-black bg-[#D79A58]"}   px-2 py-1 rounded-full`}>
         
         {
-        order.shipingfee!=0 && order.processingfee!=0?"Approved":"Review"
+       order.profit!=0?"Approved":"Review"
         }</span>
     </td>
     <td className="px-4 py-2">
@@ -161,7 +161,7 @@ const filteredOrders = Orders?.filter((order: OrderRpr) => {
         dispatch(AddSelectedOrder(order))
         dispatch(ToogleEdit())
       }}
-      className="bg-blue-500 text-white px-4 py-1 rounded-full">Edit</button>
+      className="bg-blue-500 cursor-pointer text-white px-4 py-1 rounded-full">Edit</button>
     </td>
   </tr>
 ))}

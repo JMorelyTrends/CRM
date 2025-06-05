@@ -8,22 +8,23 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/lib/Resellerstore';
 import { ToogleEdit } from '@/lib/features/OrederReview/OrderReviewSlice';
-import { Slinedata } from "../Small comps/Types";
+import { Slinedata ,Supplier} from "../Small comps/Types";
 import axios from "axios";
-
-
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import SupplierDropdown from "../Leads_panel/SupplierDropdown";
 export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetStateAction<void>>}) {
     const dispatch=useDispatch()
     const open=useSelector((state:RootState)=>state.Rew.isOpen)
     const order=useSelector((state:RootState)=>state.Rew.selectedOrder)
-    console.log(order)
-  const [dummyLinedata, setDummyLinedata] = useState<Slinedata[]|null>(null);
-  const [shipingfee,setshippingfee]=useState<string>("");
-  const [processingfee,setprocessingfee]=useState<string>("");
-  const [Source,setSource]=useState<string>("")
-  const [Supplier,setSupplier]=useState<string>("");
-  const [Traffic,setTraffic]=useState<string>("shopify")
-  const close=()=>{
+    const [dummyLinedata, setDummyLinedata] = useState<Slinedata[]|null>(null);
+    const [shipingfee,setshippingfee]=useState<string>("");
+    const [processingfee,setprocessingfee]=useState<string>("");
+    const [Source,setSource]=useState<string>("")
+    const [Supplier,setSupplier]=useState<string>("");
+    const [Traffic,setTraffic]=useState<string>("shopify")
+  const [userid,setuserid]=useState<string|null>("")
+    const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
+    const close=()=>{
        setshippingfee("0") 
    setprocessingfee("0")
   setDummyLinedata(null)
@@ -34,6 +35,29 @@ export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetS
     dispatch(ToogleEdit())
   }
   let f=false;
+const getsuppliers=async()=>{
+     const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
+      userid
+     });
+      setavailsuppliers(sup.data.supps)
+    }
+
+  useEffect(()=>{
+   if(userid!==""&&userid)
+   {
+
+    getsuppliers();
+   }
+   
+  },[userid])
+
+ useEffect(() => {
+    dispatch(Toggleleadsrenderstep(0));
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("tempcred");
+      setuserid(id);
+    }
+  }, []);
   useEffect(()=>{
  
   if(order && order.linedata && !f){
@@ -42,8 +66,7 @@ export default function ReviewEdits({getwons}:{getwons:React.Dispatch<React.SetS
   setDummyLinedata(order?.linedata)
   setTraffic("shopify");
   setSource(order?.Source_of_truth?order?.Source_of_truth:"");
-  setSupplier(order?.Supplier_Name?order.Supplier_Name:"");
-  
+  setSupplier(order.Supplier_Name?._id||"");
   f=true
 }
   },[order])
@@ -146,7 +169,9 @@ close()
 
           <div className="flex flex-col gap-1">
             <Label>Supplier Name</Label>
-            <Input value={Supplier} onChange={(e)=>{setSupplier(e.target.value)}} />
+              {
+    availsuppliers && availsuppliers.length>0 && <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={Supplier} setSupplierUsed={setSupplier} getsuppliers={getsuppliers} />
+  }
           </div>
 
           {/* Line Item Costs */}

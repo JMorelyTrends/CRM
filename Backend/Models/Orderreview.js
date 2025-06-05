@@ -62,9 +62,7 @@ const OrderreviewSchema = new mongoose.Schema(
         },
       },
     ],
-    userid: {
-      type: String,
-    },
+
     shopifycreatedat: {
       type: Date,
     },
@@ -76,14 +74,20 @@ const OrderreviewSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    Supplier_Name: {
-      type: String,
-      default: null,
-    },
+    Supplier_Name:{
+     type:mongoose.Schema.Types.ObjectId,
+    ref:"Supplier",
+    default:null,
+  },
     approved: {
       type: Boolean,
       default: false,
     },
+  userid:{
+    type:[mongoose.Schema.Types.ObjectId],
+    ref:"User",
+    required:true,
+  },
   },
   { timestamps: true }
 );

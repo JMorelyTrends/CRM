@@ -10,19 +10,24 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import SupplierDropdown from "./SupplierDropdown";
-export function CompleteOrderPopup({
+import { useDispatch } from "react-redux";
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+export function CompleteOrderPopup({ 
+
   open,
   setOpen,
   task,
   fetchallorders,
   update,
 }: {
+
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   task: Task;
   fetchallorders: () => void;
   update:boolean
 }) {
+  const dispatch=useDispatch()
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
   const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
@@ -34,28 +39,43 @@ export function CompleteOrderPopup({
   const [sourceOfTruth, setSourceOfTruth] = useState<string>(task.Sourceofthruth?task.Sourceofthruth:'');
   const [paymentMethod, setPaymentMethod] = useState<string>(task.paymentmethod?task.paymentmethod:'');
   const [sell,setsell]=useState<string>(task.sellprice?task.sellprice.toString():"")
+  const [userid, setuserid] = useState<string | null>("");
+
 //usestates for feautres
+
   const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task?.labels ?? []);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
   const [createLabelOpen, setCreateLabelOpen] = useState(false);
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
   const [newLabel, setNewLabel] = useState("");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
-
   const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
   
-
 const router=useRouter()
+
+  useEffect(() => {
+    dispatch(Toggleleadsrenderstep(0));
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("tempcred");
+      setuserid(id);
+    }
+  }, []);
  const getsuppliers=async()=>{
-     const sup=await axios.get(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
+     const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
+      userid
+     });
      console.log(sup.data.supps)
       setavailsuppliers(sup.data.supps)
     }
-  useEffect(()=>{
-   
-    getsuppliers();
 
-  },[])
+  useEffect(()=>{
+   if(userid!==""&&userid)
+   {
+
+    getsuppliers();
+   }
+   console.log(userid)
+  },[userid])
 
   useEffect(() => {
     if (open && task) {
@@ -82,9 +102,6 @@ else{
     }
     
   }, [task, open]);
-
-
-
 
   const AddnewLabel = async (color: string, label: string) => {
     try {
@@ -139,6 +156,7 @@ else{
       console.error("Failed to update labels", err);
     }
   };
+
   const handleDeleteLabel=async(id:string)=>{
     try{
        await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/features/dellabel`,{
@@ -207,10 +225,12 @@ else{
     "bg-teal-400",
     "bg-indigo-400",
   ];
+
 const Orderreview =()=>{
 
        router.push('/Leads/OrderReview')
 }
+
   const Submit=async()=>{
    
 
@@ -515,8 +535,6 @@ const Orderreview =()=>{
           <Button onClick={() => AddnewLabel(selectedColor, newLabel)}>Add</Button>
         </DialogContent>
       </Dialog>
-
-     
     </>
   );
 }

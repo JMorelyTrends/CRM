@@ -151,7 +151,7 @@ export type OrderRpr={
     name?: string;
     value?: number;
   }[];
-  Supplier_Name?:string,
+  Supplier_Name?:Sup,
   Source_of_truth?:string,
   Traffic_Source?:string,
   profit?:number,
@@ -166,6 +166,7 @@ export type OrderRpr={
 //suppliers types
 
 export type Sup={
+  _id?:string,
     Name:string|null,
     Number:string|null,
     Email:string|null,

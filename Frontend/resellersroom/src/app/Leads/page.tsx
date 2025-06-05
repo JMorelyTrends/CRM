@@ -23,6 +23,7 @@ const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
 });
 
+
 type Props = object;
 
 
@@ -37,7 +38,7 @@ export default function Page({}: Props) {
   const [wonpopup,setwonpopup]=useState<boolean>(false)
   const [wontask,setwontask]=useState<Task|null>(null)
 
-const lockRef = useRef(false);
+  const lockRef = useRef(false);
 
   
 
@@ -62,6 +63,7 @@ const lockRef = useRef(false);
       setuserid(id);
     }
   }, []);
+
   const fetchallorders = async () => {
     if (userid != "") {
       const mongodata = (
@@ -72,7 +74,7 @@ const lockRef = useRef(false);
           }
         )
       ).data;
-      console.log(mongodata);
+      
       setstate(mongodata);
       getprices(mongodata); // pass fresh state to getprices
     }
@@ -350,7 +352,8 @@ function timeout(ms: number) {
     <DndContext onDragStart={DragStart} onDragEnd={DragEnd} sensors={sensors}>
        {/* Header with Leads label and search bar */}
      {/* Header with Leads label and search bar */}
-     {wonpopup && wontask &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} update={false} />}
+     {wonpopup && wontask  &&<CompleteOrderPopup  fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} update={false} />}
+
    {!isSmallScreen&& 
    
    <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">

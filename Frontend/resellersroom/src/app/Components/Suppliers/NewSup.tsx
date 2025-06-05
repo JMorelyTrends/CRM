@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import BrandSelector from "./BrandSelector";
@@ -15,6 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import {  X } from "lucide-react";
 import { CloudDownload } from "lucide-react";
+import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
+import {  useDispatch} from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 
 type Props = {
   Newopen: boolean;
@@ -22,24 +26,29 @@ type Props = {
   getallsups:  React.Dispatch<React.SetStateAction<void>>; 
 };
 
-const NewSup = (props: Props) => {
+const NewSup = (props: Props) => {  
+  const dispatch=useDispatch()
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [dragActive, setDragActive] = useState(false);
   const [filedata, setfiledata] = useState<File | null>(null);
+  const [userid,setuserid]=useState<string|null>("")
+  useEffect(() => {
+    dispatch(Toggleleadsrenderstep(0));
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("tempcred");
+      setuserid(id);
+    }
+    //move to login
+  }, []);
 
   //inputs states
   const [supplierName, setSupplierName] = useState<string>("");
   const [number, setNumber] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [website, setWebsite] = useState<string>("");
-
-
-
-
   //Brand selection
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-
 
   const close = () => {
     props.setNewopen(false);
@@ -59,7 +68,7 @@ const NewSup = (props: Props) => {
       return toast.error("number should be 11 character long");
     }
     if (
-      supplierName &&
+      supplierName && userid&&
       ((number && !email) || (!number && email) || (number && email))
     ) {
       let imageUrl = "";
@@ -97,6 +106,8 @@ const NewSup = (props: Props) => {
         ...(website && { Website: website }),
         ...(selectedBrands && { Brand: selectedBrands }),
         ...(imageUrl && { image: imageUrl }),
+        userid
+
       };
       try {
         await axios.post(
@@ -117,7 +128,6 @@ const NewSup = (props: Props) => {
       );
     }
   };
-
 
   return (
     <Dialog open={props.Newopen} onOpenChange={() => close()}>

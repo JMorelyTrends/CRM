@@ -8,6 +8,7 @@ import { Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {  useDispatch} from 'react-redux';
 import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
   type pageProps = object;
  
   type hprops={
@@ -45,21 +46,32 @@ import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
     )
   }
 
-
-
 const Page: React.FC<pageProps> = () => {
   const dispatch=useDispatch()
   const router = useRouter();
   const [suppliers,setsuppliers]=useState<Sup[]>();
-
+  const [userid,setuserid]=useState<string|null>("")
+  useEffect(() => {
+    dispatch(Toggleleadsrenderstep(0));
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("tempcred");
+      setuserid(id);
+    }
+  }, []);
   const getallsups=async()=>{
-  const all=await axios.get(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
+    console.log(userid)
+  const all=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,
+    {userid}
+  );
   console.log(all)
   setsuppliers(all.data.supps)
   }
   useEffect(()=>{
-    getallsups()
-  },[])
+    if(userid!=="")
+    {
+      getallsups()
+    }
+  },[userid])
     
   function useIsSmallScreen() {
     const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -76,6 +88,7 @@ const Page: React.FC<pageProps> = () => {
   
     return isSmallScreen;
   }
+  
   const isSmallScreen=useIsSmallScreen();
  
   const [search,setsearch ]=useState<string>("")
