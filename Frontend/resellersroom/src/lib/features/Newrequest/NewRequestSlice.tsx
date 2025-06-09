@@ -42,11 +42,11 @@ import { Custprop, Task } from '@/app/Components/Small comps/Types'
     Custprop:Cust,
     dCustomerArray:dCustArray,
     MongocustomersArray:dCustArray,
-    Selectedonecustomer:Cust|null,
+    Selectedonecustomer:Custprop|null,
     Openshopifymatch:boolean,
     OpenMongomatch:boolean,
     MatchedCustomer:Custprop|null,
-    SubmitingCustomer:Cust|null,
+    SubmitingCustomer:Custprop|null,
     Ordercreated:Task|null,
     flow:string,
     Shflag:boolean

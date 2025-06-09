@@ -29,12 +29,14 @@ const shopify = shopifyApi({
   logger: customLogger,
   restResources,
 });
+
 const { DraftOrder } = shopify.rest;
+const { Customer:custs } = shopify.rest;
 
 const session = shopify.session.customAppSession(
   process.env.SHOPIFY_STORE_DOMAIN
 );
-
+console.log(Object.keys(custs));
 const normalizePhoneNumber = (phone) => {
   if (!phone) return "";
   phone = phone.trim();
@@ -43,12 +45,13 @@ const normalizePhoneNumber = (phone) => {
   if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
   return phone;
 };
+
 const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
-
+const client = new shopify.clients.Rest({ session });
     const isValid = (field) => field && field.trim() !== "";
-
+ // STEP-1: if no unique identifier exists just send back
     if (
       !isValid(newCustomer.email) &&
       !isValid(newCustomer.number) &&
@@ -59,6 +62,8 @@ const createCustomer = async (req, res) => {
       });
     }
 
+
+   //STEP-2: CHECK IN SHOPIIFY IF THE CUSTOMER EXISTS
     let queryParts = [];
     if (isValid(newCustomer.email))
       queryParts.push(`email:${newCustomer.email.trim()}`);
@@ -97,7 +102,7 @@ const createCustomer = async (req, res) => {
         customer: newCustomer,
       });
     }
-
+//STEP-3: CHECK IN DB IF THE CUSTOMER EXISTS
     const searchConditions = [];
     if (isValid(newCustomer.email))
       searchConditions.push({ email: newCustomer.email.trim() });
@@ -115,8 +120,68 @@ const createCustomer = async (req, res) => {
       });
     }
 
+     // --- Step 4: Create if not exists ---
+    if (isValid(newCustomer.email)) {
+      // Create customer on Shopify
+      const shopifyCustomerPayload = {
+        email: newCustomer.email.trim(),
+        first_name: newCustomer.first_name || "",
+        last_name:newCustomer.last_name||"",
+        phone: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
+      };
+      const createdShopifyCustomer = ( await client.post({
+  path: 'customers',
+  data: {
+    customer: {
+      email: newCustomer.email,
+      first_name: newCustomer.first_name || '',
+      last_name:newCustomer.last_name||'',
+      phone: newCustomer.phone || '',
+      addresses: [
+        {
+          address1: newCustomer.address || '',
+          city: newCustomer.city || '',
+          zip: newCustomer.postcode || ''
+        }
+      ],
+    },
+  },
+  type: 'application/json',
+})).body.customer
+    
+      // Return the created customer from Shopify
+      const responseCustomer = {
+        first_name:createdShopifyCustomer.first_name,
+        last_name:createdShopifyCustomer.last_name,
+        shopifyid: createdShopifyCustomer.id,
+        email: createdShopifyCustomer.email,
+        total_spent: createdShopifyCustomer.total_spent,
+        orders_count: createdShopifyCustomer.orders_count,
+        customerfrom: "mongodb",
+        Number: createdShopifyCustomer.phone,
+        address: createdShopifyCustomer.default_address?.address1 || "",
+        City: createdShopifyCustomer.default_address?.city || "",
+        postcode: createdShopifyCustomer.default_address?.zip || "",
+        userid:newCustomer.userid,
+        socialhandel: isValid(newCustomer.social)
+        ? newCustomer.social.trim()
+        : "",
+      };
+
+     const k= await Customer.create(responseCustomer)
+
+      return res.status(201).json({
+        message: "Customer created in Shopify.",
+        customer: k,
+      });
+    }
+
+
+
+
     const createdCustomer = await Customer.create({
-      Name: isValid(newCustomer.name) ? newCustomer.name.trim() : "",
+      first_name: isValid(newCustomer.first_name) ? newCustomer.first_name.trim() : "",
+      last_name: isValid(newCustomer.last_name) ? newCustomer.last_name.trim() : "",
       email: isValid(newCustomer.email) ? newCustomer.email.trim() : "",
       Number: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
       address: isValid(newCustomer.address) ? newCustomer.address.trim() : "",
@@ -135,7 +200,7 @@ const createCustomer = async (req, res) => {
       customer: createdCustomer,
     });
   } catch (error) {
-//    console.error(error);
+   console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -207,21 +272,27 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
     }
 
     const regexConditions = nameParts.map((part) => ({
-      Name: { $regex: new RegExp(part, "i") },
+      first_name: { $regex: new RegExp(part, "i") },
     }));
 
     mongoQuery = {
-      $and: [
-        { userid: id },
-        {
-          $or: [
-            ...regexConditions,
-            { socialhandel: { $regex: new RegExp(search, "i") } },
-            { Number: { $regex: new RegExp(search, "i") } },
-          ],
-        },
+  $and: [
+    { userid: id },
+    {
+      $or: [
+        ...regexConditions,
+        { socialhandel: { $regex: new RegExp(search, "i") } },
+        { Number: { $regex: new RegExp(search, "i") } },
       ],
-    };
+    },
+    {
+      $or: [
+        { email: { $exists: false } },
+        { email: { $in: [null, ""] } }, // check for null or empty
+      ],
+    },
+  ],
+};
   }
 
   try {
@@ -229,6 +300,8 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
       Customer.find(mongoQuery),
       shopify.rest.Customer.search({ session, query }),
     ]);
+
+   
 
     const d = customerData.customers.map((customer) => ({
       _id: customer.id,
@@ -719,12 +792,12 @@ async function draftorder(customerid, product, tags, shiping) {
   draftOrder.use_customer_default_address = true;
 
   draftOrder.shipping_address = shiping;
+  draftOrder.email=customerid.email
+  console.log(draftOrder)
 
   const response = await draftOrder.save({
     update: true,
   });
-   
-  
    return draftOrder.id
 };
 
@@ -808,7 +881,7 @@ const shopifycustomer = async (Customer) => {
   try {
     const client = new shopify.rest.Customer({ session });
         const id= parseFloat (Customer.id.split('/')[4])
-       // console.log(id)
+      
     const response = await shopify.rest.Customer.find({
       session,
       id: id, // numeric ID, not GID
@@ -839,6 +912,34 @@ const shopifycustomer = async (Customer) => {
     }
   }
 };
+
+const getshopifybyid_store=async(id,userid)=>{
+
+ const d = await shopify.rest.Customer.search({ session, id: id });
+
+ const ch=await Customer.findOne({shopifid:d.customers[0].id});
+
+ if(!ch){
+
+ const iid=await Customer.create({
+  shopifyid:d.customers[0]?.id,
+  first_name:d.customers[0]?.first_name,
+  last_name:d. customers[0].last_name,
+  email:d.customers[0].email,
+  orders_count:d.customers[0].orders_count,
+  total_spent:d.customers[0].total_spent,
+  Number:d.customers[0].phone,
+  userid:userid
+ })
+
+ return iid._id;
+}
+ else{
+ 
+  return ch._id
+ }
+
+}
 
 function buildOrderQuery(afterCursor = null, createdAfter) {
   return {
@@ -922,5 +1023,6 @@ module.exports = {
   update_Customer_Crm,
   updateshopifycustomer,
   getshopifyorders,
-createshopifycustoemr
+createshopifycustoemr,
+getshopifybyid_store
 };

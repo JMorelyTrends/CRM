@@ -42,7 +42,7 @@ const Page: React.FC = () => {
   // If you need sideOpen or className — move them into context or global state
 
   return (
-    <div className="relative w-full h-full flex justify-center items-center overflow-hidden">
+    <div className="relative w-[80vw] h-full flex justify-center items-center overflow-hidden">
       {renderstep === 0 && (
         <Requestpanle
           sideopen={true} // <- replace with whatever logic or remove if not used

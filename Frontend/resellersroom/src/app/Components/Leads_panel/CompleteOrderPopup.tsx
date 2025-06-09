@@ -13,14 +13,12 @@ import SupplierDropdown from "./SupplierDropdown";
 import { useDispatch } from "react-redux";
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 export function CompleteOrderPopup({ 
-
   open,
   setOpen,
   task,
   fetchallorders,
   update,
 }: {
-
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   task: Task;
@@ -42,7 +40,6 @@ export function CompleteOrderPopup({
   const [userid, setuserid] = useState<string | null>("");
 
 //usestates for feautres
-
   const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task?.labels ?? []);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
   const [createLabelOpen, setCreateLabelOpen] = useState(false);
@@ -60,7 +57,8 @@ const router=useRouter()
       setuserid(id);
     }
   }, []);
- const getsuppliers=async()=>{
+
+  const getsuppliers=async()=>{
      const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
       userid
      });
@@ -232,8 +230,6 @@ const Orderreview =()=>{
 }
 
   const Submit=async()=>{
-   
-
     if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
      
@@ -272,7 +268,7 @@ const Orderreview =()=>{
     <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
+        <DialogHeader className="text-center flex justify-center items-center">
           <DialogTitle>Complete Order Details</DialogTitle>
         </DialogHeader>
 
@@ -285,10 +281,12 @@ const Orderreview =()=>{
           />
           </div>
           <div className="  w-[60%] h-full flex gap-4   flex-col justify-center items-center text-center">
+                       <div className="text-lg font-semibold text-wrap">{task?.stockxitem?.[0].name} </div>
                        <div className="text-lg font-semibold">{task.Name} </div>
                        <div className="text-sm font-semibold text-[#4774B1]">{task.email}</div>
                        <div className="text-sm font-semibold text-[#4774B1]">{task.phone}</div>
           </div>
+          
         </div>
 
              {/* Inputs in 2 balanced columns */}
@@ -537,4 +535,5 @@ const Orderreview =()=>{
       </Dialog>
     </>
   );
+  
 }

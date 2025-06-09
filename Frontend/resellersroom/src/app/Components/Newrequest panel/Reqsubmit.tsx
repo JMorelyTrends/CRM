@@ -34,7 +34,7 @@ const Firsthalf = ({
 }: FirstHalfProps) => {
   const dispatch = useDispatch();
   const selectedItems = useSelector((state: RootState) => state.NewReq.selectedItems);
-  console.log(selectedItems)
+ 
   const [shopifyCustomers, setShopifyCustomers] = useState<dCustomerArray>([]);
   const [mongoCustomers, setMongoCustomers] = useState<dCustomerArray>([]);
   const [userId, setUserId] = useState<string | null>("");
@@ -55,7 +55,7 @@ const Firsthalf = ({
         search: query,
         id: userId,
       });
-
+      console.log(data.d)
       setMongoCustomers(data.dm);
       setShopifyCustomers(data.d);
       dispatch(Addshopifycustomer(data.d));
@@ -96,7 +96,8 @@ const Firsthalf = ({
                 {
                 selectedcustomer.customerfrom === "shopify"
                   ? "Name : "+`${selectedcustomer.first_name} ${selectedcustomer.last_name}`
-                  : selectedcustomer.Name!=''?"Name : "+selectedcustomer.Name:selectedcustomer.socialhandel!=''?"Socials : "+selectedcustomer.socialhandel:""
+                  : selectedcustomer.first_name!=''&& selectedcustomer.last_name!=''?
+                  "Name : "+selectedcustomer.first_name + ' '+selectedcustomer.last_name:selectedcustomer.socialhandel!=''?"Socials : "+selectedcustomer.socialhandel:""
                   
                   }
               </div>
@@ -173,13 +174,18 @@ const Firsthalf = ({
                             setsugbox(false);
                           }}
                         >
-                          <div className="font-medium">{
-                        
-                             customer.Name!=''?customer.Name:customer.socialhandel!=''?customer.socialhandel:customer.Number?customer.Number:""
-
-                        
-                        }</div>
-                          <div className="text-gray-500 text-xs">{customer.email !==''?customer.email:(customer.Number && customer.Name!='' ||customer.socialhandel!='' )?customer.Number:""}</div>
+                          <div className="font-medium">
+                            {
+                                 customer.first_name !== '' 
+                                   ? (customer.last_name !== '' 
+                                       ? customer.first_name + ' ' + customer.last_name 
+                                       : customer.first_name)
+                                   : (customer.socialhandel !== '' 
+                                       ? customer.socialhandel 
+                                       : (customer.Number ? customer.Number : ""))
+                                 }
+                               </div>
+                          <div className="text-gray-500 text-xs">{customer.email !==''?customer.email:(customer.Number && customer.first_name!=''&&customer.last_name ||customer.socialhandel!='' )?customer.Number:""}</div>
                         </div>
                       ))}
                     </>
@@ -344,7 +350,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   }, []);
 
   const submitRequest=async(size:string,Selectcondition:string,customer:Custprop|null)=>{
-    // console.log("seleted customer :",customer)
+     console.log("seleted customer :",customer)
     // console.log("size             :",size)
     // console.log("condition        : ",Selectcondition)
     let Name;
@@ -362,7 +368,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
     }
     else if(customer?.customerfrom=='mongodb')
     {
-       Name=customer.Name!=''?customer.Name:customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
+       Name=customer.first_name+" "+customer.last_name!=''?customer.first_name+' '+customer.last_name:customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
     }
     let newOrder=null;
     if(customer!=null && selectedItems && f==="stockx" )
@@ -370,6 +376,8 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
        newOrder={
         customerid:customer._id,
         Name:Name,
+        first_name:customer.first_name,
+        last_name:customer.last_name,
         Stockxid:selectedItems._id,
         clientFrom:customer.customerfrom?customer.customerfrom:null,
         size,
@@ -382,6 +390,8 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
           newOrder={
             customerid:customer._id,
             items:selectedItems._id,
+            first_name:customer.first_name,
+            last_name:customer.last_name,
             Name:Name,
             clientFrom:customer.customerfrom?customer.customerfrom:null,
             size,

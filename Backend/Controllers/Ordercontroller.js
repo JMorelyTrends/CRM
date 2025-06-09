@@ -1,19 +1,24 @@
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 
-const {get_shopify_byid,Get_mongo_byid,draftorder}=require("./CustomerController")
+const {get_shopify_byid,Get_mongo_byid,draftorder,getshopifybyid_store}=require("./CustomerController")
 
 exports.createOrder = async (req, res) => {
   try {
     const {newOrder} = req.body;
+  
     let or=null;
- 
+    let id;
+    if(newOrder.clientFrom=='shopify')
+    {
+      id=await getshopifybyid_store(newOrder.customerid,newOrder.userid);
+    }
+    //console.log(newOrder)
     if(newOrder.Stockxid){
     or=await Order.create({
         Name: newOrder.Name,
         stockxitem:newOrder.Stockxid,
-        shopifycustomerid:newOrder.clientFrom=='shopify'?newOrder.customerid:null,
-        cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:null,
+        cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:newOrder.clientFrom=="shopify"?id:null, //if we select from shopify it gives 
         size:newOrder.size,
         condition:newOrder.Condition,
         userid:newOrder.userid   
@@ -25,7 +30,7 @@ exports.createOrder = async (req, res) => {
         or=await Order.create({
           Name: newOrder.Name,
           items:newOrder.items,
-          shopifycustomerid:newOrder.clientFrom=='shopify'?newOrder.customerid:null,
+         
           cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:null,
           size:newOrder.size,
           condition:newOrder.Condition,
@@ -39,7 +44,7 @@ exports.createOrder = async (req, res) => {
  
    
   } catch (error) {
-    //console(error)
+    console.log(error)
     res.status(400).json({ message: error.message });
   }
 };
@@ -314,7 +319,6 @@ DealOwner,
     }
 
     //product
-
     if(order.stockxitem.length>0)
     {
     product=   order.stockxitem.map((item) => ({
@@ -355,20 +359,19 @@ DealOwner,
     else{
       tags=["notags"]
     }
-
     shiping={
       first_name: order.Name,
-      address1: order.shippingaddress,
+      address1: shippingaddress,
     }
+   
+    console.log(customerid)
 
-if(order.confirm==false)
-{
- 
-     const d=await draftorder(customerid,product,tags,shiping)
-    const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
-  return res.status(201).json({data:o})
- 
-}
+    if(order.confirm==false)
+    {
+      const d=await draftorder(customerid,product,tags,shiping)
+      const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
+      return res.status(201).json({data:o})
+    }
   res.status(201).json({data:"orderupdated"});  
   }
   catch(err)
@@ -852,6 +855,7 @@ function getLast24HourLabels(step = 3) {
 
   return { labels, formatted };
 }
+
 function getdaystilldate(arr,detectedInterval){
   let array=[];
 if(detectedInterval==="week")
@@ -876,6 +880,7 @@ else if(detectedInterval==="year")
 }
 
 }
+
 function giveinterval(interval, startdate, enddate) {
   if (!interval && startdate && enddate) {
     const diffMillis = new Date(enddate) - new Date(startdate);
@@ -907,6 +912,7 @@ function calculateDateRange(interval, startdate, enddate) {
 
   return { start, end };
 }
+
 function getGroupFormatlabel(detectedInterval) {
     let groupFormat, labels;
 
@@ -929,6 +935,7 @@ function getGroupFormatlabel(detectedInterval) {
     }
     return {groupFormat,labels}
 }
+
 async function getRevenueBetweenDates(start, end, userid = null, stages = null) {
   const matchQuery = {
     createdAt: {
@@ -956,6 +963,7 @@ async function getRevenueBetweenDates(start, end, userid = null, stages = null) 
 
   return result.length > 0 ? result[0].totalRevenue : 0;
 }
+
 async function getNewLeadOrderCount(userid, start, end ) {
   const matchQuery = {
     stage: "New Lead"

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const OrderreviewSchema = new mongoose.Schema(
   {
-    soid: {
+    soid: {          //to store shopify order id 
       type: String,
       unique:true,
     },

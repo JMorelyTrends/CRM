@@ -17,6 +17,8 @@ const Newcustomer = (props: Props) => {
   const selectedItems=useSelector((state:RootState)=>state.NewReq.selectedItems)
  
   const [name, setName] = useState<string>('');
+  const [first_name,setfirst_name]=useState<string>('');
+  const [last_name,setlast_name]=useState<string>('')
   const [number, setNumber] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   //const [address, setAddress] = useState<string>('');
@@ -47,7 +49,8 @@ const Newcustomer = (props: Props) => {
     }
 
     const newCustomer = {
-      name,
+      first_name,
+      last_name,
       number,
       email,
       userid,
@@ -92,6 +95,8 @@ const Newcustomer = (props: Props) => {
     else{
       dispatch(Addselectedcusotmer(newc.data?.customer))
       setName('');
+      setfirst_name('');
+      setlast_name('')
       setNumber('');
       setEmail('');
     //  setAddress('');
@@ -131,16 +136,25 @@ const Newcustomer = (props: Props) => {
         className="w-full h-full bg-[#EBEBEB] rounded-xl overflow-auto p-4 flex flex-col gap-4"
       >
         <div className="flex flex-col">
-          <label className="mb-1 font-medium">Name</label>
+          <label className="mb-1 font-medium">first Name</label>
           <input
             type="text"
            
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={first_name}
+            onChange={(e) => setfirst_name(e.target.value)}
             className="p-2 rounded-md border border-gray-300"
           />
         </div>
-
+        <div className="flex flex-col">
+          <label className="mb-1 font-medium">Last Name</label>
+          <input
+            type="text"
+           
+            value={last_name}
+            onChange={(e) => setlast_name(e.target.value)}
+            className="p-2 rounded-md border border-gray-300"
+          />
+        </div>
         <div className="flex flex-col">
           <label className="mb-1 font-medium">Number</label>
           <input

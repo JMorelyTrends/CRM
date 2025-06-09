@@ -2,38 +2,50 @@ const mongoose = require("mongoose");
 
 const CustomerSchema = new mongoose.Schema(
   {
-    Name: {
+    first_name: {
       type: String,
-
       trim: true,
+    },
+    last_name:{
+      type:String,
+      trim:true
+    },
+    shopifyid:{
+      type:Number,
+       default:null,
     },
     email: {
       type: String,
       trim:true,
       default:"" 
-     
     },
     customerfrom:{
       type:String,
       default:"mongodb"
     },
+    total_spend:{
+      type:String,
+    },
+    orders_count:{
+     type:Number
+    },
+    tags:{
+      type:[String],
+    },
     socialhandel:{
       type:String,
-      
     },
     Number:{
       type:String,
     },
     address: {
       type: String,
-   
     },
     City:{
       type:String,
     },
     Postcode:{
         type:String,
-       
     },
     userid:{
       type:mongoose.Schema.Types.ObjectId,

@@ -356,7 +356,7 @@ function timeout(ms: number) {
 
    {!isSmallScreen&& 
    
-   <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">
+   <div className="w-[80vw] flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">
       <h1 className=" text-3xl font-semibold text-gray-800 dark:text-[#888888]">Leads Management</h1>
       <input
         type="text"
