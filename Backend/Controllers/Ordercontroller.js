@@ -13,7 +13,7 @@ exports.createOrder = async (req, res) => {
     {
       id=await getshopifybyid_store(newOrder.customerid,newOrder.userid);
     }
-    //console.log(newOrder)
+    
     if(newOrder.Stockxid){
     or=await Order.create({
         Name: newOrder.Name,
@@ -53,7 +53,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").sort({createdAt:-1});
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate('cusid').sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",
@@ -218,6 +218,8 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 //different
 

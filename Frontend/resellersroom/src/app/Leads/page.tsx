@@ -14,11 +14,17 @@ import {
 import DraggableCard from "../Components/Leads_panel/DraggableCard";
 import axios from "axios";
 import { useDispatch } from "react-redux";
+import EditPopup from "../Components/Customer/Editpopup";
 //import { Reseller, RootState } from "@/lib/Resellerstore";
-import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import { ADD_Matched_cutomer, Toggleleadsrenderstep,ToogleCustomerComplete } from "@/lib/features/Newrequest/NewRequestSlice";
+import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 import { statetype, Task } from "../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
+import CompleteCustomerpopup from "../Components/Newrequest panel/CompleteCustomerpopup";
 import { useIsSmallScreen } from "../Components/Small comps/Issmall";
+import { toast } from "sonner";
+import { AddOrderid, AddSelectedOrder,ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
+
 const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
 });
@@ -74,7 +80,7 @@ export default function Page({}: Props) {
           }
         )
       ).data;
-      
+     console.log(mongodata) 
       setstate(mongodata);
       getprices(mongodata); // pass fresh state to getprices
     }
@@ -271,14 +277,23 @@ function timeout(ms: number) {
           taskid: currenttask,
           newstage: destinationCol.id,
         }
-        
       );
      
       if(destinationCol.title=='Won')
       {
         await timeout(700);
-        setwontask(currenttask)
-        setwonpopup(true)
+        if(currenttask.cusid&& currenttask.cusid?.email!="" && currenttask?.phone!="")
+        {
+          setwontask(currenttask)
+          setwonpopup(true)
+          dispatch(ToogleCompleteorder())
+          dispatch(AddSelectedOrder(currenttask))
+        }
+        else{
+          dispatch(AddSelectedCustomer(currenttask.cusid))
+          dispatch(AddOrderid(currenttask._id))
+          dispatch(Toogle_Editopen())
+        }
       }
     }
       catch (error) {
@@ -354,6 +369,7 @@ function timeout(ms: number) {
      {/* Header with Leads label and search bar */}
      {wonpopup && wontask  &&<CompleteOrderPopup  fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} update={false} />}
 
+     <EditPopup getcustomers={fetchallorders} /> 
    {!isSmallScreen&& 
    
    <div className="w-[80vw] flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">

@@ -10,8 +10,10 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import SupplierDropdown from "./SupplierDropdown";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import { RootState } from "@/lib/Resellerstore";
+import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
 export function CompleteOrderPopup({ 
   open,
   setOpen,
@@ -24,8 +26,11 @@ export function CompleteOrderPopup({
   task: Task;
   fetchallorders: () => void;
   update:boolean
-}) {
+})
+ {
+
   const dispatch=useDispatch()
+  const isOpen=useSelector((state:RootState)=>state.Rew.completeorder);
   const [productName, setProductName] = useState(task.Name);
   const [size, setSize] = useState(task.size);
   const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
@@ -253,6 +258,7 @@ const Orderreview =()=>{
       fetchallorders()
    toast.success("order updated")
        setOpen(false)
+       dispatch(ToogleCompleteorder())
        if(update==false){
        router.push('/Leads/OrderReview')
       }
@@ -266,7 +272,7 @@ const Orderreview =()=>{
  
   return (
     <>
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={()=>dispatch(ToogleCompleteorder())}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader className="text-center flex justify-center items-center">
           <DialogTitle>Complete Order Details</DialogTitle>

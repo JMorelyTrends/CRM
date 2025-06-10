@@ -168,7 +168,7 @@ const Firsthalf = ({
                           key={`mongo-${index}`}
                           className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                           onClick={() => {
-                            setsearchclient(customer.Name);
+                            setsearchclient(customer.first_name+" "+customer.last_name);
                             dispatch(Addselectedcusotmer(customer))    //if something go wrong with customer it have to do with this bit
                             setselectedcustomer(customer);
                             setsugbox(false);
@@ -368,7 +368,10 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
     }
     else if(customer?.customerfrom=='mongodb')
     {
-       Name=customer.first_name+" "+customer.last_name!=''?customer.first_name+' '+customer.last_name:customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
+       Name=customer.first_name!=''&&customer.last_name!=''?customer.first_name+' '+customer.last_name   
+       :
+       customer.first_name!=''?customer.first_name:
+       customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
     }
     let newOrder=null;
     if(customer!=null && selectedItems && f==="stockx" )

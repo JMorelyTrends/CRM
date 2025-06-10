@@ -7,17 +7,39 @@ import {
     DialogPortal,
     DialogOverlay
 } from "@/components/ui/dialog";
+import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from "@/lib/Resellerstore";
 import { Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep,Updating_Customer_shopify,ToogleShflag } from '@/lib/features/Newrequest/NewRequestSlice';
 import { Custprop } from '../Small comps/Types';
 import { isEqualStrings } from '../Small comps/isEqualStrings';
-
-const Shopifymatch = () => {
+import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
+const Shopifymatch = ({from,getcustomers}:{from:string,getcustomers:()=>Promise<void>}) => {
+    
     const dispatch = useDispatch();
+    const orderid=useSelector((state:RootState)=>state.Rew.selectorderid)
     const flag = useSelector((state: RootState) => state.NewReq.Openshopifymatch);
     const customer:Custprop|null = useSelector((state: RootState) => state.NewReq.MatchedCustomer);
     const edata=useSelector((state:RootState)=>state.NewReq.SubmitingCustomer)
+
+    const Use=async()=>{
+        if(from=="leads" && orderid)
+        {
+            const newc= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/usethecustomer`,
+                {
+                  Cust:customer,
+                  orderid:orderid
+                })
+                dispatch(Toogleshopifypopup())
+                dispatch(Toogle_Editopen())
+                getcustomers()
+        }
+        else{
+            dispatch(Toogleshopifypopup());
+            dispatch(Addselectedcusotmer(customer));
+            dispatch(Toggleleadsrenderstep(2));
+        }
+    }
   
 
     //function too see which fields are equal
@@ -72,11 +94,8 @@ const Shopifymatch = () => {
                             <button
                                 className="px-6 py-2 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg font-medium transition"
                                 onClick={() => {
-                                    dispatch(Toogleshopifypopup());
-                                    dispatch(Addselectedcusotmer(customer));
-                                    dispatch(Toggleleadsrenderstep(2));
-                                }}
-                            >
+                                   Use()
+                                }} >
                                 Use
                             </button>
 <button

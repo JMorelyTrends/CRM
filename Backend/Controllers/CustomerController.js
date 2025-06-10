@@ -45,12 +45,12 @@ const normalizePhoneNumber = (phone) => {
   if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
   return phone;
 };
-
+ const isValid = (field) => field && field.trim() !== "";
 const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
-const client = new shopify.clients.Rest({ session });
-    const isValid = (field) => field && field.trim() !== "";
+    const client = new shopify.clients.Rest({ session });
+   
  // STEP-1: if no unique identifier exists just send back
     if (
       !isValid(newCustomer.email) &&
@@ -328,29 +328,208 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
 
 const updateCustomer = async (req, res) => {
   try {
-    const { Name, email, address, Postcode, id } = req.body;
+     const {Cust ,orderid} = req.body;
+     const client = new shopify.clients.Rest({ session });
+   
+     //step check if the customer exists in the shopify
 
-    // Find and update
-    const updatedCustomer = await Customer.findByIdAndUpdate(
-      id,
-      { Name, email, address, Postcode },
-      { new: true, runValidators: true }
-    );
+     let queryParts = [];
+     if (isValid(Cust.email))
+       queryParts.push(`email:${Cust.email.trim()}`);
+     if (isValid(Cust.phone)) {
+       const normalizedPhone = normalizePhoneNumber(Cust.phone);
+       queryParts.push(`phone:${normalizedPhone}`);
+     }
+     const query = queryParts.join(" OR ");
+ 
+     let customerData = { customers: [] };
+     if (queryParts.length > 0) {
+       customerData = await shopify.rest.Customer.search({
+         session,
+         query,
+       });
+      
+     }
+ 
+     if (customerData.customers.length > 0) {
+       const newCustomer = {
+         _id: customerData.customers[0].id,
+         email: customerData.customers[0].email,
+         first_name: customerData.customers[0].first_name,
+         last_name: customerData.customers[0].last_name,
+         total_spent: customerData.customers[0].total_spent,
+         orders_count: customerData.customers[0].orders_count,
+         customerfrom: "shopify",
+         Number: customerData.customers[0].phone,
+         address: {
+           address1: customerData.customers[0].default_address?.address1 || "",
+           city: customerData.customers[0].default_address?.city || "",
+           zip: customerData.customers[0].default_address?.zip || "",
+         },
+       };
+        
 
-    if (!updatedCustomer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
+       return res.status(200).json({
+         alert: "Exists in Shopify database",
+         customer: newCustomer,
+       });
+     }
 
+     const createdShopifyCustomer = ( await client.post({
+      path: 'customers',
+      data: {
+        customer: {
+          email: Cust.email,
+          first_name: Cust.firstName|| '',
+          last_name:Cust.lastName||'',
+          phone: Cust.phone || '',
+          addresses: [
+            {
+              address1: Cust.address || '',
+              city: Cust.city || '',
+              zip: Cust.postcode || ''
+            }
+          ],
+        },
+      },
+      type: 'application/json',
+    })).body.customer
+
+    const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+      first_name:Cust.firstName,
+      last_name:Cust.lastName,
+      email:Cust.email,
+      Number:Cust.phone,
+     
+     }})
+     if(orderid)
+     {
+      console.log(orderid)
+      console.log(re)
+       const t=await Order.findByIdAndUpdate({
+        _id:orderid
+       },{
+        $set:{
+          cusid:re._id,
+          Name:Cust.firstName+' '+Cust.lastName
+        }
+       });
+     }
     res.status(200).json({
       message: "Customer updated successfully",
-      customer: updatedCustomer,
+      customer: re,
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  } 
+  
+  catch (error) {
+ 
+    const errors = error?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0])
+       {
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+      
+        const d="phone"+re;
+        res.status(501).json({data:d})
+
+      } else if (errors?.email) {
+        const d = "email " + re;
+        res.status(501).json({data:d})
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+
+        res.status(501).json({data:d})
+    }
   }
 };
 
+
+
 //to get all the customers from orders
+
+const UseShopiyfcustomer=async(req,res)=>{  //when you entered the email to the  customer which dont have email hten this api hit when user press use
+try{
+  const {Cust,orderid}=req.body;
+
+
+  //Step-1 check if that email have in our db or not if yes return that customer id
+
+  
+  const t=await Customer.findOne({email:Cust.email});
+  const order= await Order.findOne({_id:orderid})
+  if(t)
+  {
+   //if there is hte customer which are present with that mail that order will be given to that customer
+     // find hte order and give t._id ot that order cusid 
+
+     const newo=await Order.findByIdAndUpdate({
+      _id:orderid
+     },{
+      $set:{
+        cusid:t._id,
+        Name:t.first_name+' '+t.last_name
+      }
+     });
+     return res.status(201).json({message:"order user updated"});
+  }
+  
+
+  //STEP 2 check if the email is in the shopify
+  let queryParts = [];
+  if (isValid(Cust.email))
+    queryParts.push(`email:${Cust.email.trim()}`);
+  if (isValid(Cust.Number)) {
+    const normalizedPhone = normalizePhoneNumber(Cust.Number);
+    queryParts.push(`phone:${normalizedPhone}`);
+  }
+  const query = queryParts.join(" OR ");
+  const E=Cust.email.trim();
+  const d = await shopify.rest.Customer.search({ session, query });
+  
+  if(d && d.customers.length>0)
+  {
+    const iid=await Customer.create({
+     shopifyid:d.customers[0]?.id,
+     first_name:d.customers[0]?.first_name,
+     last_name:d. customers[0].last_name,
+     email:d.customers[0].email,
+     orders_count:d.customers[0].orders_count,
+     total_spent:d.customers[0].total_spent,
+     Number:d.customers[0].phone,
+     userid:order.userid,
+     emailMarketingConsent:{
+       consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
+       marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
+       marketingState:d.customers[0].email_marketing_consent.state
+     }
+    })
+
+    const nn=await Order.findByIdAndUpdate({
+      _id:orderid
+     },{
+      $set:{
+        cusid:iid._id,
+        Name:iid.first_name+' '+iid.last_name
+      }
+     });
+     return res.status(201).json({message:"order user updated"});
+   
+  }
+
+  //STEP 3 if customer is not in shopoify and db create one
+  console.log("step3")
+  
+     
+      
+
+}
+catch(err)
+{
+  console.log(err)
+  res.status(500).json({message:"something worng with the customer"})
+}
+}
 
 const getAllCustomerOrderStats = async (req, res) => {
   try {
@@ -880,26 +1059,22 @@ const getcustoemrwithorders = async (shopifyMap) => {
 const shopifycustomer = async (Customer) => {
   try {
     const client = new shopify.rest.Customer({ session });
-        const id= parseFloat (Customer.id.split('/')[4])
-      
+    const id=Customer.id;   
     const response = await shopify.rest.Customer.find({
       session,
-      id: id, // numeric ID, not GID
+      id: id,   // numeric ID, not GID
     });
-
     response.first_name = Customer.firstName;
     response.last_name = Customer.lastName;
     response.phone = Customer.phone;
     response.email = Customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
     const t = await response.save({ update: true });
-    
     return t;
   }
-   catch (err) {
+    catch (err) {
     const errors = err?.response?.body.errors;
     if (Object.values(errors)[0]?.[0]) {
-
-      const re = Object.values(errors)[0]?.[0];
+    const re = Object.values(errors)[0]?.[0];
       if (errors?.phone) {
         throw new Error(re);
       } else if (errors?.email) {
@@ -929,7 +1104,12 @@ const getshopifybyid_store=async(id,userid)=>{
   orders_count:d.customers[0].orders_count,
   total_spent:d.customers[0].total_spent,
   Number:d.customers[0].phone,
-  userid:userid
+  userid:userid,
+  emailMarketingConsent:{
+    consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
+    marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
+    marketingState:d.customers[0].email_marketing_consent.state
+  }
  })
 
  return iid._id;
@@ -938,7 +1118,6 @@ const getshopifybyid_store=async(id,userid)=>{
  
   return ch._id
  }
-
 }
 
 function buildOrderQuery(afterCursor = null, createdAfter) {
@@ -1024,5 +1203,6 @@ module.exports = {
   updateshopifycustomer,
   getshopifyorders,
 createshopifycustoemr,
-getshopifybyid_store
+getshopifybyid_store,
+UseShopiyfcustomer
 };

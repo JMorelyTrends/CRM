@@ -7,16 +7,26 @@ import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
-import { Toogle_Editopen } from "../../../lib/features/CustomerCrm/CustomerCrmslice";
+import { AddSelectedCustomer, Toogle_Editopen } from "../../../lib/features/CustomerCrm/CustomerCrmslice";
+import { AddSubmitingCustomer,ADD_Matched_cutomer,Toogleshopifypopup, Addselectedcusotmer } from "@/lib/features/Newrequest/NewRequestSlice";
+import Shopifyupdatepopup from "../Newrequest panel/Shopifyupdatepopup";
+import Shopifymatch from "../Newrequest panel/Shopifymatch";
 import axios from "axios";
 import { toast } from "sonner";
-export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<React.SetStateAction<void>>}) {
+
+
+export default
+ function EditPopup({getcustomers}
+  :{getcustomers:()=>Promise<void>}) {
+
+
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.Cus.openedit);
   const customer = useSelector((state: RootState) => state.Cus.Selected_customer);
-   
+  const orderid=useSelector((state:RootState)=>state.Rew.selectorderid)
   const close = () => {
     dispatch(Toogle_Editopen());
+    dispatch(Addselectedcusotmer(null))
   };
 
   const [name, setName] = useState("");
@@ -28,24 +38,42 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
   const [emailMarketingConsent, setEmailMarketingConsent] = useState("");
 
   useEffect(() => {
+    
     if (customer) {
-      setFirstName(customer.firstName)
-      setLastName(customer.lastName)
+     
+      setFirstName(customer.first_name)
+      setLastName(customer.last_name)
       setEmail(customer.email || "");
-      setPhone(customer.phone || "");
-      setEmailMarketingConsent(customer.emailMarketingConsent.marketingState || "");
+      setPhone(customer.Number || "");
+      setEmailMarketingConsent(customer.emailMarketingConsent?.marketingState || "");
+      setSocialHandle(customer.socialhandel || "");
     }
   }, [customer, ]);
 
   const handleSubmit = async() => {
     const data =
-        {_id:customer._id,id:customer.shopify_id, firstName, lastName, email, phone, emailMarketingConsent, Custoemrfrom:'shopify' };  
+        {_id:customer._id,id:customer.shopifyid, firstName, lastName, email, phone, emailMarketingConsent };  
         try{
-          const re= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/update_Customer_Crm`,
+          const newc= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/updateCustomer`,
           {
             Cust:data,
+            orderid
           })
-          if(re.data)
+          if(newc.data?.alert==="Exists in Shopify database")
+            {
+              const submitteddata = {
+                name,
+                Number:phone,
+                email,
+                socialhandel:socialHandle
+              };
+              dispatch(Addselectedcusotmer(null))
+              dispatch(AddSubmitingCustomer(submitteddata))
+              dispatch(ADD_Matched_cutomer(newc.data.customer))
+              dispatch(Toogleshopifypopup())
+              toast.error(`${newc.data?.alert}`)
+            }
+          else
           {
             toast.success("Customer updated succesfully")
             setEmail("")
@@ -54,6 +82,7 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
             setPhone("")
             setName("")
             getcustomers()
+            dispatch(AddSelectedCustomer(null))
             dispatch(Toogle_Editopen())
           }
         }
@@ -69,33 +98,17 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
   const isMongo = false;
 
   return (
+    <>
+   
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className={`${isMongo ? "max-w-xl" : "max-w-md"} p-6 rounded-xl shadow-lg`}>
+      <DialogContent className={`max-w-md p-6 rounded-xl shadow-lg`}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Edit Customer Details</DialogTitle>
         </DialogHeader>
 
         <div className="mt-5 grid grid-cols-1 gap-4">
-          {isMongo ? (
-            <>
-              <div className="flex flex-col gap-1">
-                <Label>Name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Email</Label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Phone</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Social Handle</Label>
-                <Input value={socialHandle} onChange={(e) => setSocialHandle(e.target.value)} />
-              </div>
-            </>
-          ) : (
+          <Shopifyupdatepopup />
+          <Shopifymatch from="leads" getcustomers={getcustomers} />
             <>
               <div className="flex flex-col gap-1">
                 <Label>First Name</Label>
@@ -113,9 +126,11 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
                 <Label>Phone</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
-            
+              <div className="flex flex-col gap-1">
+                <Label>Social Handle</Label>
+                <Input value={socialHandle} onChange={(e) => setSocialHandle(e.target.value)} />
+              </div>
             </>
-          )}
 
           <div className="pt-4 flex justify-center">
             <Button onClick={handleSubmit} className="w-28">Save</Button>
@@ -123,5 +138,6 @@ export default function EditPopup({getcustomers}:{getcustomers:React.Dispatch<Re
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

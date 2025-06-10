@@ -115,7 +115,7 @@ const Newcustomer = (props: Props) => {
       } h-[85vh] bg-white flex flex-col text-black rounded-xl overflow-hidden`}
     >
 <Shopifyupdatepopup/>
-<Shopifymatch/>
+<Shopifymatch from='newcustomer' getcustomers={()=>Boolean}/>
 <DBMatched />
       <div className="relative  w-full flex flex-col items-center pt-6  ">
         <div className="absolute top-6  text-opacity-80 text-xl md:text-3xl px-2 text-black bg-opacity-50 rounded-md">

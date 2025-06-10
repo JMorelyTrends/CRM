@@ -1,10 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Customerprop,IShopifyCustomer } from "@/app/Components/Small comps/Types";
+import { Customerprop,IShopifyCustomer, Custprop } from "@/app/Components/Small comps/Types";
 
 
 interface CustomerState {
-  Customers: IShopifyCustomer[];
-  Selected_customer:IShopifyCustomer;
+  Customers: Custprop[];
+  Selected_customer:Custprop;
   openedit:boolean,
   opennewcus:boolean,
   Newcuscrm:boolean
@@ -14,31 +14,25 @@ export const initialState: CustomerState = {
   Customers: [],
   Selected_customer: {
     _id: '',
-    shopify_id: '',
-    firstName: '',
-    lastName: '',
+    shopifyid: null, // Default is `null` in the schema
+    first_name: '',
+    last_name: '',
     email: '',
-    phone: '',
-    shopifyCreatedAt: null,
-    numberOfOrders: 0,
-    amountSpent: {
-      amount: 0,
-      currencyCode: ''
-    },
-    defaultAddress: {
-      address1: '',
-      city: '',
-      zip: ''
-    },
+    Number: '', // You might want to map this to `Number` in the schema
+    orders_count: 0, // renamed to match schema
+    total_spend: '', // renamed to match schema (string)
+  
     userid: '',
     emailMarketingConsent: {
       consentUpdatedAt: null,
-      marketingOptInLevel: '',
-      marketingState: ''
+      marketingOptInLevel: 'SINGLE_OPT_IN', // default
+      marketingState: 'SUBSCRIBED' // default
     },
-    lastUpdatedAt:"",
-    createdAt: undefined,
-    updatedAt: undefined
+    socialhandel: '', // added because it’s in schema
+    address: '', // flattened from defaultAddress
+    tags: [],
+    customerfrom: 'mongodb', // default
+  
   },
   openedit: false,
   opennewcus: false,

@@ -49,20 +49,22 @@ export type additem={
   _id:string,
   first_name:string,
   last_name:string,
-  Name:string,
+  shopifyid:string|null,
+  Name?:string,
   email:string,
-  total_spent:string,
-  orders_count:string,
+  total_spend:string,
+  orders_count:number,
   customerfrom:string,
   Number:string|null
-  address:{
-    adress1:string,
-    city:string,
-    zip:string,
-    country:string,
-  },
+  address:string,
   socialhandel:string,
-
+  emailMarketingConsent: {
+    consentUpdatedAt: Date | null;
+    marketingOptInLevel: string;
+    marketingState: string;
+  };
+  userid:string,
+  tags:string[],
 }
 export type dCustomerArray = Custprop[];
 
@@ -89,7 +91,7 @@ export type Task = {
   labels: labeltype[];
   Description: string;
   Condition: string;
-  cusid: string | null;
+  cusid: Custprop | null;
 
   // Existing optional fields
   items?: additem[];

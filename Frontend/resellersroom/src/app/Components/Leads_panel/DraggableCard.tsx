@@ -5,8 +5,8 @@ import { TaskPanel } from './TaskPanel';
 import { Clock } from 'lucide-react';
 import { Task } from "../Small comps/Types";
 import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
-
-
+import { UseSelector,useDispatch } from 'react-redux';
+import { ToogleCompleteorder } from '@/lib/features/OrederReview/OrderReviewSlice';
 
 interface DraggableCardProps {
   task: Task;
@@ -28,7 +28,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
     disabled: disableDrag,
   });
 
-
+const dispatch=useDispatch()
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -80,6 +80,8 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
         else{
          
           setwonpopup(true)
+          dispatch(ToogleCompleteorder())
+          
         }
       }
     }

@@ -47,6 +47,20 @@ const CustomerSchema = new mongoose.Schema(
     Postcode:{
         type:String,
     },
+    emailMarketingConsent: {
+      consentUpdatedAt: {
+        type:Date,
+        default: new Date().toISOString(),
+      },
+      marketingOptInLevel: {
+        type:String,
+        default:"SINGLE_OPT_IN"
+      },
+      marketingState: {
+        type:String,
+        default:"SUBSCRIBED"
+      }
+    },
     userid:{
       type:mongoose.Schema.Types.ObjectId,
       ref:"User",
