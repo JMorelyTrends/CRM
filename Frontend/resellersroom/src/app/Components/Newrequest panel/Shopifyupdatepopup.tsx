@@ -18,7 +18,7 @@ const Shopifyupdatepopup: React.FC = () => {
     const isOpen = useSelector((state: RootState) => state.NewReq.Shflag);
     const customer=useSelector((state:RootState)=>state.NewReq.Custprop);
     const edata=useSelector((state:RootState)=>state.NewReq.SubmitingCustomer)
-    console.log(customer)
+    const userid=useSelector((state:RootState)=>state.Main.userid)
     // Input states
     const [firstName, setFirstName] = useState<string>(customer?.first_name||"");
     const [lastName, setLastName] = useState<string>('');
@@ -37,31 +37,36 @@ const Shopifyupdatepopup: React.FC = () => {
     },[customer])
     const Submit=async()=>{
       try{
-       const cus={
+      if(userid)
+        { const cus={
         id:customer._id,
         firstName:firstName,
         lastName:lastName,
         phone:phone,
-        email:email
+        email:email,
+        userid:userid
        }
     const re=   await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/updateshopifycustomer`,{
         customer:cus
        });
- toast.success("Customer updated succesfully")
+          toast.success("Customer updated succesfully")
             setEmail("")
             setFirstName("");
             setLastName("")
             setPhone("")
             dispatch(ToogleShflag())
-            dispatch(Toogleshopifypopup());
+            
             dispatch(Addselectedcusotmer(re.data.data));
-            dispatch(Toggleleadsrenderstep(2));
+            dispatch(Toggleleadsrenderstep(2));}
+            else{
+               console.log(userid)
+            }
       }
  catch(err:unknown)
         {
           if(axios.isAxiosError(err))
           {
-           toast.error(err.response?.data?.error || "An error occurred");
+           toast.error(err.response?.data?.data || "An error occurred");
           }
         }
     }

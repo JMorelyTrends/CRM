@@ -6,8 +6,8 @@ import { Clock } from 'lucide-react';
 import { Task } from "../Small comps/Types";
 import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
 import { UseSelector,useDispatch } from 'react-redux';
-import { ToogleCompleteorder } from '@/lib/features/OrederReview/OrderReviewSlice';
-
+import { AddOrderid, ToogleCompleteorder } from '@/lib/features/OrederReview/OrderReviewSlice';
+import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 interface DraggableCardProps {
   task: Task;
   disableDrag?: boolean;
@@ -77,11 +77,16 @@ const dispatch=useDispatch()
         {
           setShowPanel(true);
         }
-        else{
+        else if( task.cusid?.email!="" && task?.phone!=""){
          
           setwonpopup(true)
           dispatch(ToogleCompleteorder())
           
+        }
+        else {
+          dispatch(AddSelectedCustomer(task.cusid))
+          dispatch(AddOrderid(task._id))
+          dispatch(Toogle_Editopen())
         }
       }
     }

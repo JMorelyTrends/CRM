@@ -369,7 +369,7 @@ function timeout(ms: number) {
      {/* Header with Leads label and search bar */}
      {wonpopup && wontask  &&<CompleteOrderPopup  fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} update={false} />}
 
-     <EditPopup getcustomers={fetchallorders} /> 
+     <EditPopup getcustomers={fetchallorders} method="leads" /> 
    {!isSmallScreen&& 
    
    <div className="w-[80vw] flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">

@@ -1,5 +1,4 @@
 'use client';
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/Label";
@@ -11,13 +10,18 @@ import { AddSelectedCustomer, Toogle_Editopen } from "../../../lib/features/Cust
 import { AddSubmitingCustomer,ADD_Matched_cutomer,Toogleshopifypopup, Addselectedcusotmer } from "@/lib/features/Newrequest/NewRequestSlice";
 import Shopifyupdatepopup from "../Newrequest panel/Shopifyupdatepopup";
 import Shopifymatch from "../Newrequest panel/Shopifymatch";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { toast } from "sonner";
+import { Custprop } from "../Small comps/Types";
 
+interface CustomerResponse {
+  alert?: string;
+  customer?: Custprop;
+}
 
 export default
- function EditPopup({getcustomers}
-  :{getcustomers:()=>Promise<void>}) {
+ function EditPopup({getcustomers,method}
+  :{getcustomers:()=>Promise<void>,method:string}) {
 
 
   const dispatch = useDispatch();
@@ -52,14 +56,22 @@ export default
 
   const handleSubmit = async() => {
     const data =
-        {_id:customer._id,id:customer.shopifyid, firstName, lastName, email, phone, emailMarketingConsent };  
-        try{
-          const newc= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/updateCustomer`,
+        {_id:customer._id,id:customer.shopifyid, firstName, lastName, email, phone, emailMarketingConsent,social:socialHandle };  
+        try{ 
+           let newc: AxiosResponse<CustomerResponse>;
+          method=="leads"?
+         newc = await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/updateCustomer`,
           {
             Cust:data,
             orderid
           })
-          if(newc.data?.alert==="Exists in Shopify database")
+          :
+          newc = await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/Cuscrmupdate`,
+            {
+              Cust:data,
+             
+            })
+          if(newc&&newc&&newc.data?.alert==="Exists in Shopify database")
             {
               const submitteddata = {
                 name,

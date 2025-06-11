@@ -1,4 +1,3 @@
-
 export type labeltype={
   label:{name:string,
   col:string,
@@ -216,30 +215,24 @@ export type Customerprop={
 
 //CustomerCrm
 export interface IShopifyCustomer {
-  _id?: string; // MongoDB document ID
-  shopify_id: string;
-  firstName: string;
-  lastName: string;
+  _id: string;
+  first_name: string;
+  last_name: string;
+  shopifyid: string | null;
   email: string;
-  phone: string;
-  shopifyCreatedAt: Date | null;
-  numberOfOrders: number;
-  amountSpent: {
-    amount: number;
-    currencyCode: string;
-  };
-  defaultAddress: {
-    address1: string;
-    city: string;
-    zip: string;
-  };
-  userid: string; // or Types.ObjectId[] if using an array in your schema
+  customerfrom: string;
+  orders_count: number;
+  total_spend: string;
+  Number: string | null;
+  address: string;
+  socialhandel: string;
   emailMarketingConsent: {
     consentUpdatedAt: Date | null;
     marketingOptInLevel: string;
     marketingState: string;
   };
-  lastUpdatedAt: string;
-  createdAt?: Date; // createdAt from { timestamps: true }
-  updatedAt?: Date; // updatedAt from { timestamps: true }
+  userid: string;
+  tags: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }

@@ -36,7 +36,7 @@ const { Customer:custs } = shopify.rest;
 const session = shopify.session.customAppSession(
   process.env.SHOPIFY_STORE_DOMAIN
 );
-console.log(Object.keys(custs));
+
 const normalizePhoneNumber = (phone) => {
   if (!phone) return "";
   phone = phone.trim();
@@ -46,11 +46,15 @@ const normalizePhoneNumber = (phone) => {
   return phone;
 };
  const isValid = (field) => field && field.trim() !== "";
+
+
+ //---------------------------------------------CUSTOMER CREATION---------------------------------------------
+ 
 const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
     const client = new shopify.clients.Rest({ session });
-   
+  
  // STEP-1: if no unique identifier exists just send back
     if (
       !isValid(newCustomer.email) &&
@@ -64,13 +68,14 @@ const createCustomer = async (req, res) => {
 
 
    //STEP-2: CHECK IN SHOPIIFY IF THE CUSTOMER EXISTS
-    let queryParts = [];
+    let queryParts = []; 
     if (isValid(newCustomer.email))
       queryParts.push(`email:${newCustomer.email.trim()}`);
     if (isValid(newCustomer.number)) {
       const normalizedPhone = normalizePhoneNumber(newCustomer.number);
       queryParts.push(`phone:${normalizedPhone}`);
     }
+    
     const query = queryParts.join(" OR ");
 
     let customerData = { customers: [] };
@@ -87,7 +92,7 @@ const createCustomer = async (req, res) => {
         email: customerData.customers[0].email,
         first_name: customerData.customers[0].first_name,
         last_name: customerData.customers[0].last_name,
-        total_spent: customerData.customers[0].total_spent,
+        total_spend: customerData.customers[0].total_spent,
         orders_count: customerData.customers[0].orders_count,
         customerfrom: "shopify",
         Number: customerData.customers[0].phone,
@@ -137,6 +142,7 @@ const createCustomer = async (req, res) => {
       first_name: newCustomer.first_name || '',
       last_name:newCustomer.last_name||'',
       phone: newCustomer.phone || '',
+      tags: 'Crm Customer',
       addresses: [
         {
           address1: newCustomer.address || '',
@@ -155,7 +161,7 @@ const createCustomer = async (req, res) => {
         last_name:createdShopifyCustomer.last_name,
         shopifyid: createdShopifyCustomer.id,
         email: createdShopifyCustomer.email,
-        total_spent: createdShopifyCustomer.total_spent,
+        total_spend: createdShopifyCustomer.total_spent,
         orders_count: createdShopifyCustomer.orders_count,
         customerfrom: "mongodb",
         Number: createdShopifyCustomer.phone,
@@ -186,6 +192,7 @@ const createCustomer = async (req, res) => {
       Number: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
       address: isValid(newCustomer.address) ? newCustomer.address.trim() : "",
       City: isValid(newCustomer.city) ? newCustomer.city.trim() : "",
+      
       Postcode: isValid(newCustomer.postcode)
         ? newCustomer.postcode.trim()
         : "",
@@ -205,9 +212,16 @@ const createCustomer = async (req, res) => {
   }
 };
 
+
+
+
+//-------------------------------------------CUSTOMER CRM---------------------------------------------- 
 const getAllCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find();
+    const {userid}=req.body;
+   
+    const customers = await Customer.find({userid});
+
     res.status(200).json(customers);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -228,6 +242,8 @@ const getCustomerById = async (req, res) => {
   }
 };
 
+
+//---------------------------------------------SEARCH ENGINE FOR CUSTOMER ( NEW LEADS MAKING!)-----------------------
 const getCustomers_from_shopify_mongo = async (req, res) => {
   const { search, id } = req.body;
 
@@ -326,11 +342,16 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
   }
 };
 
+
+//-------------------------------------------UPDATES----------------------------------------
+
+//this update is for wehre you need to keep the flow like leads or making new request
+
 const updateCustomer = async (req, res) => {
   try {
      const {Cust ,orderid} = req.body;
      const client = new shopify.clients.Rest({ session });
-   
+  
      //step check if the customer exists in the shopify
 
      let queryParts = [];
@@ -357,7 +378,7 @@ const updateCustomer = async (req, res) => {
          email: customerData.customers[0].email,
          first_name: customerData.customers[0].first_name,
          last_name: customerData.customers[0].last_name,
-         total_spent: customerData.customers[0].total_spent,
+         total_spend: customerData.customers[0].total_spent,
          orders_count: customerData.customers[0].orders_count,
          customerfrom: "shopify",
          Number: customerData.customers[0].phone,
@@ -383,6 +404,7 @@ const updateCustomer = async (req, res) => {
           first_name: Cust.firstName|| '',
           last_name:Cust.lastName||'',
           phone: Cust.phone || '',
+          tags: 'Crm Customer',
           addresses: [
             {
               address1: Cust.address || '',
@@ -398,14 +420,22 @@ const updateCustomer = async (req, res) => {
     const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
       first_name:Cust.firstName,
       last_name:Cust.lastName,
+      shopifyid:createdShopifyCustomer.id,
+      total_spend: createdShopifyCustomer.total_spent || 0,
+      orders_count: createdShopifyCustomer.orders_count || 0,
       email:Cust.email,
       Number:Cust.phone,
+      socialhandel:Cust.social||"",
+      emailMarketingConsent: {
+        consentUpdatedAt: new Date(),
+        marketingOptInLevel: 'SINGLE_OPT_IN',
+        marketingState: 'subscribed'
+      }
+     }}, { new: true })
      
-     }})
      if(orderid)
      {
-      console.log(orderid)
-      console.log(re)
+    
        const t=await Order.findByIdAndUpdate({
         _id:orderid
        },{
@@ -444,23 +474,156 @@ const updateCustomer = async (req, res) => {
   }
 };
 
+//this update for the customercrm where the customers which have email or phone(need testing) in sync
+//cuscrmupdate needs to be handel a case where if i send a customer where shopifyid is not there it should handle it 
+const Cuscrmupdate=async(req,res)=>{
+  try{
+    const {Cust } = req.body;
+    console.log(Cust)
+    //update shopify first so if somehting happen on shopify our db dont get de sync
+    const pp=normalizePhoneNumber(Cust.phone)
+    const d = await shopify.rest.Customer.find({ session, id: Cust.id });
+  
+    d.first_name = Cust.firstName;
+    d.last_name = Cust.lastName;
+    d.phone = Cust.phone;
+    d.email = Cust.email; 
+    const t = await d.save({ update: true });
+     
+    //now update the db 
+    const q=await Customer.findOneAndUpdate({_id:Cust._id},{
+      $set:{
+        first_name:Cust?.firstName||"",
+        last_name:Cust?.lastName||"",
+        Number:Cust?.phone||"",
+        socialhandel:Cust?.social||"",
+      }
+    })
+    
 
 
-//to get all the customers from orders
+     res.status(201).json({message:q})
+  }
+  catch (error) {
+ console.log(error)
+    const errors = error?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0])
+       {
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+      
+        const d="phone"+re;
+        res.status(501).json({data:d})
+
+      } else if (errors?.email) {
+        const d = "email " + re;
+        res.status(501).json({data:d})
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+
+        res.status(501).json({data:d})
+    }
+  }
+}
+
+//when you are just updating the customer on shopify you dont get it for crm until now (shopifyupdatedprop)
+const updateshopifycustomer=async(req,res)=>{
+  try {
+     const {customer}=req.body;
+    
+   
+     const response = await shopify.rest.Customer.find({
+       session,
+       id:customer.id , // numeric ID, not GID
+     });
+ 
+     response.first_name = customer.firstName;
+     response.last_name = customer.lastName;
+     response.phone = customer.phone;
+     response.email = customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+     const t = await response.save({ update: true });
+     const re=await shopify.rest.Customer.find({
+       session,
+       id:customer.id , // numeric ID, not GID
+     });
+     
+     const ur = {
+       _id:customer.id, 
+       first_name: re.first_name,
+       last_name: re.last_name,
+       Name: `${re.first_name} ${re.last_name}`,
+       email: re.email,
+       total_spent: re.total_spent,
+       orders_count: re.orders_count.toString(),
+       customerfrom: "shopify", // Assuming you're marking the source
+       Number: re.phone || null,
+       address: {
+         adress1: re.default_address?.address1 || "",
+         city: re.default_address?.city || "",
+         zip: re.default_address?.zip || "",
+         country: re.default_address?.country || "",
+       },
+     };
+ 
+     //console.log(response)
+     res.status(201).json({data:ur})
+   }
+    catch (err) {
+    
+     const errors = err?.response?.body.errors;
+     if (Object.values(errors)[0]?.[0]) {
+ 
+       const re = Object.values(errors)[0]?.[0];
+       if (errors?.phone) {
+         const d= re;
+         res.status(501).json({data:d})
+ 
+       } else if (errors?.email) {
+         const d = "email " + re;
+         res.status(501).json({data:d})
+       }
+     } else {
+       const re = "something went wrong with shpoify update";
+ 
+         res.status(501).json({data:d})
+     }
+   }
+ }
+
+
+
+//--------------------------------------UPDATES END-------------------------------------------------
+
+
+
+
+
+//--------------------------------------------WHERE WHERE IT SAYS USE THIS CUSTOMER IN CRM THIS IS THE FUNCTION--------------------
 
 const UseShopiyfcustomer=async(req,res)=>{  //when you entered the email to the  customer which dont have email hten this api hit when user press use
 try{
   const {Cust,orderid}=req.body;
 
+  
 
   //Step-1 check if that email have in our db or not if yes return that customer id
-
+ 
   
-  const t=await Customer.findOne({email:Cust.email});
+  const searchConditions = [];
+  if (isValid(Cust.email)) {
+    searchConditions.push({ email: Cust.email.trim() });
+  }
+  if (isValid(Cust.phone)) {
+    const normalizedPhone = normalizePhoneNumber(Cust.phone);
+    searchConditions.push({ Number: normalizedPhone });
+  }
+
+  const t = searchConditions.length > 0 ? await Customer.findOne({ $or: searchConditions }) : null;
   const order= await Order.findOne({_id:orderid})
   if(t)
   {
-   //if there is hte customer which are present with that mail that order will be given to that customer
+     //if there is hte customer which are present with that mail that order will be given to that customer
      // find hte order and give t._id ot that order cusid 
 
      const newo=await Order.findByIdAndUpdate({
@@ -489,20 +652,24 @@ try{
   
   if(d && d.customers.length>0)
   {
-    const iid=await Customer.create({
-     shopifyid:d.customers[0]?.id,
-     first_name:d.customers[0]?.first_name,
-     last_name:d. customers[0].last_name,
-     email:d.customers[0].email,
-     orders_count:d.customers[0].orders_count,
-     total_spent:d.customers[0].total_spent,
-     Number:d.customers[0].phone,
-     userid:order.userid,
-     emailMarketingConsent:{
-       consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
-       marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
-       marketingState:d.customers[0].email_marketing_consent.state
-     }
+    const iid=await Customer.findOneAndUpdate({
+    _id:order.cusid
+    },{
+      $set:{
+        shopifyid:d.customers[0]?.id,
+        first_name:d.customers[0]?.first_name,
+        last_name:d. customers[0].last_name,
+        email:d.customers[0].email,
+        orders_count:d.customers[0].orders_count,
+        total_spend:d.customers[0].total_spent,
+        Number:d.customers[0].phone,
+        userid:order.userid,
+        emailMarketingConsent:{
+          consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
+          marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
+          marketingState:d.customers[0].email_marketing_consent.state
+        }
+      }
     })
 
     const nn=await Order.findByIdAndUpdate({
@@ -510,7 +677,7 @@ try{
      },{
       $set:{
         cusid:iid._id,
-        Name:iid.first_name+' '+iid.last_name
+        Name:d.customers[0]?.first_name+' '+d.customers[0].last_name
       }
      });
      return res.status(201).json({message:"order user updated"});
@@ -518,7 +685,7 @@ try{
   }
 
   //STEP 3 if customer is not in shopoify and db create one
-  console.log("step3")
+  
   
      
       
@@ -531,6 +698,7 @@ catch(err)
 }
 }
 
+//--------------------------------------------IDK SEEMS IMPORTANT-------------------------------------------------------
 const getAllCustomerOrderStats = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -585,11 +753,9 @@ const getAllCustomerOrderStats = async (req, res) => {
     const dbm=await Customer.find({userid:userId});
     const mergedCustomers = [];
   
-  //  console.log(mongoBuckets.get('682ee56c7c3e911370a40ab9'))
   
 
     for (const customer of dbm) {
-   // console.log(mongoBuckets.get(customer?._id.toString())) 
       mergedCustomers.push({
         id: customer?._id,
         Name: customer?.Name || "",
@@ -626,6 +792,7 @@ const getAllCustomerOrderStats = async (req, res) => {
   }
 };
 
+
 const deleteCustomer = async (req, res) => {
   try {
     const { id } = req.body;
@@ -638,6 +805,15 @@ const deleteCustomer = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+
+
+
+
+
+
+
 
 //this api is for the mongodb custoemr update which is on the new request section it will take a whole update customer and find it by _id then update all the document
 //check if
@@ -710,6 +886,7 @@ const Updatecusnewreq = async (req, res) => {
   }
 };
 
+
 const update_Customer_Crm = async (req, res) => {
   const { Cust } = req.body;
  
@@ -748,9 +925,10 @@ const update_Customer_Crm = async (req, res) => {
   }
 };
 
+
 const getshopifyorders = async (req, res) => {
   const { userid } = req.body;
-console.log(userid)
+
   try {
     // Get last createdAt from DB
     const latestOrder = await Orderreview.findOne({ userid })
@@ -788,7 +966,6 @@ console.log(userid)
     }
 
     const shopifyOrders = totalorders.flat();
-  //   console.log(shopifyOrders) 
     // Populate into DB
     const savePromises = shopifyOrders.map(async (order) => {
       const check=await Orderreview.find({name:order.name});
@@ -841,69 +1018,6 @@ console.log(userid)
 };
 
 
-const updateshopifycustomer=async(req,res)=>{
- try {
-    const {customer}=req.body;
-    console.log(customer)
-   
-       // console.log(id)
-    const response = await shopify.rest.Customer.find({
-      session,
-      id:customer.id , // numeric ID, not GID
-    });
-
-    response.first_name = customer.firstName;
-    response.last_name = customer.lastName;
-    response.phone = customer.phone;
-    response.email = customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
-    const t = await response.save({ update: true });
-    const re=await shopify.rest.Customer.find({
-      session,
-      id:customer.id , // numeric ID, not GID
-    });
-    const ur = {
-      _id:customer.id, 
-      first_name: re.first_name,
-      last_name: re.last_name,
-      Name: `${re.first_name} ${re.last_name}`,
-      email: re.email,
-      total_spent: re.total_spent,
-      orders_count: re.orders_count.toString(),
-      customerfrom: "shopify", // Assuming you’re marking the source
-      Number: re.phone || null,
-      address: {
-        adress1: re.default_address?.address1 || "",
-        city: re.default_address?.city || "",
-        zip: re.default_address?.zip || "",
-        country: re.default_address?.country || "",
-      },
-      // Optional field (uncomment if you have social handle)
-      // socialhandel: updatedCustomer.socialhandel,
-    };
-
-    //console.log(response)
-    res.status(201).json({data:ur})
-  }
-   catch (err) {
-    const errors = err?.response?.body.errors;
-    if (Object.values(errors)[0]?.[0]) {
-
-      const re = Object.values(errors)[0]?.[0];
-      if (errors?.phone) {
-     
-        res.status(501).json({data:d})
-
-      } else if (errors?.email) {
-        const d = "email " + re;
-        res.status(501).json({data:d})
-      }
-    } else {
-      const re = "something went wrong with shpoify update";
-
-        res.status(501).json({data:d})
-    }
-  }
-}
 
 
 const createshopifycustoemr=async(req,res)=>{
@@ -919,7 +1033,7 @@ try{
           phone: data.phone,
           email_marketing_consent: {
             marketing_opt_in_level: 'SINGLE_OPT_IN',
-            marketing_state: 'SUBSCRIBED',
+            marketing_state: 'subscribed',
             consent_updated_at: new Date().toISOString(),
           },
         });
@@ -972,7 +1086,6 @@ async function draftorder(customerid, product, tags, shiping) {
 
   draftOrder.shipping_address = shiping;
   draftOrder.email=customerid.email
-  console.log(draftOrder)
 
   const response = await draftOrder.save({
     update: true,
@@ -1092,8 +1205,8 @@ const getshopifybyid_store=async(id,userid)=>{
 
  const d = await shopify.rest.Customer.search({ session, id: id });
 
- const ch=await Customer.findOne({shopifid:d.customers[0].id});
-
+ const ch=await Customer.findOne({shopifyid:d.customers[0].id});
+ 
  if(!ch){
 
  const iid=await Customer.create({
@@ -1102,7 +1215,7 @@ const getshopifybyid_store=async(id,userid)=>{
   last_name:d. customers[0].last_name,
   email:d.customers[0].email,
   orders_count:d.customers[0].orders_count,
-  total_spent:d.customers[0].total_spent,
+  total_spend:d.customers[0].total_spent||0,
   Number:d.customers[0].phone,
   userid:userid,
   emailMarketingConsent:{
@@ -1111,7 +1224,6 @@ const getshopifybyid_store=async(id,userid)=>{
     marketingState:d.customers[0].email_marketing_consent.state
   }
  })
-
  return iid._id;
 }
  else{
@@ -1204,5 +1316,6 @@ module.exports = {
   getshopifyorders,
 createshopifycustoemr,
 getshopifybyid_store,
-UseShopiyfcustomer
+UseShopiyfcustomer,
+Cuscrmupdate
 };

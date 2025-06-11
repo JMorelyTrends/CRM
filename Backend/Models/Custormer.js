@@ -24,10 +24,12 @@ const CustomerSchema = new mongoose.Schema(
       default:"mongodb"
     },
     total_spend:{
-      type:String,
+      type:Number,
+      default:0
     },
     orders_count:{
-     type:Number
+     type:Number,
+     default:0,
     },
     tags:{
       type:[String],

@@ -1,4 +1,3 @@
-
 "use client"
 import React,{useState,useEffect} from 'react'
 import {ArrowUpNarrowWide,Funnel } from "lucide-react"
@@ -10,6 +9,8 @@ import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus, Toogle_N
 import NewCustomerFormUI from '../Components/Customer/NewCustomerFormUI'
 import { IShopifyCustomer } from '../Components/Small comps/Types'
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Addselectedcusotmer, Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice'
+import { AddOrderid } from '@/lib/features/OrederReview/OrderReviewSlice'
 
   type hprops={
     search:string,
@@ -71,47 +72,24 @@ const Page = () => {
         const [custo,setcusto]=useState<IShopifyCustomer[]|null>(null)
         const [noofcus,setnoofcus]=useState<number>(0);
         const [Klaviyop,setKlaviyop]=useState<number>(0)
-        const [cpage,setcpage]=useState<number>(1)
-        const [totalPages,settotalpages]=useState<number>(1)
       
         //functions
         const getcustomers=async()=>{
         try
-          {  const re=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/shcustomer/getcustomers`,
+          {  const re=await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getAllCustomers`,
           {
             userid: userid,
-            currentpage:cpage,
-            searchText:search
           })
-          setcusto(re.data.customers)
-         
+          setcusto(re.data)
+          
           setnoofcus(re.data.totalCustomers);
           dispatch(AddCustomers(re.data.customers))
-          settotalpages(re.data.totalPages)
           setKlaviyop(re.data.optin)
-          if(cpage>re.data.totalPages)
-          {
-            setcpage(1);
-          }
         }
         catch(e){
           console.log("something wrong with customer fetching",e)
         }
         }
-        const goToNextPage = () => {
-          if (cpage < totalPages) {
-            setcpage((prev) => prev + 1);
-            
-          }
-        };
-        
-        const goToPreviousPage = () => {
-          if (cpage > 1) {
-            setcpage((prev) => prev - 1);
-        
-          }
-        };
-
 
         //useeffects
         useEffect(() => {
@@ -119,7 +97,11 @@ const Page = () => {
             if (typeof window !== "undefined") {
               const id = localStorage.getItem("tempcred");
               setuserid(id);
+              dispatch(Addselectedcusotmer(0))
+              dispatch(AddOrderid(""))
+              dispatch(Toggleleadsrenderstep(0))
             }
+
           }, []);
 
         useEffect(()=>{
@@ -131,7 +113,7 @@ const Page = () => {
   if (userid !== "") {
     getcustomers();
   }
-}, [cpage]);
+}, []);
 
   return (
     <div className=' w-[80vw]'>
@@ -141,6 +123,7 @@ const Page = () => {
         />}
 
         <EditPopup
+        method='crm'
         getcustomers={getcustomers}
         />
         <NewCustomerFormUI />
@@ -221,81 +204,56 @@ const Page = () => {
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
     dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
-            <table className="w-full table-auto text-sm text-left text-black border-collapse ">
+            <table className="w-full table-auto text-sm text-center text-black border-collapse">
               <thead className="bg-white sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-2">Customer Name</th>
-                  <th className="px-4 py-2">Number</th>
-                  <th className="px-4 py-2">Email</th>
-                  <th className="px-4 py-2">Total Spend</th>
-                  <th className="px-4 py-2">Total Orders</th>
-                  <th className="px-4 py-2">Tier</th>
-                  <th className="px-4 py-2">Klaviyo</th>
-                 
-                  <th className="px-4 py-2">Edit</th>
+                  <th className="px-4 py-2 text-center">Customer Name</th>
+                  <th className="px-4 py-2 text-center">Number</th>
+                  <th className="px-4 py-2 text-center">Email</th>
+                  <th className="px-4 py-2 text-center">Social</th>
+                  <th className="px-4 py-2 text-center">Total Spend</th>
+                  <th className="px-4 py-2 text-center">Total Orders</th>
+                  <th className="px-4 py-2 text-center">Tier</th>
+                  <th className="px-4 py-2 text-center">Klaviyo</th>
+                  <th className="px-4 py-2 text-center">Edit</th>
                 </tr>
               </thead>
               <tbody>
-                {custo &&custo.length>0 &&custo.map((customer, idx) => (
+                {custo && custo.length > 0 && custo.map((customer, idx) => (
                   <tr key={idx} className="border-b border-black">
-                    <td className="px-4 py-2">{customer.firstName+" "+customer.lastName}</td>
-                    <td className="px-4 py-2">{customer.phone}</td>
-                    <td className="px-4 py-2">{customer.email}</td>
-                    
-                    <td className="px-4 py-2">{customer.amountSpent.amount}</td>
-                    <td className="px-4 py-2">{customer.numberOfOrders}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 text-center">{customer.first_name + " " + customer.last_name}</td>
+                    <td className="px-4 py-2 text-center">{customer.Number}</td>
+                    <td className="px-4 py-2 text-center">{customer.email}</td>
+                    <td className="px-4 py-2 text-center">{customer.socialhandel || '-'}</td>
+                    <td className="px-4 py-2 text-center">{customer.total_spend}</td>
+                    <td className="px-4 py-2 text-center">{customer.orders_count || 0}</td>
+                    <td className="px-4 py-2 text-center">
                       <button className="bg-gray-200 px-2 py-1 rounded-full">tier</button>
                     </td>
-                   
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 text-center">
                       <button
-                        className={`px-2 py-1 rounded-full text-nowrap cursor-pointer ${customer.emailMarketingConsent.marketingState==='SUBSCRIBED'?'bg-[#B7CBAF]':'bg-[#272626] text-white'} `}
+                        className={`px-2 py-1 rounded-full text-nowrap cursor-pointer ${customer.emailMarketingConsent.marketingState === 'subscribed' ? 'bg-[#B7CBAF]' : 'bg-[#272626] text-white'} `}
                       >
-                       {customer.emailMarketingConsent.marketingState==='SUBSCRIBED'?'Opt-in':'Opt-out'}
+                        {customer.emailMarketingConsent.marketingState === 'subscribed' ? 'Opt-in' : 'Opt-out'}
                       </button>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 text-center">
                       <button
-                      onClick={()=>{
-                        dispatch(AddSelectedCustomer(customer))
-                        dispatch(Toogle_Editopen())}}
-                      className="bg-blue-400 cursor-pointer text-white  px-4 py-1 rounded-full">Edit</button>
+                        onClick={() => {
+                          dispatch(AddSelectedCustomer(customer))
+                          dispatch(Toogle_Editopen())
+                        }}
+                        className="bg-blue-400 cursor-pointer text-white px-4 py-1 rounded-full">Edit</button>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-            {/* Pagination Buttons */}
-            <div className="flex justify-center items-start gap-4 mt-4">
-              <button
-                onClick={goToPreviousPage}
-                disabled={cpage === 1}
-                className={`w-[100px] h-[30px] ml-5 bg-[#454545] text-white font-bold rounded-xl cursor-pointer ${
-                  cpage === 1 ? "opacity-50 cursor-not-allowed" : "hover:border-black"
-                }`}
-              >
-                Previous
-              </button>
-              <span className="font-bold text-black text-md">
-                Page {cpage} of {totalPages}
-              </span>
-              <button
-                onClick={goToNextPage}
-                disabled={cpage === totalPages}
-                className={`w-[100px] h-[30px] ml-5 bg-[#454545] text-white font-bold rounded-xl cursor-pointer ${
-                  cpage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:border-black"
-                }`}
-              >
-                Next
-              </button>
-            </div>
-
     </div>
 
   )
+
 }
 
 export default Page
