@@ -13,6 +13,7 @@ import { ToogleShflag,Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderst
 import { isEqualStrings } from '../Small comps/isEqualStrings';
 import axios from 'axios';
 import { toast } from 'sonner';
+import PhoneInput from '../Small comps/PhoneInput';
 const Shopifyupdatepopup: React.FC = () => {
     const dispatch = useDispatch();
     const isOpen = useSelector((state: RootState) => state.NewReq.Shflag);
@@ -25,18 +26,28 @@ const Shopifyupdatepopup: React.FC = () => {
     const [email, setEmail] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
     const [address, setAddress] = useState<string>('');
-
+    const [ccode,setccdoe]=useState<string>("")
     useEffect(()=>{
       if(customer)
       {
         setFirstName(customer?.first_name||"");
         setLastName(customer?.last_name||"");
         setEmail(customer?.email||"");
+        
         setPhone(customer?.Number||"");
       }
     },[customer])
+    const getlastn = (s:string, n:number) => s.slice(-n);
     const Submit=async()=>{
       try{
+        if (phone) {
+            const cleanNumber = phone.replace(/^\+/, '');
+            const phoneNumber = getlastn(cleanNumber, 10);
+            if (phoneNumber.length !== 10) {
+              toast.error("Phone number must be 10 digits");
+              return;
+            }
+          }
       if(userid)
         { const cus={
         id:customer._id,
@@ -55,7 +66,7 @@ const Shopifyupdatepopup: React.FC = () => {
             setLastName("")
             setPhone("")
             dispatch(ToogleShflag())
-            
+            dispatch(Toogleshopifypopup())
             dispatch(Addselectedcusotmer(re.data.data));
             dispatch(Toggleleadsrenderstep(2));}
             else{
@@ -64,6 +75,7 @@ const Shopifyupdatepopup: React.FC = () => {
       }
  catch(err:unknown)
         {
+            console.log(err)
           if(axios.isAxiosError(err))
           {
            toast.error(err.response?.data?.data || "An error occurred");
@@ -117,13 +129,9 @@ const Shopifyupdatepopup: React.FC = () => {
 
                             <div>
                                 <label className="block text-gray-700 font-semibold mb-1">Phone</label>
-                                <input
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    className={`w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500
-                                        ${edata?.Number&&customer.Number&&isEqualStrings(customer.Number,edata?.Number)?' text-blue-400':''}
-                                        `}
+                                <PhoneInput
+                                number={phone}
+                                setNumber={setPhone}
                                 />
                             </div>
 

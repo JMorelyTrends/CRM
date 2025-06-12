@@ -23,7 +23,7 @@ const Shopifymatch = ({from,getcustomers}:{from:string,getcustomers:()=>Promise<
     const edata=useSelector((state:RootState)=>state.NewReq.SubmitingCustomer)
 
     const Use=async()=>{
-        if(from=="leads" && orderid)
+        if( orderid)
         {
             const newc= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/usethecustomer`,
                 {
@@ -90,14 +90,14 @@ const Shopifymatch = ({from,getcustomers}:{from:string,getcustomers:()=>Promise<
                             </table>
                         )}
 
-                        <div className="mt-6 flex justify-center gap-10 ">
-                            <button
+                        <div className= {`mt-6 flex justify-center gap-10 `} >
+                           {from!="crm"&& <button
                                 className="px-6 py-2 bg-blue-600 cursor-pointer hover:bg-blue-700 text-white rounded-lg font-medium transition"
                                 onClick={() => {
                                    Use()
                                 }} >
                                 Use
-                            </button>
+                            </button>}
 <button
                                 className="px-6 py-2 bg-gray-700 cursor-pointer hover:bg-gray-600 text-white rounded-lg font-medium transition"
                                 onClick={() => {

@@ -13,6 +13,7 @@ import Shopifymatch from "../Newrequest panel/Shopifymatch";
 import axios, { AxiosResponse } from "axios";
 import { toast } from "sonner";
 import { Custprop } from "../Small comps/Types";
+import PhoneInput from "../Small comps/PhoneInput";
 
 interface CustomerResponse {
   alert?: string;
@@ -53,29 +54,34 @@ export default
       setSocialHandle(customer.socialhandel || "");
     }
   }, [customer, ]);
-
+  const getlastn = (s:string, n:number) => s.slice(-n);
+  const getfirstn=(s:string, n:number) =>s.slice(0,n)
   const handleSubmit = async() => {
+    // Validate phone number
+    if (phone) {
+      const cleanNumber = phone.replace(/^\+/, '');
+      const phoneNumber = getlastn(cleanNumber, 10);
+      if (phoneNumber.length !== 10) {
+        toast.error("Phone number must be 10 digits");
+        return;
+      }
+    }
+    
     const data =
         {_id:customer._id,id:customer.shopifyid, firstName, lastName, email, phone, emailMarketingConsent,social:socialHandle };  
         try{ 
            let newc: AxiosResponse<CustomerResponse>;
-          method=="leads"?
+        if(  method=="leads"){
          newc = await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/updateCustomer`,
           {
             Cust:data,
             orderid
           })
-          :
-          newc = await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/Cuscrmupdate`,
-            {
-              Cust:data,
-             
-            })
-          if(newc&&newc&&newc.data?.alert==="Exists in Shopify database")
+            if(newc&&newc&&newc.data?.alert==="Exists in Shopify database")
             {
               const submitteddata = {
                 name,
-                Number:phone,
+                Number:phone=='+0'?"":phone,
                 email,
                 socialhandel:socialHandle
               };
@@ -97,12 +103,41 @@ export default
             dispatch(AddSelectedCustomer(null))
             dispatch(Toogle_Editopen())
           }
+        
+        }
+          else{
+            newc = await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/Cuscrmupdate`,
+              {
+                Cust:data,
+              })
+              if(newc&&newc&&newc.data?.alert==="Exists in Shopify database")
+                {
+                  
+               
+                  toast.error(`${newc.data?.alert}`)
+                }
+              else
+              {
+                toast.success("Customer updated succesfully")
+                setEmail("")
+                setFirstName("");
+                setLastName("")
+                setPhone("")
+                setName("")
+                getcustomers()
+                dispatch(AddSelectedCustomer(null))
+                dispatch(Toogle_Editopen())
+              }
+          }
+       
+      
         }
         catch(err:unknown)
         {
+          console.log(err)
           if(axios.isAxiosError(err))
           {
-           toast.error(err.response?.data?.error || "An error occurred");
+           toast.error(err.response?.data?.data || "An error occurred");
           }
         }
   };
@@ -113,12 +148,12 @@ export default
     <>
    
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className={`max-w-md p-6 rounded-xl shadow-lg`}>
+      <DialogContent className="max-w-md p-4 rounded-xl shadow-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Edit Customer Details</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">Edit Customer Details</DialogTitle>
         </DialogHeader>
 
-        <div className="mt-5 grid grid-cols-1 gap-4">
+        <div className="mt-3 grid grid-cols-1 gap-3">
           <Shopifyupdatepopup />
           <Shopifymatch from="leads" getcustomers={getcustomers} />
             <>
@@ -136,7 +171,10 @@ export default
               </div>
               <div className="flex flex-col gap-1">
                 <Label>Phone</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <PhoneInput
+                number={phone}
+                setNumber={setPhone}
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <Label>Social Handle</Label>

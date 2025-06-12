@@ -8,6 +8,7 @@ import {Toggleleadsrenderstep,Addselectedcusotmer,ADD_Matched_cutomer,Toogleshop
 import Shopifymatch from './Shopifymatch';
 import DBMatched from './DBMatched';
 import Shopifyupdatepopup from './Shopifyupdatepopup';
+import PhoneInput from '../Small comps/PhoneInput';
 type Props = {
   sideopen: boolean;
 };
@@ -21,6 +22,8 @@ const Newcustomer = (props: Props) => {
   const [last_name,setlast_name]=useState<string>('')
   const [number, setNumber] = useState<string>('');
   const [email, setEmail] = useState<string>('');
+  const [countryCode, setCountryCode] = useState<string>("");
+  const [fullNumber, setFullNumber] = useState<string>("");
   //const [address, setAddress] = useState<string>('');
   //const [postcode, setPostcode] = useState<string>('');
   //const [city,setcity]=useState<string>('');
@@ -35,7 +38,11 @@ const Newcustomer = (props: Props) => {
   },[])
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
+
+   
+   
     if(number.length>0&& number.length<11)
     {
       toast("Number should be 11 character long");
@@ -115,7 +122,7 @@ const Newcustomer = (props: Props) => {
       } h-[85vh] bg-white flex flex-col text-black rounded-xl overflow-hidden`}
     >
 <Shopifyupdatepopup/>
-<Shopifymatch from='newcustomer' getcustomers={()=>promises<void>}/>
+<Shopifymatch from='newcustomer' getcustomers={async () => {}}/>
 <DBMatched />
       <div className="relative  w-full flex flex-col items-center pt-6  ">
         <div className="absolute top-6  text-opacity-80 text-xl md:text-3xl px-2 text-black bg-opacity-50 rounded-md">
@@ -157,20 +164,7 @@ const Newcustomer = (props: Props) => {
         </div>
         <div className="flex flex-col">
           <label className="mb-1 font-medium">Number</label>
-          <input
-            type="tel"
-           
-            pattern="[0-9]*"
-            inputMode="numeric"
-            value={number}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (/^\d*$/.test(val) && val.length <= 11) {
-                setNumber(val);
-              }
-            }}
-            className="p-2 rounded-md border border-gray-300"
-          />
+          <PhoneInput number={number} setNumber={setNumber} />
         </div>
 
         <div className="flex flex-col">
@@ -209,6 +203,8 @@ const Newcustomer = (props: Props) => {
           Back
         </div>
       </form>
+
+
     </div>
   );
 };

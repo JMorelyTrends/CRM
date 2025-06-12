@@ -11,8 +11,9 @@ import { AddSubmitingCustomer,ADD_Matched_cutomer,Toogleshopifypopup, Addselecte
 import {Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
 import Shopifyupdatepopup from "../Newrequest panel/Shopifyupdatepopup";
 import Shopifymatch from "../Newrequest panel/Shopifymatch";
+import PhoneInput from "../Small comps/PhoneInput";
 
-export default function NewCustomerFormUI() {
+export default function NewCustomerFormUI({getcustomers,from}:{getcustomers:()=>Promise<void>,from:string}) {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.Cus.Newcuscrm);
   const customer=useSelector((state:RootState)=>state.NewReq.Selectedonecustomer)
@@ -30,11 +31,20 @@ export default function NewCustomerFormUI() {
     }
   }, []);
 
-
+  const getlastn = (s:string, n:number) => s.slice(-n);
   const submit=async()=>{
+   
    if(userid!=="")
     {
-       
+      if (number) {
+        const cleanNumber = number.replace(/^\+/, '');
+        const phoneNumber = getlastn(cleanNumber, 10);
+        if (phoneNumber.length !== 10) {
+          toast.error("Phone number must be 10 digits");
+          return;
+        }
+      }
+      
         if(firstname==="" && lastname==""&&number==""&&email=="")
         {
          toast("fill atleast one field")   
@@ -71,6 +81,7 @@ export default function NewCustomerFormUI() {
       else
       {
         toast.success("Customer updated succesfully")
+        getcustomers()
         setfirstname("")
         setlastname("")
         setEmail("")
@@ -111,10 +122,10 @@ export default function NewCustomerFormUI() {
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto p-6 rounded-xl shadow-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Add New Customer</DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-center">Add New Customer</DialogTitle>
         </DialogHeader>
         <Shopifyupdatepopup />
-        <Shopifymatch from="leads" getcustomers={()=>Promise.resolve()} />
+        <Shopifymatch from="crm" getcustomers={()=>Promise.resolve()} />
         <div className="flex flex-col gap-4">
           <div className="flex flex-col">
             <label className="mb-1 font-medium">First Name</label>
@@ -146,22 +157,9 @@ export default function NewCustomerFormUI() {
           </div>
           <div className="flex flex-col">
             <label className="mb-1 font-medium">Number</label>
-            <input
-              type="tel"
-              pattern="[0-9]*"
-              inputMode="numeric"
-              value={number}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^\d*$/.test(val) && val.length <= 11) {
-                  setNumber(val);
-                }
-                else if(number==null)
-                {
-                    setNumber("0")
-                }
-              }}
-              className="p-2 rounded-md border border-gray-300"
+            <PhoneInput 
+            number={number}
+            setNumber={setNumber}
             />
           </div>
           <div className="flex flex-col">

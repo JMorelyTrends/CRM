@@ -16,11 +16,10 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import EditPopup from "../Components/Customer/Editpopup";
 //import { Reseller, RootState } from "@/lib/Resellerstore";
-import { ADD_Matched_cutomer, Toggleleadsrenderstep,ToogleCustomerComplete } from "@/lib/features/Newrequest/NewRequestSlice";
+import { ADD_Matched_cutomer, Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 import { statetype, Task } from "../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
-import CompleteCustomerpopup from "../Components/Newrequest panel/CompleteCustomerpopup";
 import { useIsSmallScreen } from "../Components/Small comps/Issmall";
 import { toast } from "sonner";
 import { AddOrderid, AddSelectedOrder,ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";

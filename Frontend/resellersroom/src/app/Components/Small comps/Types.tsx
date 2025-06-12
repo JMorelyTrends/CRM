@@ -55,7 +55,7 @@ export type additem={
   orders_count:number,
   customerfrom:string,
   Number:string|null
-  address:string,
+  
   socialhandel:string,
   emailMarketingConsent: {
     consentUpdatedAt: Date | null;
@@ -64,6 +64,13 @@ export type additem={
   };
   userid:string,
   tags:string[],
+  total_spent?:string,
+ address:{ total_spent?:string
+  adress1?:string,
+  city?:string,
+  zip?:string,
+  country?:string
+}
 }
 export type dCustomerArray = Custprop[];
 

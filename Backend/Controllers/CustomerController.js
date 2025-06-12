@@ -54,7 +54,7 @@ const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
     const client = new shopify.clients.Rest({ session });
-  
+
  // STEP-1: if no unique identifier exists just send back
     if (
       !isValid(newCustomer.email) &&
@@ -72,8 +72,8 @@ const createCustomer = async (req, res) => {
     if (isValid(newCustomer.email))
       queryParts.push(`email:${newCustomer.email.trim()}`);
     if (isValid(newCustomer.number)) {
-      const normalizedPhone = normalizePhoneNumber(newCustomer.number);
-      queryParts.push(`phone:${normalizedPhone}`);
+      const normalizedPhone = newCustomer.number;
+      queryParts.push(`phone:${newCustomer.number}`);
     }
     
     const query = queryParts.join(" OR ");
@@ -124,9 +124,10 @@ const createCustomer = async (req, res) => {
         customer: existingCustomer,
       });
     }
-
+   
      // --- Step 4: Create if not exists ---
-    if (isValid(newCustomer.email)) {
+    if (isValid(newCustomer.email)||isValid(newCustomer.number)) {
+    
       // Create customer on Shopify
       const shopifyCustomerPayload = {
         email: newCustomer.email.trim(),
@@ -141,7 +142,7 @@ const createCustomer = async (req, res) => {
       email: newCustomer.email,
       first_name: newCustomer.first_name || '',
       last_name:newCustomer.last_name||'',
-      phone: newCustomer.phone || '',
+      phone: newCustomer.number || '',
       tags: 'Crm Customer',
       addresses: [
         {
@@ -207,7 +208,7 @@ const createCustomer = async (req, res) => {
       customer: createdCustomer,
     });
   } catch (error) {
-   console.error(error);
+  
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -221,8 +222,27 @@ const getAllCustomers = async (req, res) => {
     const {userid}=req.body;
    
     const customers = await Customer.find({userid});
+    
+    // Calculate total count
+    const totalCount = customers.length;
+    
+    // Calculate subscribed customers count
+    const subscribedCount = customers.filter(customer => 
+      customer.emailMarketingConsent?.marketingState === 'subscribed'
+    ).length;
+    
+    // Calculate percentage (handle division by zero)
+    const subscribedPercentage = totalCount > 0 
+      ? ((subscribedCount / totalCount) * 100).toFixed(2)
+      : 0;
 
-    res.status(200).json(customers);
+    res.status(200).json({
+      Customers: customers,
+      totalCustomers:totalCount,
+      subscribedCount,
+      optin: `${subscribedPercentage}`
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -352,6 +372,7 @@ const updateCustomer = async (req, res) => {
      const {Cust ,orderid} = req.body;
      const client = new shopify.clients.Rest({ session });
   
+
      //step check if the customer exists in the shopify
 
      let queryParts = [];
@@ -373,6 +394,7 @@ const updateCustomer = async (req, res) => {
      }
  
      if (customerData.customers.length > 0) {
+
        const newCustomer = {
          _id: customerData.customers[0].id,
          email: customerData.customers[0].email,
@@ -429,7 +451,7 @@ const updateCustomer = async (req, res) => {
       emailMarketingConsent: {
         consentUpdatedAt: new Date(),
         marketingOptInLevel: 'SINGLE_OPT_IN',
-        marketingState: 'subscribed'
+        marketingState: 'unsubscribed'
       }
      }}, { new: true })
      
@@ -452,7 +474,7 @@ const updateCustomer = async (req, res) => {
   } 
   
   catch (error) {
- 
+ console.log(error)
     const errors = error?.response?.body.errors;
     if (Object.values(errors)[0]?.[0])
        {
@@ -476,63 +498,99 @@ const updateCustomer = async (req, res) => {
 
 //this update for the customercrm where the customers which have email or phone(need testing) in sync
 //cuscrmupdate needs to be handel a case where if i send a customer where shopifyid is not there it should handle it 
-const Cuscrmupdate=async(req,res)=>{
+const Cuscrmupdate = async (req, res) => {
   try{
-    const {Cust } = req.body;
+    const {Cust}=req.body;
     console.log(Cust)
-    //update shopify first so if somehting happen on shopify our db dont get de sync
-    const pp=normalizePhoneNumber(Cust.phone)
-    const d = await shopify.rest.Customer.find({ session, id: Cust.id });
-  
-    d.first_name = Cust.firstName;
-    d.last_name = Cust.lastName;
-    d.phone = Cust.phone;
-    d.email = Cust.email; 
-    const t = await d.save({ update: true });
-     
-    //now update the db 
-    const q=await Customer.findOneAndUpdate({_id:Cust._id},{
-      $set:{
-        first_name:Cust?.firstName||"",
-        last_name:Cust?.lastName||"",
-        Number:Cust?.phone||"",
-        socialhandel:Cust?.social||"",
-      }
-    })
-    
+    const client = new shopify.clients.Rest({ session });
 
-
-     res.status(201).json({message:q})
-  }
-  catch (error) {
- console.log(error)
-    const errors = error?.response?.body.errors;
-    if (Object.values(errors)[0]?.[0])
-       {
-      const re = Object.values(errors)[0]?.[0];
-      if (errors?.phone) {
+    if(Cust.id)
+    {
       
-        const d="phone"+re;
-        res.status(501).json({data:d})
+         const response = await shopify.rest.Customer.find({
+          session,
+          id:Cust.id , // numeric ID, not GID
+        });
+    
+        response.first_name = Cust.firstName;
+        response.last_name = Cust.lastName;
+        response.phone = Cust.phone;
+        response.email = Cust.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+        const t = await response.save({ update: true });
 
-      } else if (errors?.email) {
-        const d = "email " + re;
-        res.status(501).json({data:d})
-      }
-    } else {
-      const re = "something went wrong with shpoify update";
-
-        res.status(501).json({data:d})
+        const d=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+          first_name:Cust.firstName||"",
+          last_name:Cust.lastName||"",
+          email:isValid(Cust.email)&&Cust.email||"",
+          Number:isValid(Cust.phone)&&Cust.phone||"",
+          socialhandel:Cust.social||"",
+        }})
+        return res.status(201).json({message:"Customer is updated"})
+    }
+    else if(isValid(Cust.email)|| isValid(Cust.phone))
+    {
+      const createdShopifyCustomer = ( await client.post({
+        path: 'customers',
+        data: {
+          customer: {
+            email: Cust.email,
+            first_name: Cust.firstName|| '',
+            last_name:Cust.lastName||'',
+            phone: Cust.phone || '',
+            tags: 'Crm Customer',
+            addresses: [
+              {
+                address1: Cust.address || '',
+                city: Cust.city || '',
+                zip: Cust.postcode || ''
+              }
+            ],
+          },
+        },
+        type: 'application/json',
+      })).body.customer
+      const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+        first_name:Cust.firstName,
+        last_name:Cust.lastName,
+        shopifyid:createdShopifyCustomer.id,
+        email:Cust.email,
+        Number:Cust.phone,
+        socialhandel:Cust.social||"",
+       
+       }}, { new: true })
+       
+       return res.status(201).json({message:"Customer is updated"})
+    }
+    else if(Cust.social){
+      const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+        first_name:Cust.firstName,
+        last_name:Cust.lastName,
+        socialhandel:Cust.social||"",
+       
+       }}, { new: true })
+       return res.status(201).json({message:"Customer is updated"})
     }
   }
+  catch (error) {
+  
+    const errors = error?.response?.body?.errors;
+    if (errors?.phone) {
+      return res.status(501).json({ data: "phone " + errors.phone[0] });
+    } else if (errors?.email) {
+      
+      return res.status(501).json({ data: "email " + errors.email[0] });
+    }
+
+    return res.status(501).json({ data: "Something went wrong with Shopify update" });
+  }
 }
+
 
 //when you are just updating the customer on shopify you dont get it for crm until now (shopifyupdatedprop)
 const updateshopifycustomer=async(req,res)=>{
   try {
      const {customer}=req.body;
-    
-   
+     console.log(customer)
      const response = await shopify.rest.Customer.find({
        session,
        id:customer.id , // numeric ID, not GID
@@ -570,7 +628,7 @@ const updateshopifycustomer=async(req,res)=>{
      res.status(201).json({data:ur})
    }
     catch (err) {
-    
+   
      const errors = err?.response?.body.errors;
      if (Object.values(errors)[0]?.[0]) {
  
@@ -582,6 +640,9 @@ const updateshopifycustomer=async(req,res)=>{
        } else if (errors?.email) {
          const d = "email " + re;
          res.status(501).json({data:d})
+       }
+       else if(errors?.sms_marketing_consent){
+        res.status(501).json({data:re})
        }
      } else {
        const re = "something went wrong with shpoify update";
@@ -1033,7 +1094,7 @@ try{
           phone: data.phone,
           email_marketing_consent: {
             marketing_opt_in_level: 'SINGLE_OPT_IN',
-            marketing_state: 'subscribed',
+            marketing_state: 'unsubscribed',
             consent_updated_at: new Date().toISOString(),
           },
         });

@@ -60,7 +60,7 @@ const CustomerSchema = new mongoose.Schema(
       },
       marketingState: {
         type:String,
-        default:"SUBSCRIBED"
+        default:"unsubscribed"
       }
     },
     userid:{
