@@ -511,144 +511,10 @@ try {
   }
 }
 
-exports.reqwondata=async(req,res)=>{
-try {
-    const { interval, startdate, enddate,userid } = req.body;
-    const userIdObj = new mongoose.Types.ObjectId(userid);
-    let detectedInterval = interval;
-    let start = startdate;
-    let end = enddate;
-
-    
-    if (!interval && startdate && enddate) {
-      const diffMillis = new Date(enddate) - new Date(startdate);
-      detectedInterval=giveinterval(interval,startdate,enddate)
-    } else {
-      const l=calculateDateRange(interval,startdate,enddate);
-      start=l.start
-      end=l.end
-    }
-
-    let groupFormat, labels;
-    let get=getGroupFormatlabel(detectedInterval);
-    groupFormat=get.groupFormat;
-    labels=get.labels;
-
-    
-    const data = await Order.aggregate([
-      {
-        $match: {
-           userid: { $in: [userIdObj] }, 
-          createdAt: { $gte: new Date(start), $lte: new Date(end) }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $dateTrunc: {
-              date: "$createdAt",
-              unit:detectedInterval=="day"?  "hour":"day",
-                binSize: 3,
-              timezone: "UTC"
-            }
-          },
-          Won: {
-            $sum: {
-              $cond: [{ $eq: ["$stage", "Won"] }, 1, 0]
-            }
-          },
-          Req: {
-            $sum: {
-              $cond: [
-                { $not: { $in: ["$stage", ["Won", "Lost"]] } },
-                1,
-                0
-              ]
-            }
-          }
-        }
-      },
-      {
-        $sort: { _id: 1 }
-      }
-    ]);
-
-    
-    let formatted = [];
-     formatted = labels&&labels.length>0&& labels.map(label => ({
-        name: label,
-        Won: 0,
-        Request: 0
-      }));
-
-    if (detectedInterval === "day") {
-      formatted=getLast24HourLabels().formatted
-      data.forEach(entry => {
-        const hour = new Date(entry._id).getUTCHours(); // hour form the monogo result
-        let bucket = Math.floor(hour / 3) * 3;        // 
-        let label = `${bucket.toString().padStart(2, '0')}:00`;
-        let index = labels.indexOf(label);
-
-        if (index !== -1) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Request += entry.Req;
-        }
-        else{
-            for(i=0;i<2;i++)
-            {
-               bucket+=1;
-               
-               label = `${bucket.toString().padStart(2, '0')}:00`
-               index = labels.indexOf(label);
-                if(index !== -1)
-                {
-                  break;
-                }
-            }
-          formatted[index].Won += entry.Won;
-          formatted[index].Request += entry.Req;
-        }
-      });   
-       
-    } 
-    else if(detectedInterval==="week") {
-       data&& data.length>0&& data.map((entry) => {
-        let kk=new Date(entry._id);
-        let index=kk.getDay();
-        if(index)
-        {
-         formatted[index].Won += entry.Won;
-           formatted[index].Request += entry.Req;
-        }
-    });
-        
-    
-   
-    }
-    else if(detectedInterval==="year")
-    {
-      data&& data.length>0&&  data.map((entry) => {
-        let kk=new Date(entry._id);
-        let index=kk.getMonth();
-        if(index)
-        {
-           formatted[index].Won += entry.Won;
-           formatted[index].Request += entry.Req;
-        }
-    });
-    }
-    res.status(200).json({ data: formatted });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "error getting request vs won data" });
-  }
-}
-
-exports.wonloastdata=async(req,res)=>{
-
+exports.reqwondata = async (req, res) => {
   try {
-    const { interval, startdate, enddate ,userid} = req.body;
-      const userIdObj = new mongoose.Types.ObjectId(userid);
+    const { interval, startdate, enddate, userid } = req.body;
+    const userIdObj = new mongoose.Types.ObjectId(userid);
     let detectedInterval = interval;
     let start = startdate;
     let end = enddate;
@@ -656,110 +522,188 @@ exports.wonloastdata=async(req,res)=>{
     if (!interval && startdate && enddate) {
       detectedInterval = giveinterval(interval, startdate, enddate);
     } else {
-      const range = calculateDateRange(interval, startdate, enddate);
+      const range = calculateDateRange(interval || "month", startdate, enddate);
       start = range.start;
       end = range.end;
     }
 
     let groupFormat, labels;
-    const groupResult = getGroupFormatlabel(detectedInterval);
+    const groupResult = getGroupFormatlabel(detectedInterval || "month");
     groupFormat = groupResult.groupFormat;
     labels = groupResult.labels;
 
-    // MongoDB aggregation
+    if (!labels || labels.length === 0) {
+      return res.status(400).json({ message: "Invalid interval specified" });
+    }
+
+    // For month interval, we need to get the raw data without date truncation
     const data = await Order.aggregate([
       {
         $match: {
-            userid: { $in: [userIdObj] }, 
+          userid: { $in: [userIdObj] },
           createdAt: { $gte: new Date(start), $lte: new Date(end) }
         }
       },
       {
-        $group: {
-          _id: {
-            $dateTrunc: {
-              date: "$createdAt",
-              unit: detectedInterval === "day" ? "hour" : "day",
-              binSize: 3,
-              timezone: "UTC"
-            }
-          },
-          Won: {
-            $sum: {
-              $cond: [{ $eq: ["$stage", "Won"] }, 1, 0]
-            }
-          },
-          Lost: {
-            $sum: {
-              $cond: [{ $eq: ["$stage", "Lost"] }, 1, 0]
-            }
-          }
+        $project: {
+          day: { $dayOfMonth: "$createdAt" },
+          stage: 1,
+          createdAt: 1
         }
-      },
-      {
-        $sort: { _id: 1 }
       }
     ]);
 
-    // Format result
-    let formatted = labels && labels.length > 0 && labels.map(label => ({
+    let formatted = labels.map(label => ({
+      name: label,
+      Won: 0,
+      Request: 0
+    }));
+
+    if (detectedInterval === "day") {
+      data.forEach(entry => {
+        const hour = new Date(entry.createdAt).getUTCHours();
+        const bucket = Math.floor(hour / 3);
+        if (bucket >= 0 && bucket < 8) {
+          if (entry.stage === "Won") {
+            formatted[bucket].Won += 1;
+          } else if (!["Won", "Lost"].includes(entry.stage)) {
+            formatted[bucket].Request += 1;
+          }
+        }
+      });
+    } else if (detectedInterval === "month") {
+      data.forEach(entry => {
+        const day = entry.day;
+        // Find which 5-day interval this day belongs to
+        const labelIndex = labels.findIndex(label => {
+          const [startDay, endDay] = label.split('-').map(Number);
+          return day >= startDay && day <= endDay;
+        });
+        
+        if (labelIndex !== -1) {
+          if (entry.stage === "Won") {
+            formatted[labelIndex].Won += 1;
+          } else if (!["Won", "Lost"].includes(entry.stage)) {
+            formatted[labelIndex].Request += 1;
+          }
+        }
+      });
+    } else if (detectedInterval === "year") {
+      data.forEach(entry => {
+        const monthIndex = new Date(entry.createdAt).getMonth();
+        if (monthIndex >= 0 && monthIndex < 12) {
+          if (entry.stage === "Won") {
+            formatted[monthIndex].Won += 1;
+          } else if (!["Won", "Lost"].includes(entry.stage)) {
+            formatted[monthIndex].Request += 1;
+          }
+        }
+      });
+    }
+
+    res.status(200).json({ data: formatted });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "error getting request vs won data" });
+  }
+};
+
+exports.wonloastdata = async (req, res) => {
+  try {
+    const { interval, startdate, enddate, userid } = req.body;
+    const userIdObj = new mongoose.Types.ObjectId(userid);
+    let detectedInterval = interval;
+    let start = startdate;
+    let end = enddate;
+
+    if (!interval && startdate && enddate) {
+      detectedInterval = giveinterval(interval, startdate, enddate);
+    } else {
+      const range = calculateDateRange(interval || "month", startdate, enddate);
+      start = range.start;
+      end = range.end;
+    }
+
+    let groupFormat, labels;
+    const groupResult = getGroupFormatlabel(detectedInterval || "month");
+    groupFormat = groupResult.groupFormat;
+    labels = groupResult.labels;
+
+    if (!labels || labels.length === 0) {
+      return res.status(400).json({ message: "Invalid interval specified" });
+    }
+
+    // For month interval, we need to get the raw data without date truncation
+    const data = await Order.aggregate([
+      {
+        $match: {
+          userid: { $in: [userIdObj] },
+          createdAt: { $gte: new Date(start), $lte: new Date(end) }
+        }
+      },
+      {
+        $project: {
+          day: { $dayOfMonth: "$createdAt" },
+          stage: 1,
+          createdAt: 1
+        }
+      }
+    ]);
+
+    let formatted = labels.map(label => ({
       name: label,
       Won: 0,
       Lost: 0
     }));
 
     if (detectedInterval === "day") {
-      const labelObj = getLast24HourLabels();
-      labels = labelObj.labels;
-      formatted = labelObj.formatted.map(f => ({ ...f, Lost: 0 }));
-
       data.forEach(entry => {
-        const hour = new Date(entry._id).getUTCHours();
-        let bucket = Math.floor(hour / 3) * 3;
-        let label = `${bucket.toString().padStart(2, '0')}:00`;
-        let index = labels.indexOf(label);
-
-        if (index !== -1) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Lost += entry.Lost;
-        } else {
-          for (let i = 0; i < 2; i++) {
-            bucket += 1;
-            label = `${bucket.toString().padStart(2, '0')}:00`;
-            index = labels.indexOf(label);
-            if (index !== -1) break;
-          }
-          if (index !== -1) {
-            formatted[index].Won += entry.Won;
-            formatted[index].Lost += entry.Lost;
+        const hour = new Date(entry.createdAt).getUTCHours();
+        const bucket = Math.floor(hour / 3);
+        if (bucket >= 0 && bucket < 8) {
+          if (entry.stage === "Won") {
+            formatted[bucket].Won += 1;
+          } else if (entry.stage === "Lost") {
+            formatted[bucket].Lost += 1;
           }
         }
       });
-    } else if (detectedInterval === "week") {
+    } else if (detectedInterval === "month") {
       data.forEach(entry => {
-        const index = new Date(entry._id).getDay();
-        if (formatted[index]) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Lost += entry.Lost;
+        const day = entry.day;
+        // Find which 5-day interval this day belongs to
+        const labelIndex = labels.findIndex(label => {
+          const [startDay, endDay] = label.split('-').map(Number);
+          return day >= startDay && day <= endDay;
+        });
+        
+        if (labelIndex !== -1) {
+          if (entry.stage === "Won") {
+            formatted[labelIndex].Won += 1;
+          } else if (entry.stage === "Lost") {
+            formatted[labelIndex].Lost += 1;
+          }
         }
       });
     } else if (detectedInterval === "year") {
       data.forEach(entry => {
-        const index = new Date(entry._id).getMonth();
-        if (formatted[index]) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Lost += entry.Lost;
+        const monthIndex = new Date(entry.createdAt).getMonth();
+        if (monthIndex >= 0 && monthIndex < 12) {
+          if (entry.stage === "Won") {
+            formatted[monthIndex].Won += 1;
+          } else if (entry.stage === "Lost") {
+            formatted[monthIndex].Lost += 1;
+          }
         }
       });
     }
-   
 
     res.status(200).json({ data: formatted });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "error getting won vs lost data" });
   }
-}
+};
 
 exports.otherdetails=async(req,res)=>{
   try
@@ -926,10 +870,10 @@ function giveinterval(interval, startdate, enddate) {
     const diffInDays = diffMillis / (1000 * 60 * 60 * 24);
 
     if (diffInDays > 90) return "year";
-    if (diffInDays > 14) return "week";
+    if (diffInDays > 14) return "month";
     return "day";
   }
-  return interval;
+  return interval || "month"; // Default to month if no interval specified
 }
 
 function calculateDateRange(interval, startdate, enddate) {
@@ -939,40 +883,62 @@ function calculateDateRange(interval, startdate, enddate) {
   if (!start || !end) {
     end = new Date();
     if (interval === "year") {
-      const past = new Date();
-      past.setFullYear(end.getFullYear() - 1);
-      start = past;
-    } else if (interval === "week") {
-      start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+      start = new Date(end.getFullYear(), 0, 1); // Start from January 1st
+      start.setHours(0, 0, 0, 0);
+    } else if (interval === "month") {
+      start = new Date(end.getFullYear(), end.getMonth(), 1); // Start from 1st of current month
+      start.setHours(0, 0, 0, 0);
     } else if (interval === "day") {
-      start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+      start = new Date(end);
+      start.setHours(0, 0, 0, 0);
+    } else {
+      // Default to month view
+      start = new Date(end.getFullYear(), end.getMonth(), 1);
+      start.setHours(0, 0, 0, 0);
     }
   }
 
+  end.setHours(23, 59, 59, 999);
   return { start, end };
 }
 
 function getGroupFormatlabel(detectedInterval) {
-    let groupFormat, labels;
+  let groupFormat, labels;
 
-    switch (detectedInterval) {
-      case "year":
-        
-        groupFormat = { $month: "$createdAt" };
-        labels =  getdaystilldate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],detectedInterval);
-        break;
-      case "week":
-        groupFormat = { $dayOfWeek: "$createdAt" };
-        labels =  getdaystilldate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],detectedInterval);
-        break;
-      case "day":
-        groupFormat = { $hour: "$createdAt" }; // still truncate by hour
-        labels = getLast24HourLabels().labels; // 8 blocks
-        break;
-      default:
-        groupFormat = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
-    }
-    return {groupFormat,labels}
+  switch (detectedInterval) {
+    case "year":
+      groupFormat = { $month: "$createdAt" };
+      labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      break;
+    case "month":
+      groupFormat = { $dayOfMonth: "$createdAt" };
+      const today = new Date();
+      const currentDay = today.getDate();
+      labels = [];
+      for (let i = 1; i <= currentDay; i += 5) {
+        const endDay = Math.min(i + 4, currentDay);
+        labels.push(`${i}-${endDay}`);
+      }
+      break;
+    case "day":
+      groupFormat = { $hour: "$createdAt" };
+      labels = Array.from({ length: 8 }, (_, i) => {
+        const hour = i * 3;
+        return `${hour.toString().padStart(2, '0')}:00`;
+      });
+      break;
+    default:
+      // Default to month view if interval is not recognized
+      groupFormat = { $dayOfMonth: "$createdAt" };
+      const defaultToday = new Date();
+      const defaultCurrentDay = defaultToday.getDate();
+      labels = [];
+      for (let i = 1; i <= defaultCurrentDay; i += 5) {
+        const endDay = Math.min(i + 4, defaultCurrentDay);
+        labels.push(`${i}-${endDay}`);
+      }
+  }
+  return { groupFormat, labels };
 }
 
 async function getRevenueBetweenDates(start, end, userid = null, stages = null) {

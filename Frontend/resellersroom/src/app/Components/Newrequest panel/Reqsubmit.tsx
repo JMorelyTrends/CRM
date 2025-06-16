@@ -92,8 +92,8 @@ const Firsthalf = ({
       <div className="h-[30%] flex flex-col">
         {selectedcustomer ? (
           <div className="w-full h-full flex justify-center items-center">
-            <div className="flex flex-col w-[80%] h-[90%] bg-white rounded-2xl p-2 text-sm text-black">
-              <div className="font-semibold">
+            <div className="flex flex-col gap-1 w-[80%] h-[98%] bg-white rounded-2xl p-2 text-sm text-black text-nowrap">
+              <div className="font-semibold truncate max-w-[90%]">
               
                 {
                 selectedcustomer.customerfrom === "shopify"
@@ -103,7 +103,7 @@ const Firsthalf = ({
                   
                   }
               </div>
-              <div className="text-gray-600">{
+              <div className="text-gray-600 truncate max-w-[90%]">{
               
               selectedcustomer.email!=''?
               "Email: "+ selectedcustomer.email:
