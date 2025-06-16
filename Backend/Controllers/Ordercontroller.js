@@ -1,12 +1,13 @@
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 
-const {get_shopify_byid,Get_mongo_byid,draftorder,getshopifybyid_store}=require("./CustomerController")
+const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store}=require("./CustomerController");
+const Customer = require("../Models/Custormer");
 
 exports.createOrder = async (req, res) => {
   try {
     const {newOrder} = req.body;
-  
+
     let or=null;
     let id;
     if(newOrder.clientFrom=='shopify')
@@ -84,7 +85,7 @@ exports.getAllOrders = async (req, res) => {
       {
         //shopify customer
         h=await get_shopify_byid(data.shopifycustomerid)
-        // console.log("shopify customer get :",h.customers[0])
+       
         phone=h.customers[0].phone!=null?h.customers[0].phone:null
         email=h.customers[0].email!=h.customers[0].email!=null?h.customers[0].email:null
         //add address here if needed
@@ -92,7 +93,7 @@ exports.getAllOrders = async (req, res) => {
       }
       else{
         h= await Get_mongo_byid(data.cusid)
-      // console.log("customer from db customer get :",h)
+      
         phone=h[0].Number!=''?h[0].Number:null
         email=h[0].email!=''?h[0].email:null
          
@@ -146,7 +147,7 @@ if (data.confirm != null)  tasks[counter].confirm = data.confirm;
       columns,
       columnOrder
     }
-  // console.log(maporderdata)
+
 
     res.status(200).json(maporderdata);
   } catch (error) {
@@ -165,7 +166,7 @@ catch(err)
 {
   res.json(500).json({message:"error in getting the numbers of leads"})
 }
-}
+};
 
 exports.getOrderById = async (req, res) => {
   try {
@@ -207,7 +208,7 @@ exports.UpdateStages=async(req,res)=>{
   catch{
     res.status(500).json({message:"error on updating kanban order stage"})
   }
-}
+};
 
 exports.deleteOrder = async (req, res) => {
   try {
@@ -260,7 +261,7 @@ exports.Getorderofsuppliers=async(req,res)=>{
    const {name}=req.body;
   try
   {
-   // console.log(name)
+
       const o=await Order.find({Supplierid:name}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid");
       let spend=0;
       if(o?.length>0)
@@ -294,6 +295,7 @@ DealOwner,
 }=req.body;
   
   try{
+    
     const rev=parseFloat(sell)||0;
     const cog=parseFloat(price)||0;
     const pp=parseFloat(processingfee)||0;
@@ -301,15 +303,16 @@ DealOwner,
     const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress,
     Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
    
+
     let customerid;
     let product;
     let tags=[];
     let shiping;
-    
+  
     //customer 
-    if(order.shopifycustomerid!=null)
+    if(order.cusid.shopifyid!=null)
     {
-      customerid={id:order.shopifycustomerid}
+      customerid={id:order.cusid.shopifyid}
     }
     else{
       customerid= {
@@ -339,7 +342,7 @@ DealOwner,
     else{
       product= [{
         title:order.items[0].Name,
-        price:order.items[0].price,
+        price:cog,
         quantity:1,
           properties: [
       {
@@ -366,14 +369,22 @@ DealOwner,
       address1: shippingaddress,
     }
    
-    console.log(customerid)
+    
 
     if(order.confirm==false)
     {
-      const d=await draftorder(customerid,product,tags,shiping)
+      const d=await createShoOrder(customerid.id,product,tags,shiping,rev)
       const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
+    
+      const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
+        orders_count:(order.cusid.orders_count+1)
+       })
       return res.status(201).json({data:o})
     }
+    
+    const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
+      orders_count:(order.cusid.orders_count+1)
+     })
   res.status(201).json({data:"orderupdated"});  
   }
   catch(err)
@@ -392,7 +403,6 @@ exports.Wonorders=async(req,res)=>{
  }
  catch(err)
  {
-   
        res.status(500).json({message:"error on updating Description"})
  }
 }
@@ -547,7 +557,7 @@ try {
         let bucket = Math.floor(hour / 3) * 3;        // 
         let label = `${bucket.toString().padStart(2, '0')}:00`;
         let index = labels.indexOf(label);
-          //  console.log(label,bucket,hour)
+
         if (index !== -1) {
           formatted[index].Won += entry.Won;
           formatted[index].Request += entry.Req;
@@ -567,11 +577,7 @@ try {
           formatted[index].Won += entry.Won;
           formatted[index].Request += entry.Req;
         }
-      });
-      // console.log(formatted);
-      // console.log(data);
-      // console.log(labels);
-   
+      });   
        
     } 
     else if(detectedInterval==="week") {

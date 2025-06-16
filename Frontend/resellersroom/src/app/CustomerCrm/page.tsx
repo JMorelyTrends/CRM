@@ -126,7 +126,7 @@ const Page = () => {
         method='crm'
         getcustomers={getcustomers}
         />
-        <NewCustomerFormUI getcustomers={getcustomers}/>
+        <NewCustomerFormUI  from='crm' getcustomers={getcustomers}/>
                 {/*ADD new Supplier */}
         <div className="w-full h-[8vh] mt-[2vh] bg-white flex justify-items-start items-end">
             <button

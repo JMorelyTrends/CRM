@@ -162,8 +162,8 @@ const createCustomer = async (req, res) => {
         last_name:createdShopifyCustomer.last_name,
         shopifyid: createdShopifyCustomer.id,
         email: createdShopifyCustomer.email,
-        total_spend: createdShopifyCustomer.total_spent,
-        orders_count: createdShopifyCustomer.orders_count,
+        // total_spend: createdShopifyCustomer.total_spent,
+        // orders_count: createdShopifyCustomer.orders_count,
         customerfrom: "mongodb",
         Number: createdShopifyCustomer.phone,
         address: createdShopifyCustomer.default_address?.address1 || "",
@@ -251,7 +251,7 @@ const getAllCustomers = async (req, res) => {
 const getCustomerById = async (req, res) => {
   try {
     const { id } = req.body;
-    //console.log(id)
+  
     const customer = await Customer.findById(id);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
@@ -355,6 +355,7 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
       },
     }));
 
+   
     res.status(200).json({ d, dm: mongodata });
   } catch (error) {
     console.error(error);
@@ -501,7 +502,7 @@ const updateCustomer = async (req, res) => {
 const Cuscrmupdate = async (req, res) => {
   try{
     const {Cust}=req.body;
-    console.log(Cust)
+   
     const client = new shopify.clients.Rest({ session });
 
     if(Cust.id)
@@ -590,7 +591,7 @@ const Cuscrmupdate = async (req, res) => {
 const updateshopifycustomer=async(req,res)=>{
   try {
      const {customer}=req.body;
-     console.log(customer)
+  
      const response = await shopify.rest.Customer.find({
        session,
        id:customer.id , // numeric ID, not GID
@@ -652,8 +653,6 @@ const updateshopifycustomer=async(req,res)=>{
    }
  }
 
-
-
 //--------------------------------------UPDATES END-------------------------------------------------
 
 
@@ -666,7 +665,7 @@ const UseShopiyfcustomer=async(req,res)=>{  //when you entered the email to the 
 try{
   const {Cust,orderid}=req.body;
 
-  
+
 
   //Step-1 check if that email have in our db or not if yes return that customer id
  
@@ -695,11 +694,13 @@ try{
         Name:t.first_name+' '+t.last_name
       }
      });
+
      return res.status(201).json({message:"order user updated"});
   }
   
 
   //STEP 2 check if the email is in the shopify
+
   let queryParts = [];
   if (isValid(Cust.email))
     queryParts.push(`email:${Cust.email.trim()}`);
@@ -707,7 +708,7 @@ try{
     const normalizedPhone = normalizePhoneNumber(Cust.Number);
     queryParts.push(`phone:${normalizedPhone}`);
   }
-  const query = queryParts.join(" OR ");
+  const query = Cust._id?Cust._id:queryParts.join(" OR ");
   const E=Cust.email.trim();
   const d = await shopify.rest.Customer.search({ session, query });
   
@@ -1008,6 +1009,8 @@ const getshopifyorders = async (req, res) => {
 
     let result = await client.query({ data: query });
     let orders = result.body.data.orders.edges.map(edge => edge.node);
+    // Filter out orders with CRM order tag
+    orders = orders.filter(order => !order.tags.includes('CRM order'));
     totalorders.push(orders);
 
     let hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
@@ -1020,6 +1023,8 @@ const getshopifyorders = async (req, res) => {
       result = await client.query({ data: query });
 
       orders = result.body.data.orders.edges.map(edge => edge.node);
+      // Filter out orders with CRM order tag
+      orders = orders.filter(order => !order.tags.includes('CRM order'));
       totalorders.push(orders);
 
       hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
@@ -1043,11 +1048,6 @@ const getshopifyorders = async (req, res) => {
           0
         ),
       }));
-
-      // const metadata = order.metafields.edges.map((m) => ({
-      //   name: m.node.namespace,
-      //   value: parseFloat(m.node.value) || 0,
-      // }));
       
       const shipfee = parseFloat(order.shippingLine?.originalPriceSet?.shopMoney?.amount || 0);
       const dbOrder = new Orderreview({
@@ -1137,6 +1137,7 @@ const get_shopify_byid = async (id) => {
 //Draf order here becasue our shopify session is here i should make it sepearte module in near future
 
 async function draftorder(customerid, product, tags, shiping) {
+ 
   const draftOrder = new DraftOrder({ session });
 
   draftOrder.line_items = product;
@@ -1275,8 +1276,8 @@ const getshopifybyid_store=async(id,userid)=>{
   first_name:d.customers[0]?.first_name,
   last_name:d. customers[0].last_name,
   email:d.customers[0].email,
-  orders_count:d.customers[0].orders_count,
-  total_spend:d.customers[0].total_spent||0,
+  // orders_count:d.customers[0].orders_count,
+  // total_spend:d.customers[0].total_spent||0,
   Number:d.customers[0].phone,
   userid:userid,
   emailMarketingConsent:{
@@ -1308,6 +1309,7 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
               createdAt
               totalPrice
               email
+              tags
        lineItems(first: 10) {
                        edges {
                          node {
@@ -1360,6 +1362,43 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
   };
 };
 
+async function createShoOrder(customerid, product, tags, shipping, rev) {
+  const client = new shopify.clients.Rest({ session });
+  
+  const orderData = {
+    order: {
+      line_items: product,
+      customer: {
+        id: customerid
+      },
+      shipping_address: shipping,
+      financial_status: 'paid',
+      total_price: rev,
+      send_receipt: true,
+      tags: 'CRM order',
+      transactions: [
+        {
+          kind: 'sale',
+          status: 'success',
+          amount: rev
+        }
+      ]
+    }
+  };
+
+  try {
+    const response = await client.post({
+      path: 'orders',
+      data: orderData,
+      type: 'application/json'
+    });
+    return response.body.order.id;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   createCustomer,
   getAllCustomers,
@@ -1371,6 +1410,7 @@ module.exports = {
   Get_mongo_byid,
   get_shopify_byid,
   draftorder,
+  createShoOrder,
   getAllCustomerOrderStats,
   update_Customer_Crm,
   updateshopifycustomer,

@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Funnel, ArrowUpNarrowWide } from "lucide-react";
 import axios from 'axios';
-import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import { Addselectedcusotmer, Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { Task,StockXItem,additem } from "../../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../../Components/Leads_panel/CompleteOrderPopup"
 import { TaskPanel } from '@/app/Components/Leads_panel/TaskPanel';
 import { useDispatch } from "react-redux";
 import CustomDateRangePicker from "../.././Components/Dashboard/CustomDateRangePicker";
 import { DateRange } from "react-day-picker";
+import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
 
 const OrdersPage = () => {
     const dispatch=useDispatch()
@@ -63,9 +64,11 @@ else{
 
 const Editoptions=(order:Task)=>{
   setselectedtask(order)
+  dispatch(Addselectedcusotmer(order))
+
   if(order.confirm){
-    
     setwonpopup(true)
+    dispatch(ToogleCompleteorder())
   }
   else{
     setpanelopen(true)
@@ -299,7 +302,7 @@ const Editoptions=(order:Task)=>{
       <td className="px-4 py-2">
         <button
           onClick={() => {
-          Editoptions(order) 
+            Editoptions(order) 
            
           }}
           className="bg-blue-500 text-white px-4 py-1 rounded-full"

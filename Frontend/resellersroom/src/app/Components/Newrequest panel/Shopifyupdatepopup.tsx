@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from "@/lib/Resellerstore";
-import { ToogleShflag,Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice';
+import { ToogleShflag,Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep, ADD_Matched_cutomer } from '@/lib/features/Newrequest/NewRequestSlice';
 import { isEqualStrings } from '../Small comps/isEqualStrings';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -66,8 +66,9 @@ const Shopifyupdatepopup: React.FC = () => {
             setLastName("")
             setPhone("")
             dispatch(ToogleShflag())
-            dispatch(Toogleshopifypopup())
+          
             dispatch(Addselectedcusotmer(re.data.data));
+            dispatch(ADD_Matched_cutomer(re.data.data))
             dispatch(Toggleleadsrenderstep(2));}
             else{
                console.log(userid)

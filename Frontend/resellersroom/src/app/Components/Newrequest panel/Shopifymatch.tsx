@@ -73,7 +73,7 @@ const Shopifymatch = ({from,getcustomers}:{from:string,getcustomers:()=>Promise<
                                     </tr>
                                     <tr className="border-b border-gray-200">
                                         <td className="p-2 font-semibold">Total Spent</td>
-                                        <td className="p-2">£{customer.total_spent}</td>
+                                        <td className="p-2">£{customer.total_spend}</td>
                                     </tr>
                                     <tr className="border-b border-gray-200">
                                         <td className="p-2 font-semibold">Orders Count</td>
