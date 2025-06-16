@@ -722,8 +722,9 @@ try{
         first_name:d.customers[0]?.first_name,
         last_name:d. customers[0].last_name,
         email:d.customers[0].email,
-        orders_count:d.customers[0].orders_count,
-        total_spend:d.customers[0].total_spent,
+        // orders_count:d.customers[0].orders_count,
+        // total_spend:d.customers[0].total_spent,
+        tshopifyspent:d.customers[0].total_spent, // just to know how much customer eran on shopify before we get it on crm to give initail tier
         Number:d.customers[0].phone,
         userid:order.userid,
         emailMarketingConsent:{
@@ -1136,24 +1137,24 @@ const get_shopify_byid = async (id) => {
 
 //Draf order here becasue our shopify session is here i should make it sepearte module in near future
 
-async function draftorder(customerid, product, tags, shiping) {
+// async function draftorder(customerid, product, tags, shiping) {
  
-  const draftOrder = new DraftOrder({ session });
+//   const draftOrder = new DraftOrder({ session });
 
-  draftOrder.line_items = product;
+//   draftOrder.line_items = product;
 
-  draftOrder.customer = customerid;
+//   draftOrder.customer = customerid;
 
-  draftOrder.use_customer_default_address = true;
+//   draftOrder.use_customer_default_address = true;
 
-  draftOrder.shipping_address = shiping;
-  draftOrder.email=customerid.email
+//   draftOrder.shipping_address = shiping;
+//   draftOrder.email=customerid.email
 
-  const response = await draftOrder.save({
-    update: true,
-  });
-   return draftOrder.id
-};
+//   const response = await draftOrder.save({
+//     update: true,
+//   });
+//    return draftOrder.id
+// };
 
 //to get customers
 
@@ -1278,6 +1279,7 @@ const getshopifybyid_store=async(id,userid)=>{
   email:d.customers[0].email,
   // orders_count:d.customers[0].orders_count,
   // total_spend:d.customers[0].total_spent||0,
+  tshopifyspent:d.customers[0].total_spent,
   Number:d.customers[0].phone,
   userid:userid,
   emailMarketingConsent:{
@@ -1409,7 +1411,7 @@ module.exports = {
   Updatecusnewreq,
   Get_mongo_byid,
   get_shopify_byid,
-  draftorder,
+  // draftorder,
   createShoOrder,
   getAllCustomerOrderStats,
   update_Customer_Crm,

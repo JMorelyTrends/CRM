@@ -77,7 +77,7 @@ const Page: React.FC = () => {
             exit="exit"
             variants={variants}
             transition={{ duration: 0.5 }}
-            className="w-full h-full flex justify-center items-end"
+            className="w-full bg-white h-full flex justify-center items-center"
             style={{ zIndex: 4 }}
           >
             <Newcustomer sideopen={true} />

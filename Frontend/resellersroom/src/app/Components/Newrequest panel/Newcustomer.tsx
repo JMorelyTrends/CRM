@@ -121,32 +121,31 @@ const Newcustomer = (props: Props) => {
           : 'lg:w-[40%] md:w-[70%] w-[90%]'
       } h-[85vh] bg-white flex flex-col text-black rounded-xl overflow-hidden`}
     >
-<Shopifyupdatepopup/>
-<Shopifymatch from='newcustomer' getcustomers={async () => {}}/>
-<DBMatched />
-      <div className="relative  w-full flex flex-col items-center pt-6  ">
-        <div className="absolute top-6  text-opacity-80 text-xl md:text-3xl px-2 text-black bg-opacity-50 rounded-md">
-          {selectedItems?.name}
-        </div>
-        <div className="w-fit h-[120px]  ">
+      <Shopifyupdatepopup/>
+      <Shopifymatch from='newcustomer' getcustomers={async () => {}}/>
+      <DBMatched />
+      
+      <div className="w-full flex items-center gap-4 p-4 border-b">
+        <div className="w-[100px] h-[100px] flex-shrink-0">
           <img
             src={selectedItems?.image}
             alt="Selected"
-            className="w-full h-full object-cover "
+            className="w-full h-full object-cover rounded-lg"
           />
+        </div>
+        <div className="text-xl md:text-2xl font-medium text-black">
+          {selectedItems?.name}
         </div>
       </div>
 
-     
       <form
         onSubmit={handleSubmit}
-        className="w-full h-full bg-[#EBEBEB] rounded-xl overflow-auto p-4 flex flex-col gap-4"
+        className="w-full flex-1 bg-[#EBEBEB] rounded-xl overflow-auto p-6 flex flex-col gap-4"
       >
         <div className="flex flex-col">
           <label className="mb-1 font-medium">first Name</label>
           <input
             type="text"
-           
             value={first_name}
             onChange={(e) => setfirst_name(e.target.value)}
             className="p-2 rounded-md border border-gray-300"

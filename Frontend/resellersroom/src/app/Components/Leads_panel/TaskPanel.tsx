@@ -15,6 +15,7 @@ import { labeltype,Task } from "../Small comps/Types";
 
 import {  useDispatch  } from 'react-redux';
 import {addLabel}from "../../../lib/features/Leads/LeadsSlice"
+import { kMaxLength } from "buffer";
 
 
 export function TaskPanel({
@@ -42,6 +43,26 @@ export function TaskPanel({
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
   const [costPrice, setCostPrice] = useState<string>(task?.price?.toString()||"");
   
+
+  useEffect(()=>{
+    if(task)
+    {
+    const cc=  (task?.stockxitem?.length > 0 && task?.stockxitem[0]?.last_sale_price
+      ? (task.price === 0 
+          ? task.stockxitem[0].last_sale_price 
+          : task.price || 0)
+      :task?.items&& task?.items?.length > 0
+        ? (task.price !== 0 
+            ? task.items?.[0]?.price || 0
+            : task.price || 0)
+        : task.price || 0 )
+        
+        setCostPrice(cc.toString()||"0")
+    }
+   
+  },[])
+
+
   const handleCostPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Only allow numbers
@@ -169,35 +190,59 @@ export function TaskPanel({
               </DialogTitle>
             </DialogHeader>
 
-            {task?.stockxitem?.[0]?.image && (
-              <div className="flex justify-center">
-                <img
-                  src={task.stockxitem[0].image}
-                  alt="Product"
-                  className="w-40 h-40 object-contain rounded-lg"
-                />
+            {/* Image + Info Section */}
+            <div className="flex items-center gap-4 mb-6">
+              {/* Left side - Info */}
+              <div className="w-[60%] h-full flex gap-4 flex-col justify-center items-center text-center">
+                {task?.stockxitem?.[0]?.name && (
+                  <div className="text-lg font-semibold text-wrap">
+                    {task.stockxitem[0].name}
+                  </div>
+                )}
+                {task?.items?.[0]?.Name && (
+                  <div className="text-lg font-semibold">
+                    {task.items[0].Name}
+                  </div>
+                )}
+                <div className="text-lg font-semibold">
+                  {task?.Name}
+                </div>
+                {task?.email && (
+                  <div className="text-sm font-semibold text-[#4774B1]">
+                    {task.email}
+                  </div>
+                )}
+                {task?.phone && (
+                  <div className="text-sm font-semibold text-[#4774B1]">
+                    {task.phone}
+                  </div>
+                )}
+                {task?.Description && (
+                  <div className="text-sm text-gray-600">
+                    {task.Description}
+                  </div>
+                )}
               </div>
-            )}
-            {task?.stockxitem?.[0]?.name && (
-              <div className="text-lg text-center font-bold">
-                {task.stockxitem[0].name}
+
+              {/* Right side - Image */}
+              <div className="w-[40%] h-full">
+                {task?.stockxitem?.[0]?.image && (
+                  <img
+                    src={task.stockxitem[0].image}
+                    alt="Product"
+                    className="w-[150px] h-[150px] object-contain rounded"
+                  />
+                )}
+                {task?.items?.[0]?.itempics && (
+                  <img
+                    src={task.items[0].itempics[0]}
+                    alt="Product"
+                    className="w-[150px] h-[150px] object-contain rounded"
+                  />
+                )}
               </div>
-            )}
-            {/*for the item section  */}
-            {task?.items?.[0]?.itempics && (
-              <div className="flex justify-center">
-                <img
-                  src={task.items[0].itempics[0]}
-                  alt="Product"
-                  className="w-40 h-40 object-contain rounded-lg"
-                />
-              </div>
-            )}
-            {task?.items?.[0]?.Name && (
-              <div className="text-lg text-center font-bold">
-                {task.items[0].Name}
-              </div>
-            )}
+            </div>
+
             <div className="mb-6">
               <h3 className="text-sm font-semibold mb-2">Labels</h3>
               <div className="flex gap-2 flex-wrap">
@@ -227,7 +272,7 @@ export function TaskPanel({
                   value={costPrice}
                   onChange={handleCostPriceChange}
                   placeholder="Enter cost price"
-                  className="w-[30vw] p-2 border rounded-md text-sm"
+                  className="w-[18%] text-center p-2 border rounded-md text-sm"
                 />
               </div>
             </div>

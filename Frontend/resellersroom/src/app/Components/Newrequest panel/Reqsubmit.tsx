@@ -5,7 +5,7 @@ import axios from "axios";
 import { Custprop, dCustomerArray } from "../Small comps/Types";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
-import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder} from "@/lib/features/Newrequest/NewRequestSlice";
+import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder, Addnoofleads} from "@/lib/features/Newrequest/NewRequestSlice";
 
 const debounce = <T extends unknown[]>( func: (...args: T) => void,delay: number ) => {
     let timer: ReturnType< typeof setTimeout>;
@@ -71,8 +71,10 @@ const Firsthalf = ({
   return (
     <div className="w-full h-[45%] flex flex-col gap-0.5">
       {/* Selected Product Name */}
-      <div className="h-[20%] w-full flex justify-center items-center text-md font-bold">
-        {selectedItems?.name}
+      <div className="h-[20%] w-full flex justify-center items-center ">
+        <div className="w-[80%] text-center truncate text-nowrap text-md font-bold overflow-hidden px-2">
+          <span className="truncate">{selectedItems?.name}</span>
+        </div>
       </div>
 
       {/* Product Image */}
@@ -294,9 +296,9 @@ const Secondhalf = ({
           className="bg-gray-50 border border-black text-gray-900 text-sm rounded-lg w-full p-2.5"
         >
           <option value="">Choose Condition</option>
-          <option value="new"> New</option>
-          <option value="used">Pre Loved</option>
-          <option value="both">Any Condition</option>
+          <option value="New"> New</option>
+          <option value="pre-loved">Preloved</option>
+          <option value="Any">Any Condition</option>
         </select>
       </div>
 
@@ -336,6 +338,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   const [sugbox, setsugbox] = useState<boolean>(false);
   const [userid, setUserid] = useState<string | null>("");
 
+  const numofleads=useSelector((state:RootState)=>state.NewReq.noofleads)
  
   useEffect(()=>{
     setSelectedcustomer(t)
@@ -344,7 +347,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       setUserid(localStorage.getItem("tempcred"));
-  
+      
     }
     
   }, []);
@@ -409,7 +412,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
         newOrder:newOrder
       })
       
-      console.log(result)
+      dispatch(Addnoofleads(numofleads+1))
       dispatch(Addcreatedorder(result.data.data))
       dispatch(Toggleleadsrenderstep(4))
   

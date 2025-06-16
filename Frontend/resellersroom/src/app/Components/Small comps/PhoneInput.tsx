@@ -196,7 +196,7 @@ const PhoneInput = ({number,setNumber}:{number:string,setNumber:React.Dispatch<R
   const [fullNumber, setFullNumber] = useState<string>("");
   const getlastn = (s:string, n:number) => s.slice(-n);
   const getfirstn=(s:string, n:number) =>s.slice(0,n)
-  console.log("hello")
+ 
   useEffect(()=>{
    if(number)
    {
@@ -208,7 +208,7 @@ const PhoneInput = ({number,setNumber}:{number:string,setNumber:React.Dispatch<R
     const code = getfirstn(cleanNumber, cleanNumber.length - 10);
     sett(l);
     setCountryCode('+' + code);
-    console.log(code)
+ 
    }
   },[])
 

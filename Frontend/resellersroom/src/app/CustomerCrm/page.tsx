@@ -73,6 +73,19 @@ const Page = () => {
         const [noofcus,setnoofcus]=useState<number>(0);
         const [Klaviyop,setKlaviyop]=useState<number>(0)
       
+        const getTierInfo = (totalSpend: number, tshopifySpend: number) => {
+          const total = totalSpend + tshopifySpend;
+          if (total >= 3001) {
+            return { tier: 'Platinum', color: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300' };
+          } else if (total >= 1251) {
+            return { tier: 'Gold', color: 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300' };
+          } else if (total >= 501) {
+            return { tier: 'Silver', color: 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-800 border border-slate-300' };
+          } else {
+            return { tier: 'Bronze', color: 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300' };
+          }
+        };
+      
         //functions
         const getcustomers=async()=>{
         try
@@ -228,7 +241,16 @@ const Page = () => {
                     <td className="px-4 py-2 text-center">{customer.total_spend}</td>
                     <td className="px-4 py-2 text-center">{customer.orders_count || 0}</td>
                     <td className="px-4 py-2 text-center">
-                      <button className="bg-gray-200 px-2 py-1 rounded-full">tier</button>
+                      {(() => {
+                        const totalSpend = Number(customer.total_spend) || 0;
+                        const tshopifySpend = Number(customer.tshopifyspent) || 0;
+                        const { tier, color } = getTierInfo(totalSpend, tshopifySpend);
+                        return (
+                          <button className={`px-2 py-1 rounded-full ${color}`}>
+                            {tier}
+                          </button>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-2 text-center">
                       <button

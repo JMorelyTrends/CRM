@@ -49,6 +49,9 @@ const CustomerSchema = new mongoose.Schema(
     Postcode:{
         type:String,
     },
+    tshopifyspent:{   // just to know how much this customer spend on shopify before we start using it in CRM so we can give this customer a tier
+    type:Number,
+    },
     emailMarketingConsent: {
       consentUpdatedAt: {
         type:Date,

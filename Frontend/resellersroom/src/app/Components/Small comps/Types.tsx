@@ -238,6 +238,7 @@ export interface IShopifyCustomer {
     marketingOptInLevel: string;
     marketingState: string;
   };
+  tshopifyspent?:number,
   userid: string;
   tags: string[];
   createdAt?: Date;

@@ -51,7 +51,7 @@ import { Custprop, Task } from '@/app/Components/Small comps/Types'
     flow:string,
     Shflag:boolean
     completeCustomer:boolean,
-    
+    noofleads:string
    // UpShCus:Cust        // to hold the custoemrs which going to be updated from crm 
   };
   
@@ -102,7 +102,7 @@ import { Custprop, Task } from '@/app/Components/Small comps/Types'
     flow:"stockx",
     Shflag:false,
     completeCustomer:false,
-    
+    noofleads:""
   };
   
  export const NewRequestSlice= createSlice({
@@ -151,6 +151,9 @@ reducers:{
     }),
     ToogleCustomerComplete:((state)=>{
       state.completeCustomer=!state.completeCustomer
+    }),
+    Addnoofleads:((state,action)=>{
+      state.noofleads=action.payload
     })
 
 }
@@ -159,6 +162,6 @@ reducers:{
 export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,
   Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,
   AddSubmitingCustomer,Addcreatedorder,Addflow,Updating_Customer_shopify,ToogleShflag,
-  ToogleCustomerComplete
+  ToogleCustomerComplete,Addnoofleads
 }=NewRequestSlice.actions;
 export default NewRequestSlice.reducer

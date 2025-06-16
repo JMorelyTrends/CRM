@@ -19,7 +19,7 @@ import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
 import {  useDispatch} from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
-
+import PhoneInput from "../Small comps/PhoneInput";
 type Props = {
   Newopen: boolean;
   setNewopen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -62,10 +62,16 @@ const NewSup = (props: Props) => {
 
 
   };
-
+  const getlastn = (s:string, n:number) => s.slice(-n);
   const Submit = async () => {
-    if (number && number.length != 11) {
-      return toast.error("number should be 11 character long");
+   
+    if (number) {
+      const cleanNumber = number.replace(/^\+/, '');
+      const phoneNumber = getlastn(cleanNumber, 10);
+      if (phoneNumber.length !== 10) {
+        toast.error("Phone number must be 10 digits");
+        return;
+      }
     }
     if (
       supplierName && userid&&
@@ -226,7 +232,7 @@ const NewSup = (props: Props) => {
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
-              <input
+              {/* <input
                 type="text"
                 placeholder="Number"
                 value={number}
@@ -234,7 +240,8 @@ const NewSup = (props: Props) => {
                   setNumber(e.target.value)
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
+              /> */}
+                <PhoneInput number={number} setNumber={setNumber} />
               <input
                 type="email"
                 placeholder="Email"
