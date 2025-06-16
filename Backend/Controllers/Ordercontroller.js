@@ -245,10 +245,23 @@ exports.updatelabels=async (req,res)=>{
 exports.UpdateDescription=async(req,res)=>{
   try{
      
-    const {Description,orderid}=req.body;
-    const order=await  Order.updateOne({_id:orderid},{$set:{Description:Description}});
+    const {Description,orderid,price}=req.body;
+   
+    // Check if price exists and is a valid numeric string
+    const isValidPrice = price && /^\d+(\.\d+)?$/.test(price);
     
-    res.status(201).json({data:order})
+    // Prepare update object
+    const updateObj = { Description };
+    if (isValidPrice) {
+      updateObj.price = parseFloat(price);
+    }
+   
+    const order = await Order.updateOne(
+      {_id: orderid},
+      {$set: updateObj}
+    );
+    
+    res.status(201).json({data: order})
   
   }
   catch(err)

@@ -40,8 +40,15 @@ export function TaskPanel({
   const [newLabel, setNewLabel] = useState("");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
+  const [costPrice, setCostPrice] = useState<string>(task?.price?.toString()||"");
   
-  
+  const handleCostPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers
+    if (value === "" || /^\d*$/.test(value)) {
+      setCostPrice(value);
+    }
+  };
 
   const AddnewLabel = async (color: string, label: string) => {
     try {
@@ -114,11 +121,12 @@ export function TaskPanel({
   const SupmitDesription = async () => {
     if (!task?._id) return;
     setOpen(false);
-
+    
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateDescription`, {
         Description: Description,
-        orderid: task._id
+        orderid: task._id,
+        price:costPrice
       });
       fetchallorders();
     } catch (err) {
@@ -211,6 +219,16 @@ export function TaskPanel({
                 <Button size="icon" variant="outline" onClick={() => setLabelDialogOpen(true)}>
                   <Plus size={16} />
                 </Button>
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <span className="text-sm font-medium">Cost Price :</span>
+                <input
+                  type="text"
+                  value={costPrice}
+                  onChange={handleCostPriceChange}
+                  placeholder="Enter cost price"
+                  className="w-[30vw] p-2 border rounded-md text-sm"
+                />
               </div>
             </div>
 
