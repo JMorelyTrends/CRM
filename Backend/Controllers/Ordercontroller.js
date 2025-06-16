@@ -178,6 +178,23 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
+exports.getOrderofCustomer=async(req,res)=>{
+  try{
+    const {id}=req.body;
+   if(id){
+    const n=await Order.find({cusid:id,stage:"Won"}).populate("items").populate("stockxitem").populate("labels");
+   
+    return res.status(201).json({data:n})}
+    res.status(201).json({message:"no orders"})
+  
+}
+catch(err)
+{
+  console.log
+  res.json(500).json({message:"error in getting the numbers of leads"})
+}
+}
+
 exports.updateOrder = async (req, res) => {
   try {
     const updatedOrder = await Order.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -305,6 +322,7 @@ shippingaddress,
 Sourceofthruth,
 paymentmethod,
 DealOwner,
+getOrderofCustomer
 }=req.body;
   
   try{

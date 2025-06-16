@@ -12,6 +12,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Addselectedcusotmer, Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice'
 import { AddOrderid } from '@/lib/features/OrederReview/OrderReviewSlice'
 import FilterSort from '../Components/fillters/FilterSort';
+import { useRouter } from 'next/navigation';
 
   type hprops={
     search:string,
@@ -65,6 +66,7 @@ import FilterSort from '../Components/fillters/FilterSort';
 
 
 const Page = () => {
+        const router = useRouter();
         const dispatch=useDispatch();
         const isSmallScreen=useIsSmallScreen();
 
@@ -210,10 +212,6 @@ const Page = () => {
              setsearch={setsearch}
         />}
 
-        <EditPopup
-        method='crm'
-        getcustomers={getcustomers}
-        />
         <NewCustomerFormUI  from='crm' getcustomers={getcustomers}/>
                 {/*ADD new Supplier */}
         <div className="w-full h-[8vh] mt-[2vh] bg-white flex justify-items-start items-end">
@@ -285,7 +283,10 @@ const Page = () => {
               <tbody>
                 {filteredAndSortedCustomers && filteredAndSortedCustomers.length > 0 && 
                   filteredAndSortedCustomers.map((customer, idx) => (
-                    <tr key={idx} className="border-b border-black">
+                    <tr 
+                      key={idx} 
+                      className="border-b border-black hover:bg-gray-100"
+                    >
                       <td className="px-4 py-2 text-center">{customer.first_name + " " + customer.last_name}</td>
                       <td className="px-4 py-2 text-center">{customer.Number}</td>
                       <td className="px-4 py-2 text-center">{customer.email}</td>
@@ -315,9 +316,9 @@ const Page = () => {
                         <button
                           onClick={() => {
                             dispatch(AddSelectedCustomer(customer))
-                            dispatch(Toogle_Editopen())
+                            router.push('/CustomerCrm/Details')
                           }}
-                          className="bg-blue-400 cursor-pointer text-white px-4 py-1 rounded-full">Edit</button>
+                          className="bg-blue-400 cursor-pointer text-white px-4 py-1 rounded-full">View</button>
                       </td>
                     </tr>
                   ))}

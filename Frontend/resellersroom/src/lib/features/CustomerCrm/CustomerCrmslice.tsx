@@ -29,7 +29,13 @@ export const initialState: CustomerState = {
       marketingState: 'SUBSCRIBED' // default
     },
     socialhandel: '', // added because it’s in schema
-    address: '', // flattened from defaultAddress
+    address: {
+      total_spent:'',
+  adress1:'',
+  city:'',
+  zip:'',
+  country:''
+    }, // flattened from defaultAddress
     tags: [],
     customerfrom: 'mongodb', // default
   

@@ -23,5 +23,7 @@ router.post("/otherdetails",orderController.otherdetails);
 router.post("/Wonorders",orderController.Wonorders);
 router.post("/getordersfortabel",orderController.getordersfortabel)
 
+router.post("/getOrderofCustomer",orderController.getOrderofCustomer)
+
 module.exports=router;
 
