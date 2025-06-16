@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { AddselectedSup } from "@/lib/features/Supplier/SupplierSlice";
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import FilterSort from "../Components/fillters/FilterSort";
+
 type pageProps = object;
 
 type hprops = {
@@ -66,6 +68,30 @@ const Page: React.FC<pageProps> = () => {
   const [search, setsearch] = useState<string>("");
   const [Newopen, setNewopen] = useState<boolean>(false);
   const isSmallScreen = useIsSmallScreen();
+  const [sortBy, setSortBy] = useState<string>("");
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+  const filterOptions = [
+    { label: "Has Email", value: "hasEmail" },
+    { label: "Has Website", value: "hasWebsite" },
+    { label: "Has Phone", value: "hasPhone" },
+    { label: "Has Brands", value: "hasBrands" },
+  ];
+
+  const sortOptions = [
+    { label: "Name (A-Z)", value: "nameAsc" },
+    { label: "Name (Z-A)", value: "nameDesc" },
+    { label: "Most Brands", value: "mostBrands" },
+    { label: "Least Brands", value: "leastBrands" },
+  ];
+
+  const handleFilterChange = (filters: string[]) => {
+    setActiveFilters(filters);
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+  };
 
   //useffects
 
@@ -95,16 +121,45 @@ const Page: React.FC<pageProps> = () => {
 
   const fillterdata = suppliers?.filter((data: Sup) => {
     const searchTerm = search.toLowerCase();
-    return (
+    const matchesSearch = 
       data.Name?.toLowerCase().includes(searchTerm) ||
       data.Email?.toLowerCase().includes(searchTerm) ||
       data.Number?.toLowerCase().includes(searchTerm) ||
       data.Website?.toLowerCase().includes(searchTerm) ||
-      data.Brand?.some((b: string) => b.toLowerCase().includes(searchTerm))
-    );
+      data.Brand?.some((b: string) => b.toLowerCase().includes(searchTerm));
+
+    const matchesFilters = activeFilters.every(filter => {
+      switch (filter) {
+        case "hasEmail":
+          return !!data.Email;
+        case "hasWebsite":
+          return !!data.Website;
+        case "hasPhone":
+          return !!data.Number;
+        case "hasBrands":
+          return data.Brand && data.Brand.length > 0;
+        default:
+          return true;
+      }
+    });
+
+    return matchesSearch && matchesFilters;
   });
 
-
+  const sortedData = fillterdata?.sort((a, b) => {
+    switch (sortBy) {
+      case "nameAsc":
+        return (a.Name || "").localeCompare(b.Name || "");
+      case "nameDesc":
+        return (b.Name || "").localeCompare(a.Name || "");
+      case "mostBrands":
+        return (b.Brand?.length || 0) - (a.Brand?.length || 0);
+      case "leastBrands":
+        return (a.Brand?.length || 0) - (b.Brand?.length || 0);
+      default:
+        return 0;
+    }
+  });
 
   return (
     <>
@@ -132,32 +187,15 @@ const Page: React.FC<pageProps> = () => {
           </button>
         </div>
 
-        {/*Fillters */}
-        <div className="w-full h-[12vh] mt-[3vh]  flex flex-col justify-between items-start text-black">
-          <div className=" w-[40vw] h-full flex ml-13 flex-col justify-around items-start ">
-            <div className="flex w-full h-[40%]">
-              <div className="tex-3xl font-bold">All Suppliers</div>
-              <div className="text-[10px] font-extralight flex items-end">
-                <div className="">(250)</div>
-              </div>
-            </div>
-
-            <div className="flex justify-start gap-8 w-full h-[60%]  ">
-              <div className="w-[10%] h-full  flex items-end gap-1.5 ">
-                <div className="text-sm mb-0.5">sortby</div>
-                <div className="">
-                  <ArrowUpNarrowWide />
-                </div>
-              </div>
-              <div className="w-[10%] h-full  flex items-end gap-1.5 ">
-                <div className="text-sm mb-0.5">fillter</div>
-                <div className="">
-                  <Funnel />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/*Filters and Sort */}
+        <FilterSort
+          title="All Suppliers"
+          count={suppliers?.length}
+          filterOptions={filterOptions}
+          sortOptions={sortOptions}
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
+        />
 
         {/* Cards Container */}
         <div
@@ -170,9 +208,9 @@ const Page: React.FC<pageProps> = () => {
         >
           {suppliers &&
             suppliers.length > 0 &&
-            fillterdata &&
-            fillterdata.length > 0 &&
-            fillterdata.map((data: Sup, index: number) => {
+            sortedData &&
+            sortedData.length > 0 &&
+            sortedData.map((data: Sup, index: number) => {
               return (
                 <div
                   key={index}

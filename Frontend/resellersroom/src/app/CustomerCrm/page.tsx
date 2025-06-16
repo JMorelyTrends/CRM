@@ -11,6 +11,7 @@ import { IShopifyCustomer } from '../Components/Small comps/Types'
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Addselectedcusotmer, Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice'
 import { AddOrderid } from '@/lib/features/OrederReview/OrderReviewSlice'
+import FilterSort from '../Components/fillters/FilterSort';
 
   type hprops={
     search:string,
@@ -67,12 +68,39 @@ const Page = () => {
         const dispatch=useDispatch();
         const isSmallScreen=useIsSmallScreen();
 
-        const [search,setsearch ]=useState<string>("")
+        const [search,setsearch]=useState<string>("")
         const [userid, setuserid] = useState<string | null>("");
         const [custo,setcusto]=useState<IShopifyCustomer[]|null>(null)
         const [noofcus,setnoofcus]=useState<number>(0);
         const [Klaviyop,setKlaviyop]=useState<number>(0)
-      
+        const [sortBy, setSortBy] = useState<string>("");
+        const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+        const filterOptions = [
+          { label: "Has Email", value: "hasEmail" },
+          { label: "Has Phone", value: "hasPhone" },
+          { label: "Has Social Handle", value: "hasSocial" },
+          { label: "Klaviyo Opt-in", value: "klaviyoOptIn" },
+          { label: "Klaviyo Opt-out", value: "klaviyoOptOut" },
+        ];
+
+        const sortOptions = [
+          { label: "Name (A-Z)", value: "nameAsc" },
+          { label: "Name (Z-A)", value: "nameDesc" },
+          { label: "Highest Spend", value: "spendDesc" },
+          { label: "Lowest Spend", value: "spendAsc" },
+          { label: "Most Orders", value: "ordersDesc" },
+          { label: "Least Orders", value: "ordersAsc" },
+        ];
+
+        const handleFilterChange = (filters: string[]) => {
+          setActiveFilters(filters);
+        };
+
+        const handleSortChange = (sort: string) => {
+          setSortBy(sort);
+        };
+
         const getTierInfo = (totalSpend: number, tshopifySpend: number) => {
           const total = totalSpend + tshopifySpend;
           if (total >= 3001) {
@@ -128,6 +156,53 @@ const Page = () => {
   }
 }, []);
 
+        const filteredAndSortedCustomers = custo?.filter((customer) => {
+          const matchesFilters = activeFilters.every(filter => {
+            switch (filter) {
+              case "hasEmail":
+                return !!customer.email;
+              case "hasPhone":
+                return !!customer.Number;
+              case "hasSocial":
+                return !!customer.socialhandel;
+              case "hasAddress":
+                return !!customer.address;
+              case "klaviyoOptIn":
+                return customer.emailMarketingConsent?.marketingState === 'subscribed';
+              case "klaviyoOptOut":
+                return customer.emailMarketingConsent?.marketingState != 'subscribed';
+              default:
+                return true;
+            }
+          });
+
+          const searchTerm = search.toLowerCase();
+          const matchesSearch = 
+            (customer.first_name + " " + customer.last_name).toLowerCase().includes(searchTerm) ||
+            customer.email?.toLowerCase().includes(searchTerm) ||
+            customer.Number?.toLowerCase().includes(searchTerm) ||
+            customer.socialhandel?.toLowerCase().includes(searchTerm);
+
+          return matchesFilters && matchesSearch;
+        }).sort((a, b) => {
+          switch (sortBy) {
+            case "nameAsc":
+              return (a.first_name + " " + a.last_name).localeCompare(b.first_name + " " + b.last_name);
+            case "nameDesc":
+              return (b.first_name + " " + b.last_name).localeCompare(a.first_name + " " + a.last_name);
+            case "spendDesc":
+              return Number(b.total_spend || 0) - Number(a.total_spend || 0);
+            case "spendAsc":
+              return Number(a.total_spend || 0) - Number(b.total_spend || 0);
+            case "ordersDesc":
+              return Number(b.orders_count || 0) - Number(a.orders_count || 0);
+            case "ordersAsc":
+              return Number(a.orders_count || 0) - Number(b.orders_count || 0);
+            default:
+              return 0;
+          }
+        });
+
   return (
     <div className=' w-[80vw]'>
          { !isSmallScreen&& <Header
@@ -154,65 +229,41 @@ const Page = () => {
  
         
           {/*Fillters */}
+          <div className="w-full h-[15vh] mt-[3vh] gap-2 flex items-start text-black">
+            <div className="w-[30%] h-full flex flex-col justify-around items-start">
+              <FilterSort
+                title="All Customers"
+                count={noofcus}
+                filterOptions={filterOptions}
+                sortOptions={sortOptions}
+                onFilterChange={handleFilterChange}
+                onSortChange={handleSortChange}
+              />
+            </div>
 
-          <div className="w-full h-[12vh] mt-[3vh] gap-2  flex    items-start text-black">
-                  
-                  <div className=" w-[15%]  h-full flex ml-13 flex-col justify-around items-start ">
-                    <div className="flex w-full h-[40%]">
-                    <div className="tex-3xl font-bold">All Customer</div>
-                    <div className="text-[10px] font-extralight flex items-end"><div className="">({noofcus})</div></div>
-                   </div>
+            <div className="w-[70%] flex justify-around h-full items-center">
+              <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
+                <div className="w-full h-[30%] text-center text-xl font-bold">
+                  Total Customers
+                </div>
+                <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center">
+                  {noofcus}
+                </div>
+              </div>
 
-                   <div className="flex justify-start gap-8 w-full h-[60%]   ">
-
-                             <div className="w-[50%] h-full  flex items-end ">
-                                   <div className="text-sm mb-0.5">
-                                    sortby
-                                   </div>
-                                   <div className="">
-                                   <ArrowUpNarrowWide />
-                                   </div>
-                                </div>       
-                                <div className="w-[50%] h-full  flex items-end gap-1.5 ">
-                                   <div className="text-sm mb-0.5">
-                                    fillter
-                                   </div>
-                                   <div className="">
-                                   <Funnel />
-                                   </div>
-                                </div>   
-                                            
-        
-                   </div>
-                   
-                  </div>
-
-                  <div className="w-[70%] flex justify-around h-full items-center ">
-
-                    <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
-                              <div className="w-full h-[30%] text-center text-xl font-bold">
-                                Total Customers
-                              </div>
-                              <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center ">
-                                {noofcus}
-                              </div>
-                    </div>
- 
-                    <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
-                              <div className="w-full h-[30%] text-center text-xl font-bold">
-                                Klaviyo optin
-                              </div>
-                              <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center ">
-                              {Klaviyop}   %
-                              </div>
-                    </div>                       
-                  
-                  </div>
-
+              <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
+                <div className="w-full h-[30%] text-center text-xl font-bold">
+                  Klaviyo optin
+                </div>
+                <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center">
+                  {Klaviyop}%
+                </div>
+              </div>
+            </div>
           </div>
 
           {/**customer tabel */}
-          <div className="w-full h-[53vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
+          <div className="w-full h-[50vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
@@ -232,43 +283,44 @@ const Page = () => {
                 </tr>
               </thead>
               <tbody>
-                {custo && custo.length > 0 && custo.map((customer, idx) => (
-                  <tr key={idx} className="border-b border-black">
-                    <td className="px-4 py-2 text-center">{customer.first_name + " " + customer.last_name}</td>
-                    <td className="px-4 py-2 text-center">{customer.Number}</td>
-                    <td className="px-4 py-2 text-center">{customer.email}</td>
-                    <td className="px-4 py-2 text-center">{customer.socialhandel || '-'}</td>
-                    <td className="px-4 py-2 text-center">{customer.total_spend}</td>
-                    <td className="px-4 py-2 text-center">{customer.orders_count || 0}</td>
-                    <td className="px-4 py-2 text-center">
-                      {(() => {
-                        const totalSpend = Number(customer.total_spend) || 0;
-                        const tshopifySpend = Number(customer.tshopifyspent) || 0;
-                        const { tier, color } = getTierInfo(totalSpend, tshopifySpend);
-                        return (
-                          <button className={`px-2 py-1 rounded-full ${color}`}>
-                            {tier}
-                          </button>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      <button
-                        className={`px-2 py-1 rounded-full text-nowrap cursor-pointer ${customer.emailMarketingConsent.marketingState === 'subscribed' ? 'bg-[#B7CBAF]' : 'bg-[#272626] text-white'} `}
-                      >
-                        {customer.emailMarketingConsent.marketingState === 'subscribed' ? 'Opt-in' : 'Opt-out'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      <button
-                        onClick={() => {
-                          dispatch(AddSelectedCustomer(customer))
-                          dispatch(Toogle_Editopen())
-                        }}
-                        className="bg-blue-400 cursor-pointer text-white px-4 py-1 rounded-full">Edit</button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredAndSortedCustomers && filteredAndSortedCustomers.length > 0 && 
+                  filteredAndSortedCustomers.map((customer, idx) => (
+                    <tr key={idx} className="border-b border-black">
+                      <td className="px-4 py-2 text-center">{customer.first_name + " " + customer.last_name}</td>
+                      <td className="px-4 py-2 text-center">{customer.Number}</td>
+                      <td className="px-4 py-2 text-center">{customer.email}</td>
+                      <td className="px-4 py-2 text-center">{customer.socialhandel || '-'}</td>
+                      <td className="px-4 py-2 text-center">{customer.total_spend}</td>
+                      <td className="px-4 py-2 text-center">{customer.orders_count || 0}</td>
+                      <td className="px-4 py-2 text-center">
+                        {(() => {
+                          const totalSpend = Number(customer.total_spend) || 0;
+                          const tshopifySpend = Number(customer.tshopifyspent) || 0;
+                          const { tier, color } = getTierInfo(totalSpend, tshopifySpend);
+                          return (
+                            <button className={`px-2 py-1 rounded-full ${color}`}>
+                              {tier}
+                            </button>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          className={`px-2 py-1 rounded-full text-nowrap cursor-pointer ${customer.emailMarketingConsent.marketingState === 'subscribed' ? 'bg-[#B7CBAF]' : 'bg-[#272626] text-white'} `}
+                        >
+                          {customer.emailMarketingConsent.marketingState === 'subscribed' ? 'Opt-in' : 'Opt-out'}
+                        </button>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => {
+                            dispatch(AddSelectedCustomer(customer))
+                            dispatch(Toogle_Editopen())
+                          }}
+                          className="bg-blue-400 cursor-pointer text-white px-4 py-1 rounded-full">Edit</button>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

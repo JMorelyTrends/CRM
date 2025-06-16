@@ -355,8 +355,8 @@ const Orderreview =()=>{
       <select className="w-full border rounded px-3 py-2 mt-1"
         value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
         <option value="">Select Deal Owner</option>
-        <option value="Owner A">Alfy</option>
-        <option value="Owner B">Fran</option>
+        <option value="Owner A">ALFIE</option>
+        <option value="Owner B">FRAN</option>
       
       </select>
     </div>
