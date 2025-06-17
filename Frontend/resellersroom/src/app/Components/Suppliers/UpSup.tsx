@@ -38,7 +38,7 @@ const UpSup = (props: Props) => {
   const [website, setWebsite] = useState<string>("");
 
   // Brand selection
-  const [isOpen, setIsOpen] = useState(false);
+
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 
   //useeffects
@@ -165,8 +165,6 @@ const UpSup = (props: Props) => {
 
             {/* Brand Dropdown */}
             <BrandSelector
-              isOpen={isOpen}
-              setIsOpen={setIsOpen}
               selectedBrands={selectedBrands}
               setSelectedBrands={setSelectedBrands}
             />

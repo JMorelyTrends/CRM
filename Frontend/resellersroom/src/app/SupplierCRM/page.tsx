@@ -1,10 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { ArrowUpNarrowWide, Funnel } from "lucide-react";
+
 import NewSup from "../Components/Suppliers/NewSup";
 import axios from "axios";
-import { Sup } from "../Components/Small comps/Types";
-import { Pencil } from "lucide-react";
+import { Sup } from "../Components/Small comps/Types"
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { AddselectedSup } from "@/lib/features/Supplier/SupplierSlice";

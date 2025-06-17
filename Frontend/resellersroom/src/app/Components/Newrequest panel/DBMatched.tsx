@@ -31,7 +31,7 @@ const DBMatched = () => {
         useEffect(() => {
          if (formcusotmer !== null && !ff) {
            
-           setName(formcusotmer.Name );
+           setName(formcusotmer.Name||"" );
            setEmail(formcusotmer.email || "");
            setNumber(formcusotmer.Number || "");
            setSocial(formcusotmer.socialhandel || "");

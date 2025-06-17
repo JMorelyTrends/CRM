@@ -6,7 +6,7 @@ import { ArrowLeft, User, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/lib/Resellerstore';
 import { toast } from 'sonner';
-import { Task } from '@/app/Components/Small comps/Types';
+import { Custprop, Task } from '@/app/Components/Small comps/Types';
 import EditPopup from '../../Components/Customer/Editpopup';
 import { Toogle_Editopen, AddSelectedCustomer } from '@/lib/features/CustomerCrm/CustomerCrmslice';
 
@@ -29,7 +29,7 @@ const Page = () => {
   const selectedCustomer = useSelector((state: RootState) => state.Cus.Selected_customer);
   const [search, setSearch] = useState("");
   const [order, setorder] = useState<Task[]|null>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
+ 
 
   const getorders = async () => {
     try {
@@ -38,7 +38,7 @@ const Page = () => {
           id: selectedCustomer._id,
         });
       setorder(k.data.data);
-    } catch (e) {
+    } catch  {
       toast.error("Something wrong with getting order for this customer");
     }
   };
@@ -61,7 +61,7 @@ const Page = () => {
       
       // Find the updated customer in the response
       const updatedCustomer = response.data.Customers.find(
-        (customer: any) => customer._id === selectedCustomer._id
+        (customer: Custprop) => customer._id === selectedCustomer._id
       );
       
       if (updatedCustomer) {
@@ -69,7 +69,7 @@ const Page = () => {
       }
       
       getorders();
-    } catch (error) {
+    } catch  {
       toast.error("Error refreshing customer data");
     }
   };

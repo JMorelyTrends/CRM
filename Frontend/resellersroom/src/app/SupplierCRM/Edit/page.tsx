@@ -8,9 +8,7 @@ import axios from "axios";
 import { useRouter } from 'next/navigation';
 import { format, toZonedTime } from 'date-fns-tz';
 import UpSup from "@/app/Components/Suppliers/UpSup";
-import {  useDispatch} from 'react-redux';
-import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
-import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+
 
 const Header = () => {
   return (
@@ -45,22 +43,16 @@ function useIsSmallScreen() {
 }
 
 function Page() {
-  const dispatch=useDispatch()
+
   const router=useRouter()
   const isSmallScreen = useIsSmallScreen();
   const [orders,setorders]=useState<Task[]>()
   const [total_spent,settotal_spent]=useState<number>(0)
   const [Newopen,setNewopen]=useState<boolean>(false)
   const [supplier,setsupplier]=useState<Supplier>()
-  const [userid,setuserid]=useState<string|null>("")
 
-  useEffect(() => {
-    dispatch(Toggleleadsrenderstep(0));
-    if (typeof window !== "undefined") {
-      const id = localStorage.getItem("tempcred");
-      setuserid(id);
-    }
-  }, []);
+
+
   const s = useSelector(
     (state: RootState) => state.Sup.SelectedSupplier
   );

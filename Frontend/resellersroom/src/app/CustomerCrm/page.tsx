@@ -1,14 +1,10 @@
 "use client"
 import React,{useState,useEffect} from 'react'
-import {ArrowUpNarrowWide,Funnel } from "lucide-react"
 import axios from 'axios'
-import { Customerprop } from '../Components/Small comps/Types'
-import EditPopup from '../Components/Customer/Editpopup'
 import { useDispatch } from "react-redux";
-import {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus, Toogle_Newcuscrm} from "../../lib/features/CustomerCrm/CustomerCrmslice"
+import {AddCustomers,AddSelectedCustomer, Toogle_Newcuscrm} from "../../lib/features/CustomerCrm/CustomerCrmslice"
 import NewCustomerFormUI from '../Components/Customer/NewCustomerFormUI'
 import { IShopifyCustomer } from '../Components/Small comps/Types'
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Addselectedcusotmer, Toggleleadsrenderstep } from '@/lib/features/Newrequest/NewRequestSlice'
 import { AddOrderid } from '@/lib/features/OrederReview/OrderReviewSlice'
 import FilterSort from '../Components/fillters/FilterSort';
@@ -212,7 +208,7 @@ const Page = () => {
              setsearch={setsearch}
         />}
 
-        <NewCustomerFormUI  from='crm' getcustomers={getcustomers}/>
+        <NewCustomerFormUI  getcustomers={getcustomers}/>
                 {/*ADD new Supplier */}
         <div className="w-full h-[8vh] mt-[2vh] bg-white flex justify-items-start items-end">
             <button

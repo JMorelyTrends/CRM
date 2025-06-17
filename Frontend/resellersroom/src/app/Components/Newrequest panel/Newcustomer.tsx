@@ -22,8 +22,8 @@ const Newcustomer = (props: Props) => {
   const [last_name,setlast_name]=useState<string>('')
   const [number, setNumber] = useState<string>('');
   const [email, setEmail] = useState<string>('');
-  const [countryCode, setCountryCode] = useState<string>("");
-  const [fullNumber, setFullNumber] = useState<string>("");
+  // const [countryCode, setCountryCode] = useState<string>("");
+  // const [fullNumber, setFullNumber] = useState<string>("");
   //const [address, setAddress] = useState<string>('');
   //const [postcode, setPostcode] = useState<string>('');
   //const [city,setcity]=useState<string>('');

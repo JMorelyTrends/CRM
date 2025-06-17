@@ -231,7 +231,7 @@ export function AddtagsDes({ sideopen }: { sideopen: boolean }) {
               {selectedcustomer &&
                 (  selectedcustomer.customerfrom === "shopify"
                   ? `${selectedcustomer.first_name} ${selectedcustomer.last_name}`
-                  : selectedcustomer.Name!=''?+selectedcustomer.Name:selectedcustomer.socialhandel!=''?+selectedcustomer.socialhandel:"")}
+                  : selectedcustomer?.Name && selectedcustomer.Name!=''?+selectedcustomer?.Name:selectedcustomer.socialhandel!=''?+selectedcustomer.socialhandel:"")}
             </div>
             <div className=" flex text-sm  items-end  justify-around font-light   w-full">
               <div className=" ">

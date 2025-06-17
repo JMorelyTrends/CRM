@@ -15,9 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {  X } from "lucide-react";
 import { CloudDownload } from "lucide-react";
-import {AddselectedSup} from '@/lib/features/Supplier/SupplierSlice'
 import {  useDispatch} from 'react-redux';
-import { useRouter } from 'next/navigation';
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import PhoneInput from "../Small comps/PhoneInput";
 type Props = {
@@ -47,7 +45,7 @@ const NewSup = (props: Props) => {
   const [email, setEmail] = useState<string>("");
   const [website, setWebsite] = useState<string>("");
   //Brand selection
-  const [isOpen, setIsOpen] = useState(false);
+
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 
   const close = () => {
@@ -264,8 +262,6 @@ const NewSup = (props: Props) => {
 
             {/* Dropdown */}
             <BrandSelector
-            isOpen={isOpen}
-            setIsOpen={setIsOpen}
             selectedBrands={selectedBrands}
             setSelectedBrands={setSelectedBrands}
             />

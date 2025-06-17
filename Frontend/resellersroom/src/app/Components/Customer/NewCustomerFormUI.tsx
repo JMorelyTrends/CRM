@@ -6,14 +6,14 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
-import { AddSelectedCustomer, Toogle_Editopen,Toogle_Newcuscrm } from "../../../lib/features/CustomerCrm/CustomerCrmslice";
+import { AddSelectedCustomer,Toogle_Newcuscrm } from "../../../lib/features/CustomerCrm/CustomerCrmslice";
 import { AddSubmitingCustomer,ADD_Matched_cutomer,Toogleshopifypopup, Addselectedcusotmer, Addshopifycustomer } from "@/lib/features/Newrequest/NewRequestSlice";
 import {Toggleleadsrenderstep} from '@/lib/features/Newrequest/NewRequestSlice'
 import Shopifyupdatepopup from "../Newrequest panel/Shopifyupdatepopup";
 import Shopifymatch from "../Newrequest panel/Shopifymatch";
 import PhoneInput from "../Small comps/PhoneInput";
 
-export default function NewCustomerFormUI({getcustomers,from}:{getcustomers:()=>Promise<void>,from:string}) {
+export default function NewCustomerFormUI({getcustomers}:{getcustomers:()=>Promise<void>}) {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.Cus.Newcuscrm);
   const customer=useSelector((state:RootState)=>state.NewReq.Selectedonecustomer)

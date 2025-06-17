@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { Funnel, ArrowUpNarrowWide } from "lucide-react";
 import axios from 'axios';
 import { Addselectedcusotmer, Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { Task,StockXItem,additem } from "../../Components/Small comps/Types";

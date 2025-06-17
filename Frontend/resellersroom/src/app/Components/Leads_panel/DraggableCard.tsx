@@ -5,7 +5,7 @@ import { TaskPanel } from './TaskPanel';
 import { Clock } from 'lucide-react';
 import { Task } from "../Small comps/Types";
 import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
-import { UseSelector,useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { AddOrderid, ToogleCompleteorder,Addcurrentorder } from '@/lib/features/OrederReview/OrderReviewSlice';
 import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 interface DraggableCardProps {

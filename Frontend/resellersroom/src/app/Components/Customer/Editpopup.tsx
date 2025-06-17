@@ -55,7 +55,7 @@ export default
     }
   }, [customer, ]);
   const getlastn = (s:string, n:number) => s.slice(-n);
-  const getfirstn=(s:string, n:number) =>s.slice(0,n)
+  // const getfirstn=(s:string, n:number) =>s.slice(0,n)
   const handleSubmit = async() => {
     // Validate phone number
     if (phone) {
@@ -142,7 +142,6 @@ export default
         }
   };
 
-  const isMongo = false;
 
   return (
     <>

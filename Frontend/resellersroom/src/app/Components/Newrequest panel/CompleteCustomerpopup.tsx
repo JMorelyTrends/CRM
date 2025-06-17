@@ -10,13 +10,11 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from "@/lib/Resellerstore";
 import { ToogleCustomerComplete } from '@/lib/features/Newrequest/NewRequestSlice';
-import { isEqualStrings } from '../Small comps/isEqualStrings';
-import axios from 'axios';
 import { toast } from 'sonner';
 
-type Props = {}
 
-const CompleteCustomerpopup = (props: Props) => {
+
+const CompleteCustomerpopup = ( ) => {
     const dispatch=useDispatch()
     const isOpen = useSelector((state: RootState) => state.NewReq.completeCustomer);
     const customer=useSelector((state:RootState)=>state.NewReq.MatchedCustomer);
@@ -27,7 +25,7 @@ const CompleteCustomerpopup = (props: Props) => {
     const [phone, setPhone] = useState<string>('');
     const [socialhandel,setsocial]=useState<string>('')
     
-    const [address, setAddress] = useState<string>('');
+    // const [address, setAddress] = useState<string>('');
 
 
     useEffect(()=>{

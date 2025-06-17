@@ -120,6 +120,11 @@ export type Task = {
   paymentmethod?: string | null;
   DealOwner?: string | null;
   confirm?: boolean;
+  linedata?:Slinedata[];
+  shipingfee:string,
+  Source_of_truth?:string,
+  Supplier_Name?:Supplier
+  Revenue?:string
 };
 
 export type column={
@@ -167,7 +172,8 @@ export type OrderRpr={
   shopifycreatedat?: Date;
   createdAt?: string|Date; // from timestamps: true
   updatedAt?: Date;
-  approved?:boolean, // from timestamps: true
+  approved?:boolean,
+ // from timestamps: true
 }
 
 

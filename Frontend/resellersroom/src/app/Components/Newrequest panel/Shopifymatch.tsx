@@ -13,7 +13,7 @@ import { RootState } from "@/lib/Resellerstore";
 import { Toogleshopifypopup,Addselectedcusotmer,Toggleleadsrenderstep,Updating_Customer_shopify,ToogleShflag } from '@/lib/features/Newrequest/NewRequestSlice';
 import { Custprop } from '../Small comps/Types';
 import { isEqualStrings } from '../Small comps/isEqualStrings';
-import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
+import {  Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 const Shopifymatch = ({from,getcustomers}:{from:string,getcustomers:()=>Promise<void>}) => {
     
     const dispatch = useDispatch();
@@ -25,7 +25,7 @@ const Shopifymatch = ({from,getcustomers}:{from:string,getcustomers:()=>Promise<
     const Use=async()=>{
         if( orderid)
         {
-            const newc= await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/usethecustomer`,
+         await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/usethecustomer`,
                 {
                   Cust:customer,
                   orderid:orderid

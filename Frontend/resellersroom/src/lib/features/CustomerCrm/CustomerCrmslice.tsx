@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Customerprop,IShopifyCustomer, Custprop } from "@/app/Components/Small comps/Types";
+import { Custprop } from "@/app/Components/Small comps/Types";
 
 
 interface CustomerState {

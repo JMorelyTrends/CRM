@@ -27,8 +27,8 @@ const Shopifyupdatepopup: React.FC = () => {
     const [lastName, setLastName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [phone, setPhone] = useState<string>('');
-    const [address, setAddress] = useState<string>('');
-    const [ccode,setccdoe]=useState<string>("")
+    // const [address, setAddress] = useState<string>('');
+    // const [ccode,setccdoe]=useState<string>("")
     const pathname = usePathname();
 
     useEffect(()=>{

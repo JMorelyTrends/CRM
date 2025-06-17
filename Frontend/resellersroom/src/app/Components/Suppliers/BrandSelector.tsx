@@ -2,13 +2,11 @@ import React from 'react';
 import Select from "react-select";
 
 type selector={
-    isOpen:boolean,
-    setIsOpen:React.Dispatch<React.SetStateAction<boolean>>,
     selectedBrands:string[],
     setSelectedBrands:React.Dispatch<React.SetStateAction<string[]>>
 }
 
-const BrandSelector = ({isOpen,setIsOpen,selectedBrands,setSelectedBrands}:selector) => {
+const BrandSelector = ({selectedBrands,setSelectedBrands}:selector) => {
   const brands: string[] = [
     "Air Jordan",
     "Alexander McQueen",

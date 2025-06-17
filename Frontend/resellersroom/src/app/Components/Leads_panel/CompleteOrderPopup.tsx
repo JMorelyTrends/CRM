@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Plus, Check, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Task, labeltype } from "../Small comps/Types";
+import {  labeltype } from "../Small comps/Types";
 import { Supplier } from "../Small comps/Types";
 import axios from "axios";
 import { toast } from "sonner";

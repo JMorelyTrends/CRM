@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+
 
 // Country codes array with country names
 const countryCodes = [
@@ -193,7 +193,6 @@ const PhoneInput = ({number,setNumber}:{number:string,setNumber:React.Dispatch<R
  
   const [t,sett]=useState("");
   const [countryCode, setCountryCode] = useState<string>("+44");
-  const [fullNumber, setFullNumber] = useState<string>("");
   const getlastn = (s:string, n:number) => s.slice(-n);
   const getfirstn=(s:string, n:number) =>s.slice(0,n)
  
@@ -215,18 +214,18 @@ const PhoneInput = ({number,setNumber}:{number:string,setNumber:React.Dispatch<R
   useEffect(() => {
     if (countryCode && t) {
       const newFullNumber = countryCode + t;
-      setFullNumber(newFullNumber);
+    
       setNumber(newFullNumber);
 
      
     } else {
-      setFullNumber("");
+     
       setNumber("")
     }
   }, [countryCode, t]);
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
+    const val = e.target.value;
     // Restrict to digits only
     if (/^\d*$/.test(val)) {
       if (val.length > 10) return;
