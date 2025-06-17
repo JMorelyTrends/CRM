@@ -171,18 +171,6 @@ const UpSup = (props: Props) => {
               setSelectedBrands={setSelectedBrands}
             />
 
-            {/* Show selected brands */}
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {selectedBrands.map((brand, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-300 text-xs px-3 py-1 rounded-full text-black font-medium"
-                >
-                  {brand}
-                </span>
-              ))}
-            </div>
-
             {/* Buttons */}
             <div className="flex justify-between mt-4">
               <Button

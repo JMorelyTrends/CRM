@@ -212,7 +212,7 @@ const getpidata = async () => {
       </div>
 
       <div className="w-[65%] h-full bg-white rounded-2xl overflow-y-auto p-4 py-9 text-center">
-      <h1 className=" text-lg font-bold mb-3 text-black">Request vs Won Deals</h1>
+      <h1 className=" text-lg font-bold mb-3 text-black">Requests vs Won Deals</h1>
         <div className="mb-6">
         { reqwon&& reqwon.length>0&&  <LineChart width={550} height={300} data={reqwon}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -225,7 +225,7 @@ const getpidata = async () => {
           </LineChart>}
         </div>
         <div className="mb-6">
-                  <h1 className=" text-lg font-bold mb-3 text-black">Won vs lost</h1>
+                  <h1 className=" text-lg font-bold mb-3 text-black">Won vs lost Deals</h1>
         {wonlost&&wonlost.length>0&&  <LineChart width={550} height={300} data={wonlost}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />

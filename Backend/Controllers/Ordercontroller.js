@@ -294,10 +294,11 @@ exports.Getorderofsuppliers=async(req,res)=>{
 
       const o=await Order.find({Supplierid:name}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid");
       let spend=0;
+      
       if(o?.length>0)
       {
         o.map((or)=>{
-         spend+=or.price
+         spend+=or.sellprice
         })
       }
       res.status(201).json({data:o,spend:spend})
@@ -359,7 +360,7 @@ getOrderofCustomer
     {
     product=   order.stockxitem.map((item) => ({
     title: item.name,
-    price: item.last_sale_price || order.price,
+    price:cog,
     quantity: 1,
     sku: item?.sku,
      properties: [
@@ -1036,7 +1037,10 @@ async function getWonRevenue(userid = null, start = null, end = null) {
 }
 
 async function getWonProfit(userid = null, start = null, end = null) {
-  const match = buildMatchQuery("Won", userid, start, end);
+  const match = {
+    ...buildMatchQuery("Won", userid, start, end),
+    confirm: true  // Add condition for confirmed orders
+  };
 
  const result = await Order.aggregate([
     { $match: match },

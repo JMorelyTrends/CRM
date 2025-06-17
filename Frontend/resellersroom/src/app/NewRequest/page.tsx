@@ -1,13 +1,15 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Requestpanle from '../Components/Newrequest panel/Requestpanle';
 import Newcustomer from "../Components/Newrequest panel/Newcustomer";
 import { Suggest } from "../Components/Small comps/Types";
 import { AddtagsDes } from "../Components/Newrequest panel/AddtagsDes";
 import Reqsubmit from "../Components/Newrequest panel/Reqsubmit";
 import { AnimatePresence, motion, Variants } from "framer-motion";
-import { useSelector } from 'react-redux';
+import { useSelector,useDispatch } from 'react-redux';
 import { RootState } from "@/lib/Resellerstore";
+import {Addselectedcusotmer, Toggleleadsrenderstep}from "@/lib/features/Newrequest/NewRequestSlice"
+import { AddSelectedCustomer } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 
 type DirectionProps = {
   direction: number;
@@ -35,10 +37,16 @@ const variants: Variants = {
 };
 
 const Page: React.FC = () => {
+  const dispatch=useDispatch();
   const [suggesteddata, setsuggesteddata] = useState<Suggest[]>([]);
   const renderstep = useSelector((state: RootState) => state.NewReq.renderstep);
   const direction = useSelector((state: RootState) => state.NewReq.direction);
-
+  
+  useEffect(()=>{
+   dispatch(Toggleleadsrenderstep(0))
+   dispatch(Addselectedcusotmer(null))
+   dispatch(AddSelectedCustomer(null))
+  },[])
   // If you need sideOpen or className — move them into context or global state
 
   return (

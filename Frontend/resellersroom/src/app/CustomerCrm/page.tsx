@@ -39,7 +39,7 @@ import { useRouter } from 'next/navigation';
                  onChange={(e)=>{
                    props.setsearch(e.target.value)
                  }}
-                 placeholder="Search by customer and product "
+                 placeholder="Search by customer  "
                  className="w-full lg:w-54 px-4 py-2 border-2 text-xs p-4 text-black border-gray-300 rounded-lg "
                />
              </div>
@@ -240,7 +240,7 @@ const Page = () => {
             </div>
 
             <div className="w-[70%] flex justify-around h-full items-center">
-              <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
+              <div className="w-[30%] h-[70%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
                 <div className="w-full h-[30%] text-center text-xl font-bold">
                   Total Customers
                 </div>
@@ -249,9 +249,9 @@ const Page = () => {
                 </div>
               </div>
 
-              <div className="w-[30%] h-[90%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
+              <div className="w-[30%] h-[70%] bg-[#F3F3F3] rounded-xl flex flex-col justify-center items-center">
                 <div className="w-full h-[30%] text-center text-xl font-bold">
-                  Klaviyo optin
+                  Klaviyo Opt-Ins
                 </div>
                 <div className="w-full h-[70%] text-xl font-bold text-center flex items-end justify-center">
                   {Klaviyop}%

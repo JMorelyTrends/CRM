@@ -6,7 +6,7 @@ import { Clock } from 'lucide-react';
 import { Task } from "../Small comps/Types";
 import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
 import { UseSelector,useDispatch } from 'react-redux';
-import { AddOrderid, ToogleCompleteorder } from '@/lib/features/OrederReview/OrderReviewSlice';
+import { AddOrderid, ToogleCompleteorder,Addcurrentorder } from '@/lib/features/OrederReview/OrderReviewSlice';
 import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 interface DraggableCardProps {
   task: Task;
@@ -66,6 +66,7 @@ const dispatch=useDispatch()
   };
 
   const handleClickUp = (e: React.MouseEvent) => {
+    
     if (startpos) {
       const x = e.clientX - startpos.x;
       const y = e.clientY - startpos.y;
@@ -78,12 +79,14 @@ const dispatch=useDispatch()
           setShowPanel(true);
         }
         else if( task.cusid?.email!="" && task?.phone!=""){
-         
+          dispatch(AddOrderid(task._id))
+           dispatch(Addcurrentorder(task))
+          
           setwonpopup(true)
           dispatch(ToogleCompleteorder())
-          
         }
         else {
+         
           dispatch(AddSelectedCustomer(task.cusid))
           dispatch(AddOrderid(task._id))
           dispatch(Toogle_Editopen())
@@ -94,7 +97,7 @@ const dispatch=useDispatch()
 
   return (
  <>  
-  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={task} update={false} />}
+  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup}  update={false} />}
   <div
       ref={setNodeRef}
       onPointerDown={handleClickDown}

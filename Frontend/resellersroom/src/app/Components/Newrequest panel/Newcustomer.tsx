@@ -130,7 +130,7 @@ const Newcustomer = (props: Props) => {
           <img
             src={selectedItems?.image}
             alt="Selected"
-            className="w-full h-full object-cover rounded-lg"
+            className="w-full h-full object-contain rounded-lg"
           />
         </div>
         <div className="text-xl md:text-2xl font-medium text-black">

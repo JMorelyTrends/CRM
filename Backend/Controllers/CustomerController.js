@@ -1373,10 +1373,15 @@ async function createShoOrder(customerid, product, tags, shipping, rev) {
       customer: {
         id: customerid
       },
-      shipping_address: shipping,
+      shipping_address: {
+        address1: shipping.address1 || shipping,
+        country: 'United Kingdom',
+        first_name: "test",
+        last_name: 'test'
+      },
       financial_status: 'paid',
       total_price: rev,
-      send_receipt: true,
+      //send_receipt: true,
       tags: 'CRM order',
       transactions: [
         {

@@ -14,6 +14,8 @@ import { isEqualStrings } from '../Small comps/isEqualStrings';
 import axios from 'axios';
 import { toast } from 'sonner';
 import PhoneInput from '../Small comps/PhoneInput';
+import { usePathname } from 'next/navigation';
+
 const Shopifyupdatepopup: React.FC = () => {
     const dispatch = useDispatch();
     const isOpen = useSelector((state: RootState) => state.NewReq.Shflag);
@@ -27,6 +29,8 @@ const Shopifyupdatepopup: React.FC = () => {
     const [phone, setPhone] = useState<string>('');
     const [address, setAddress] = useState<string>('');
     const [ccode,setccdoe]=useState<string>("")
+    const pathname = usePathname();
+
     useEffect(()=>{
       if(customer)
       {
@@ -66,7 +70,11 @@ const Shopifyupdatepopup: React.FC = () => {
             setLastName("")
             setPhone("")
             dispatch(ToogleShflag())
-          
+
+            if (pathname.startsWith('/NewRequest')) {
+              dispatch(Toogleshopifypopup())
+            }
+            
             dispatch(Addselectedcusotmer(re.data.data));
             dispatch(ADD_Matched_cutomer(re.data.data))
             dispatch(Toggleleadsrenderstep(2));}

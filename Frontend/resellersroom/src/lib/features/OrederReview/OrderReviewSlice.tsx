@@ -5,13 +5,15 @@ type OrderReviewState = {
   isOpen: boolean;
   selectorderid:string,
   completeorder:boolean,
+  currentorder:Task|null,
 };
 
 const initialState: OrderReviewState = {
   selectedOrder: null,
   isOpen: false,
   selectorderid:'',
-  completeorder:false
+  completeorder:false,
+  currentorder:null,
   
 };
 
@@ -30,6 +32,10 @@ const OrderReviewSlice = createSlice({
       {
         state.selectorderid=action.payload
       },
+      Addcurrentorder(state,action)
+      {
+          state.currentorder=action.payload
+      },
       ToogleCompleteorder(state)
       { 
         state.completeorder=!state.completeorder
@@ -41,7 +47,8 @@ export const {
 ToogleEdit,
 AddSelectedOrder,
 AddOrderid,
-ToogleCompleteorder
+ToogleCompleteorder,
+Addcurrentorder
 
 } = OrderReviewSlice.actions;
 

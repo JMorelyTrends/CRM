@@ -10,7 +10,7 @@ import { TaskPanel } from '@/app/Components/Leads_panel/TaskPanel';
 import { useDispatch } from "react-redux";
 import CustomDateRangePicker from "../.././Components/Dashboard/CustomDateRangePicker";
 import { DateRange } from "react-day-picker";
-import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
+import { Addcurrentorder, ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
 import FilterSort from '../../Components/fillters/FilterSort';
 
 const OrdersPage = () => {
@@ -106,6 +106,7 @@ const OrdersPage = () => {
       dispatch(Addselectedcusotmer(order))
 
       if(order.confirm){
+        dispatch(Addcurrentorder(order))
         setwonpopup(true)
         dispatch(ToogleCompleteorder())
       }
@@ -194,7 +195,7 @@ const OrdersPage = () => {
         {/* <ReviewEdits getwons={getwons}/>
     */}
 
-      { selectedtask&&<CompleteOrderPopup fetchallorders={getwons} open={wonpopup} setOpen={setwonpopup} task={selectedtask} update={true} />}
+      { selectedtask&&<CompleteOrderPopup fetchallorders={getwons} open={wonpopup} setOpen={setwonpopup}  update={true} />}
       {selectedtask&&<TaskPanel   setopenlabeldialog={()=>false}  openlabeldialog={false} open={panelopen} setOpen={setpanelopen} task={selectedtask} fetchallorders={getwons}  />}
         {/* Header */}
         <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white sticky top-0 z-40">
@@ -304,12 +305,14 @@ const OrdersPage = () => {
                 <th className="px-4 py-2">Number</th>
                 <th className="px-4 py-2">Order Overview</th>
                 <th className="px-4 py-2">Cost</th>
+                <th className="px-4 py-2">Shipping Fee</th>
+                <th className="px-4 py-2">Processing Fee</th>
                 <th className="px-4 py-2">Revenue</th>
-               
                 <th className="px-4 py-2">Profit</th>
                 <th className="px-4 py-2">Traffic Source</th>
                 <th className="px-4 py-2">Source of Truth</th>
                 <th className="px-4 py-2">Supplier Name</th>
+                <th className="px-4 py-2">Shipping Address</th>
                 <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2">Edit</th>
               </tr>
@@ -347,6 +350,12 @@ const OrdersPage = () => {
            {/* Cost (price) */}
            <td className="px-4 py-2 truncate ">£{order.price?.toFixed(2) || "0.00"}</td>
 
+           {/* Shipping Fee */}
+           <td className="px-4 py-2">£{parseFloat(order.Shippingfee || "0").toFixed(2)}</td>
+
+           {/* Processing Fee */}
+           <td className="px-4 py-2">£{parseFloat(order.processingfee || "0").toFixed(2)}</td>
+
            {/* Revenue (assuming calculated from price or not present) */}
            <td className="px-4 py-2">£{order.sellprice?.toFixed(2) || "0.00"}</td>
 
@@ -377,6 +386,10 @@ const OrdersPage = () => {
       <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs whitespace-nowrap">
         {order?.Supplierid?.Name || "N/A"}
       </span>
+    </td>
+
+    <td className="px-4 py-2 max-w-[200px] break-words">
+      {order.shippingaddress || "N/A"}
     </td>
 
           {/* Status */}

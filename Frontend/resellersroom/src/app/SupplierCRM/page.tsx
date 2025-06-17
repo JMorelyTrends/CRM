@@ -52,7 +52,7 @@ const Header = (props: hprops) => {
           onChange={(e) => {
             props.setsearch(e.target.value);
           }}
-          placeholder="Search by customer and product "
+          placeholder="Search by Supplier "
           className="w-full lg:w-54 px-4 py-2 border-2 text-xs p-4 text-black border-gray-300 rounded-lg "
         />
       </div>
@@ -183,7 +183,7 @@ const Page: React.FC<pageProps> = () => {
               setNewopen(true);
             }}
           >
-            Add New Suplier
+            Add New Supplier
           </button>
         </div>
 

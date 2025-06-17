@@ -6,6 +6,7 @@ import { Custprop, dCustomerArray } from "../Small comps/Types";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder, Addnoofleads} from "@/lib/features/Newrequest/NewRequestSlice";
+import { toast } from "sonner";
 
 const debounce = <T extends unknown[]>( func: (...args: T) => void,delay: number ) => {
     let timer: ReturnType< typeof setTimeout>;
@@ -353,7 +354,11 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   }, []);
 
   const submitRequest=async(size:string,Selectcondition:string,customer:Custprop|null)=>{
-     console.log("seleted customer :",customer)
+   
+    if(selectedCondition==""||!selectedCondition){
+      toast("please Select Product Condition")
+      return
+    }
     // console.log("size             :",size)
     // console.log("condition        : ",Selectcondition)
     let Name;
@@ -411,7 +416,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
       const result=await   axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/CreateOrders`,{
         newOrder:newOrder
       })
-      
+      dispatch(Addselectedcusotmer(null))
       dispatch(Addnoofleads(numofleads+1))
       dispatch(Addcreatedorder(result.data.data))
       dispatch(Toggleleadsrenderstep(4))

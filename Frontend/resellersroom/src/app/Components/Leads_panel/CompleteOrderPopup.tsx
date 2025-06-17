@@ -17,31 +17,32 @@ import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlic
 export function CompleteOrderPopup({ 
   open,
   setOpen,
-  task,
+  // task,
   fetchallorders,
   update,
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  task: Task;
+  // task: Task;
   fetchallorders: () => void;
   update:boolean
 })
  {
 
   const dispatch=useDispatch()
+  const task=useSelector((state:RootState)=>state.Rew.currentorder)
   const isOpen=useSelector((state:RootState)=>state.Rew.completeorder);
-  const [productName, setProductName] = useState(task.Name);
-  const [size, setSize] = useState(task.size);
-  const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
-  const [shippingFee, setShippingFee] = useState<string>(task.Shippingfee?task.Shippingfee:'');
-  const [processingFee, setProcessingFee] = useState<string>(task.processingfee?task.processingfee:'');
+  const [productName, setProductName] = useState(task?.Name ?? '');
+  const [size, setSize] = useState(task?.size ?? '');
+  const [costPrice, setCostPrice] = useState<string>(task?.stockxitem?.[0]?.last_sale_price?.toString() ?? task?.items?.[0]?.price?.toString() ?? '');
+  const [shippingFee, setShippingFee] = useState<string>(task?.Shippingfee ?? '');
+  const [processingFee, setProcessingFee] = useState<string>(task?.processingfee ?? '');
   const [supplierUsed, setSupplierUsed] = useState<string>('');
-  const [shippingAddress, setShippingAddress] = useState<string>(task.shippingaddress?task.shippingaddress:'');
-  const [dealOwner, setDealOwner] = useState<string>(task.DealOwner?task.DealOwner:'');
-  const [sourceOfTruth, setSourceOfTruth] = useState<string>(task.Sourceofthruth?task.Sourceofthruth:'');
-  const [paymentMethod, setPaymentMethod] = useState<string>(task.paymentmethod?task.paymentmethod:'');
-  const [sell,setsell]=useState<string>(task.sellprice?task.sellprice.toString():"")
+  const [shippingAddress, setShippingAddress] = useState<string>(task?.shippingaddress ?? '');
+  const [dealOwner, setDealOwner] = useState<string>(task?.DealOwner ?? '');
+  const [sourceOfTruth, setSourceOfTruth] = useState<string>(task?.Sourceofthruth ?? '');
+  const [paymentMethod, setPaymentMethod] = useState<string>(task?.paymentmethod ?? '');
+  const [sell,setsell]=useState<string>(task?.sellprice?.toString() ?? '')
   const [userid, setuserid] = useState<string | null>("");
 
 //usestates for feautres
@@ -100,8 +101,6 @@ else{
       setPaymentMethod(task.paymentmethod?task.paymentmethod:'');
       setSelectedLabels(task.labels??[]);
       setsell(task.sellprice?task.sellprice.toString():'') 
-    
- 
     }
     
   }, [task, open]);
@@ -241,7 +240,7 @@ const Orderreview =()=>{
       await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
         {
-         _id:task._id,
+         _id:task?._id,
          price:costPrice,
          sell:sell,
          Name:productName,
@@ -281,16 +280,16 @@ const Orderreview =()=>{
         {/* Image + Name */}
         <div className="flex items-center gap-4 mb-6">
          <div className=" w-[40%] h-full"> <img
-            src={task?.stockxitem?.[0]?.image ||task.items&&task.items[0].itempics[0]|| '/placeholder.jpg'}
-            alt={task.Name}
+            src={task?.stockxitem?.[0]?.image ?? task?.items?.[0]?.itempics?.[0] ?? '/placeholder.jpg'}
+            alt={task?.Name ?? ''}
             className="w-[150px] h-[150px] object-contain rounded "
           />
           </div>
           <div className="  w-[60%] h-full flex gap-4   flex-col justify-center items-center text-center">
-                       <div className="text-lg font-semibold text-wrap">{task?.stockxitem?.[0].name} </div>
-                       <div className="text-lg font-semibold">{task.Name} </div>
-                       <div className="text-sm font-semibold text-[#4774B1]">{task.email}</div>
-                       <div className="text-sm font-semibold text-[#4774B1]">{task.phone}</div>
+                       <div className="text-lg font-semibold text-wrap">{task?.stockxitem?.[0]?.name} </div>
+                       <div className="text-lg font-semibold">{task?.Name} </div>
+                       <div className="text-sm font-semibold text-[#4774B1]">{task?.email}</div>
+                       <div className="text-sm font-semibold text-[#4774B1]">{task?.phone}</div>
           </div>
           
         </div>
@@ -420,6 +419,7 @@ const Orderreview =()=>{
         <option value="Bank Transfer">Bank Transfer</option>
         <option value="PayPal">PayPal</option>
         <option value="Cash">Cash</option>
+        <option value="Crypto">Crypto</option>
       </select>
     </div>
   </div>
@@ -453,7 +453,7 @@ const Orderreview =()=>{
              
              {/* Submit Button */}
             {
-             update==false&& (task.confirm==false?<div className="flex justify-end">
+             update==false&& (task?.confirm==false?<div className="flex justify-end">
                <Button onClick={() =>Submit()}>Submit</Button>
              </div>:<div className="flex justify-end">
                <Button onClick={() =>Orderreview()}>Order review</Button>

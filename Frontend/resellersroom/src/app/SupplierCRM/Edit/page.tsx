@@ -99,7 +99,7 @@ function Page() {
 };
 
   return (
-    <div className="w-full h-[100vh]  flex flex-col items-center ">
+    <div className="w-[80vw] h-[100vh]  flex flex-col items-center ">
       {!isSmallScreen && <Header />}
 
      <UpSup
