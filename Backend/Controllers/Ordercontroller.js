@@ -1,8 +1,37 @@
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 
-const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store}=require("./CustomerController");
+const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store,manageShopifyProduct}=require("./CustomerController");
 const Customer = require("../Models/Custormer");
+
+// Import Shopify session from CustomerController
+const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
+const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
+
+const customLogger = {
+  log: (severity, message) => {
+    if (severity === "error") {
+      //console.error(`[${severity}] ${message}`);
+    }
+  },
+};
+
+const shopify = shopifyApi({
+  apiKey: process.env.SHOPIFY_API_KEY,
+  apiSecretKey: process.env.SHOPIFY_API_SECRET,
+  apiVersion: ApiVersion.April25,
+  isCustomStoreApp: true,
+  adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
+  isEmbeddedApp: false,
+  hostName: process.env.SHOPIFY_STORE_DOMAIN,
+  scopes: ["read_customers", "write_draft_orders", "write_orders"],
+  logger: customLogger,
+  restResources,
+});
+
+const session = shopify.session.customAppSession(
+  process.env.SHOPIFY_STORE_DOMAIN
+);
 
 exports.createOrder = async (req, res) => {
   try {
@@ -333,7 +362,7 @@ getOrderofCustomer
     const pp=parseFloat(processingfee)||0;
     const sh=parseFloat(Shippingfee)||0
     const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress,
-    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
    
 
     let customerid;
@@ -355,36 +384,49 @@ getOrderofCustomer
     }
     }
 
-    //product
+    // Manage products in Shopify and get line items
     if(order.stockxitem.length>0)
     {
-    product=   order.stockxitem.map((item) => ({
-    title: item.name,
-    price:cog,
-    quantity: 1,
-    sku: item?.sku,
-     properties: [
-      {
-        name: "Image",
-        value: item.image  // Replace with actual field
-      }
-    ]
-  }))
+      // Handle StockX items
+      const productPromises = order.stockxitem.map(async (item) => {
+        const productData = {
+          title: item.name,
+          price: rev.toString(), // Sell price
+          costPrice: cog.toString(), // Cost price per item (cog)
+          sku: item?.sku || '',
+          image: item.image,
+          tags: 'StockX Product'
+        };
+        
+        const shopifyProduct = await manageShopifyProduct(productData);
+        return {
+          variant_id: shopifyProduct.variantId,
+          quantity: 1
+        };
+      });
+      
+      product = await Promise.all(productPromises);
     }
     else{
-      product= [{
-        title:order.items[0].Name,
-        price:cog,
-        quantity:1,
-          properties: [
-      {
-        name: "Image",
-        value: order.items[0].itempics[0]  
-      }
-    ]  
-      }]
+      // Handle regular items
+      const productData = {
+        title: order.items[0].Name,
+        price: rev.toString(), // Sell price
+        costPrice: cog.toString(), // Cost price per item (cog)
+        sku: '',
+        image: order.items[0].itempics[0],
+        tags: 'CRM Product'
+      };
+      
+      const shopifyProduct = await manageShopifyProduct(productData);
+      
+      product = [{
+        variant_id: shopifyProduct.variantId,
+        quantity: 1
+      }];
+     
     }
-
+ 
    //labels
     if(order.labels?.length>0)
     {
@@ -413,7 +455,71 @@ getOrderofCustomer
        })
       return res.status(201).json({data:o})
     }
+   //if they say they wanted to update the order then do it 
+
+    // else
+    // {
+    //   // Update existing Shopify order
+    //   const client = new shopify.clients.Rest({ session });
+      
+    //   try {
+    //     // First, get the current order to get line item IDs
+    //     const currentOrder = await client.get({
+    //       path: `orders/${order.shopifyorderid}`
+    //     });
+
+    //     // Update the existing order in Shopify with new line item prices
+    //     const orderUpdateData = {
+    //       order: {
+    //         id: order.shopifyorderid,
+    //         line_items: currentOrder.body.order.line_items.map((lineItem, index) => ({
+    //           id: lineItem.id,
+    //           variant_id: lineItem.variant_id,
+    //           quantity: lineItem.quantity,
+    //           price: rev.toString() // Update the price in the line item
+    //         })),
+    //         tags: tags.join(', ')
+    //       }
+    //     };
+
+    //     await client.put({
+    //       path: `orders/${order.shopifyorderid}`,
+    //       data: orderUpdateData,
+    //       type: 'application/json'
+    //     });
+
+    //     // Update the order in our database
+    //     const o = await Order.findOneAndUpdate(
+    //       { _id: _id },
+    //       { 
+    //         $set: {
+    //           Shippingfee: sh,
+    //           processingfee: pp,
+    //           shippingaddress: shippingaddress,
+    //           Sourceofthruth: Sourceofthruth,
+    //           paymentmethod: paymentmethod,
+    //           DealOwner: DealOwner,
+    //           price: cog,
+    //           sellprice: rev,
+    //           Supplierid: Supplierid,
+    //           size: size,
+    //           Name: Name
+    //         }
+    //       },
+    //       { new: true }
+    //     );
+
+        
+    //   } catch (error) {
+    //     console.error('Error updating Shopify order:', error);
+      
+    //   }
+    // }   
+
+
+    //
     
+    //
     const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
       orders_count:(order.cusid.orders_count+1)
      })

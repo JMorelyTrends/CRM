@@ -5,37 +5,7 @@ const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 const Orderreview=require("../Models/Orderreview")
 require("@shopify/shopify-api/adapters/node");
-const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
-const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
-const { response } = require("express");
-
-const customLogger = {
-  log: (severity, message) => {
-    if (severity === "error") {
-      //console.error(`[${severity}] ${message}`);
-    }
-  },
-};
-
-const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET,
-  apiVersion: ApiVersion.April25,
-  isCustomStoreApp: true,
-  adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
-  isEmbeddedApp: false,
-  hostName: process.env.SHOPIFY_STORE_DOMAIN,
-  scopes: ["read_customers", "write_draft_orders", "write_orders"],
-  logger: customLogger,
-  restResources,
-});
-
-const { DraftOrder } = shopify.rest;
-const { Customer:custs } = shopify.rest;
-
-const session = shopify.session.customAppSession(
-  process.env.SHOPIFY_STORE_DOMAIN
-);
+const {session,shopify}=require("../utils/ShopifyConnect")
 
 const normalizePhoneNumber = (phone) => {
   if (!phone) return "";
@@ -998,14 +968,15 @@ const getshopifyorders = async (req, res) => {
       .sort({ shopifycreatedat: -1 })
       .lean();
 
-      
+     
     const createdAfter = latestOrder
-      ? new Date(latestOrder.createdAt).toISOString()
-      : '2025-02-22T00:00:00Z';
-      
-
+      ? new Date(new Date(latestOrder.shopifycreatedat).getTime() - 60000).toISOString()
+      : '2025-05-22T00:00:00Z';
+    
+ //console.log(createdAfter)
     const client = new shopify.clients.Graphql({ session });
     let query = buildOrderQuery(null, createdAfter);
+   
     let totalorders = [];
 
     let result = await client.query({ data: query });
@@ -1031,7 +1002,7 @@ const getshopifyorders = async (req, res) => {
       hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
       nextCursor = result.body.data.orders.pageInfo.endCursor;
     }
-
+     
     const shopifyOrders = totalorders.flat();
     // Populate into DB
     const savePromises = shopifyOrders.map(async (order) => {
@@ -1057,11 +1028,17 @@ const getshopifyorders = async (req, res) => {
         firstName: order.customer?.firstName || '',
         lastName: order.customer?.lastName || '',
         phone: order.customer?.phone || '',
-        Revenue:order.totalPrice,
+        Revenue: order.totalPrice,
         shipingfee: shipfee,
         linedata: lineItems,
-        shopifycreatedat:order.createdAt,
+        shopifycreatedat: order.createdAt,
+        customer: order.customer,
+        subtotal: parseFloat(order.currentSubtotalPriceSet?.shopMoney?.amount || order.subtotalPrice || 0),
+        discount: parseFloat(order.currentTotalDiscountsSet?.shopMoney?.amount || order.totalDiscounts || 0),
+        taxes: parseFloat(order.currentTotalTaxSet?.shopMoney?.amount || order.totalTax || 0),
         userid,
+        status:"active",
+        statusupdate:new Date(),
       });
      return dbOrder.save();
     });
@@ -1300,9 +1277,7 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
   return {
     query: `
       {
-        orders(first: 100, query: "created_at:>=${createdAfter}"${
-      afterCursor ? `, after: "${afterCursor}"` : ""
-    }) {
+        orders(first: 100, query: "created_at:>=${createdAfter}"${afterCursor ? `, after: "${afterCursor}"` : ""}) {
           edges {
             cursor
             node {
@@ -1312,53 +1287,69 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
               totalPrice
               email
               tags
-       lineItems(first: 10) {
-                       edges {
-                         node {
-                           title
-                           quantity
-                           originalUnitPriceSet {
-                             shopMoney {
-                               amount
-                               currencyCode
-                             }
-                           }
-                           discountedUnitPriceSet {
-                             shopMoney {
-                               amount
-                               currencyCode
-                             }
-                           }
-                         }
-                       }
-        }
-              
-         shippingLine {
-                      title
-                      originalPriceSet  {
-                        shopMoney {
-                          amount
-                          currencyCode
-                        }
+              currentSubtotalPriceSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              currentTotalDiscountsSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              currentTotalTaxSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              lineItems(first: 10) {
+                edges {
+                  node {
+                    title
+                    quantity
+                    originalUnitPriceSet {
+                      shopMoney {
+                        amount
+                        currencyCode
                       }
                     }
-                   customer {
-                     id
-                     firstName
-                     lastName
-                     email
-                     phone
-                   }
-                 }
+                    discountedUnitPriceSet {
+                      shopMoney {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
+              }
+              shippingLine {
+                title
+                originalPriceSet  {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+              customer {
+                id
+                firstName
+                lastName
+                email
+                phone
+              }
+            }
           }
-       pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+          }
         }
-        
       }
     `,
   };
@@ -1367,6 +1358,7 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
 async function createShoOrder(customerid, product, tags, shipping, rev) {
   const client = new shopify.clients.Rest({ session });
   
+  // product should now be array of { variant_id: number, quantity: number }
   const orderData = {
     order: {
       line_items: product,
@@ -1380,8 +1372,6 @@ async function createShoOrder(customerid, product, tags, shipping, rev) {
         last_name: 'test'
       },
       financial_status: 'paid',
-      total_price: rev,
-      //send_receipt: true,
       tags: 'CRM order',
       transactions: [
         {
@@ -1406,6 +1396,138 @@ async function createShoOrder(customerid, product, tags, shipping, rev) {
   }
 }
 
+//--------------------------------------------PRODUCT MANAGEMENT FUNCTIONS---------------------------------------------
+
+// Search for existing product in Shopify by name
+const searchShopifyProduct = async (productName) => {
+  try {
+    const client = new shopify.clients.Rest({ session });
+    const response = await client.get({
+      path: 'products',
+      query: { title: productName }
+    });
+    
+    if (response.body.products && response.body.products.length > 0) {
+      return response.body.products[0]; // Return first matching product
+    }
+    return null;
+  } catch (error) {
+    console.error('Error searching Shopify product:', error);
+    return null;
+  }
+};
+
+// Create new product in Shopify
+const createShopifyProduct = async (productData) => {
+  try {
+    const client = new shopify.clients.Rest({ session });
+    
+    const productPayload = {
+      product: {
+        title: productData.title,
+        body_html: productData.description || '',
+        vendor: 'CRM',
+        product_type: 'General',
+        tags: productData.tags || 'CRM Product',
+        variants: [
+          {
+            price: productData.price.toString(),
+            sku: productData.sku || '',
+            inventory_quantity: 999, // Set high inventory
+            inventory_management: 'shopify',
+            cost: productData.costPrice ? productData.costPrice.toString() : '0.00'
+          }
+        ],
+        images: productData.image ? [
+          {
+            src: productData.image
+          }
+        ] : []
+      }
+    };
+
+    const response = await client.post({
+      path: 'products',
+      data: productPayload,
+      type: 'application/json'
+    });
+
+    return response.body.product;
+  } catch (error) {
+    console.error('Error creating Shopify product:', error);
+    throw error;
+  }
+};
+
+// Update existing product in Shopify
+const updateShopifyProduct = async (productId, productData) => {
+  try {
+    const client = new shopify.clients.Rest({ session });
+    
+    // Update product basic info
+    const productPayload = {
+      product: {
+        id: productId,
+        title: productData.title,
+        variants: [
+          {
+            id: productData.variantId,
+            price: productData.price.toString(),
+            sku: productData.sku || '',
+            cost: productData.costPrice ? productData.costPrice.toString() : '0.00'
+          }
+        ]
+      }
+    };
+
+    await client.put({
+      path: `products/${productId}`,
+      data: productPayload,
+      type: 'application/json'
+    });
+
+    return { id: productId };
+  } catch (error) {
+    console.error('Error updating Shopify product:', error);
+    throw error;
+  }
+};
+
+// Main product management wrapper function
+const manageShopifyProduct = async (productData) => {
+  try {
+    // Search for existing product
+    const existingProduct = await searchShopifyProduct(productData.title);
+    
+    if (existingProduct) {
+      // Product exists, update it
+      const variantId = existingProduct.variants[0].id;
+      const updatedProduct = await updateShopifyProduct(existingProduct.id, {
+        ...productData,
+        variantId: variantId
+      });
+      return {
+        productId: existingProduct.id,
+        variantId: variantId,
+        isNew: false
+      };
+    } else {
+      // Product doesn't exist, create it
+      const newProduct = await createShopifyProduct(productData);
+      return {
+        productId: newProduct.id,
+        variantId: newProduct.variants[0].id,
+        isNew: true
+      };
+    }
+  } catch (error) {
+    console.error('Error managing Shopify product:', error);
+    throw error;
+  }
+};
+
+//--------------------------------------------PRODUCT MANAGEMENT END---------------------------------------------
+
 module.exports = {
   createCustomer,
   getAllCustomers,
@@ -1422,8 +1544,13 @@ module.exports = {
   update_Customer_Crm,
   updateshopifycustomer,
   getshopifyorders,
-createshopifycustoemr,
-getshopifybyid_store,
-UseShopiyfcustomer,
-Cuscrmupdate
+  createshopifycustoemr,
+  getshopifybyid_store,
+  UseShopiyfcustomer,
+  Cuscrmupdate,
+  // Product management functions
+  searchShopifyProduct,
+  createShopifyProduct,
+  updateShopifyProduct,
+  manageShopifyProduct
 };

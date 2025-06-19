@@ -1,22 +1,19 @@
-const ShopifyCustomer=require("../Models/ShopifyCustomers")
-
-exports.handelcustomers=async(req,res)=>{
+const ShopifyHookService=require("../Services/hookservices/ShopifyHookService")
+exports.handelhook=async(req,res)=>{
  const eventType = req.get('X-Shopify-Topic'); // customers/create, update, delete
-  const customer = req.body;
+  
+  // Parse the Buffer body as JSON
+  let data;
+  try {
+    data = JSON.parse(req.body.toString());
+  }
+   catch (error) {
+    console.error('Error parsing webhook body:', error);
+    return res.status(400).send('Invalid JSON body');
+  }
 
   try {
-    switch (eventType) {
-      case 'customers/create':
-        console.log("working hook for crate");
-        break;
-      case 'customers/update':
-       console.log("working hook for update");
-        break;
-      case 'customers/delete':
-        console.log("working ");
-        break;
-    }
-
+    await ShopifyHookService.processEvent(eventType,data)
     res.status(200).send('Webhook received');
   } catch (err) {
     console.error('Webhook error:', err);

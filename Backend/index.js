@@ -13,12 +13,19 @@ const SupplierRoute=require("./Routes/SupplierRoute")
 const OrderReviewRoute=require("./Routes/OrderReviewRoute")
 const shcustomerRoutes=require("./Routes/shcustomerRoutes")
 const shopifyhookRoutes=require("./Routes/shopifyhooksRoute");
-app.use(express.json()); 
+
 app.use(cors({ origin: "*" }));
 const DB_ConnectDB = require("./utils/DBconnect"); 
 
 DB_ConnectDB();
 
+// Raw body parsing for webhooks (must come before JSON parsing)
+app.use("/api/webhooks/shopify", express.raw({ type: 'application/json' }));
+
+//routes for hooks
+app.use("/api/webhooks/shopify",shopifyhookRoutes);
+
+app.use(express.json()); 
 app.use("/api/supplier",SupplierRoute)
 app.use("/api/users", userRoutes);
 app.use("/api/orders",OrderRoutes);
@@ -29,9 +36,9 @@ app.use("/api/features/",FeatureRoutes)
 app.use("/api/S3",S3Routes);
 app.use("/api/Review",OrderReviewRoute)
 app.use("/api/shcustomer",shcustomerRoutes);
-//routes for hooks
-app.use("/api/webhooks/shopify",shopifyhookRoutes);
+
 const Port = process.env.PORT;
 app.listen(Port, () => {
   console.log(`server is listing on ${Port}`);
+ 
 });

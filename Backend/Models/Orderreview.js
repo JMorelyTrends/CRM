@@ -88,6 +88,25 @@ const OrderreviewSchema = new mongoose.Schema(
     ref:"User",
     required:true,
   },
+  customer: {
+    id: { type: String }, // Shopify GID or numeric ID
+    firstName: { type: String },
+    lastName: { type: String },
+    email: { type: String },
+    phone: { type: String },
+  },
+  subtotal: { type: Number, default: 0 },
+  discount: { type: Number, default: 0 },
+  taxes: { type: Number, default: 0 },
+  status:{
+    type:String,
+    enum:["active","Refunded","deleted"],
+    default:"active"
+  },
+  statusupdate:{
+    type:Date,
+    
+  }
   },
   { timestamps: true }
 );
