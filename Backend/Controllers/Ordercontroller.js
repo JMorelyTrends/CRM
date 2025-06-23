@@ -1,19 +1,54 @@
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 
-const {get_shopify_byid,Get_mongo_byid,draftorder}=require("./CustomerController")
+const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store,manageShopifyProduct}=require("./CustomerController");
+const Customer = require("../Models/Custormer");
+
+// Import Shopify session from CustomerController
+const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
+const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
+
+const customLogger = {
+  log: (severity, message) => {
+    if (severity === "error") {
+      //console.error(`[${severity}] ${message}`);
+    }
+  },
+};
+
+const shopify = shopifyApi({
+  apiKey: process.env.SHOPIFY_API_KEY,
+  apiSecretKey: process.env.SHOPIFY_API_SECRET,
+  apiVersion: ApiVersion.April25,
+  isCustomStoreApp: true,
+  adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
+  isEmbeddedApp: false,
+  hostName: process.env.SHOPIFY_STORE_DOMAIN,
+  scopes: ["read_customers", "write_draft_orders", "write_orders"],
+  logger: customLogger,
+  restResources,
+});
+
+const session = shopify.session.customAppSession(
+  process.env.SHOPIFY_STORE_DOMAIN
+);
 
 exports.createOrder = async (req, res) => {
   try {
     const {newOrder} = req.body;
+
     let or=null;
- 
+    let id;
+    if(newOrder.clientFrom=='shopify')
+    {
+      id=await getshopifybyid_store(newOrder.customerid,newOrder.userid);
+    }
+    
     if(newOrder.Stockxid){
     or=await Order.create({
         Name: newOrder.Name,
         stockxitem:newOrder.Stockxid,
-        shopifycustomerid:newOrder.clientFrom=='shopify'?newOrder.customerid:null,
-        cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:null,
+        cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:newOrder.clientFrom=="shopify"?id:null, //if we select from shopify it gives 
         size:newOrder.size,
         condition:newOrder.Condition,
         userid:newOrder.userid   
@@ -25,7 +60,7 @@ exports.createOrder = async (req, res) => {
         or=await Order.create({
           Name: newOrder.Name,
           items:newOrder.items,
-          shopifycustomerid:newOrder.clientFrom=='shopify'?newOrder.customerid:null,
+         
           cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:null,
           size:newOrder.size,
           condition:newOrder.Condition,
@@ -39,7 +74,7 @@ exports.createOrder = async (req, res) => {
  
    
   } catch (error) {
-    //console(error)
+    console.log(error)
     res.status(400).json({ message: error.message });
   }
 };
@@ -48,7 +83,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").sort({createdAt:-1});
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate('cusid').sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",
@@ -79,7 +114,7 @@ exports.getAllOrders = async (req, res) => {
       {
         //shopify customer
         h=await get_shopify_byid(data.shopifycustomerid)
-        // console.log("shopify customer get :",h.customers[0])
+       
         phone=h.customers[0].phone!=null?h.customers[0].phone:null
         email=h.customers[0].email!=h.customers[0].email!=null?h.customers[0].email:null
         //add address here if needed
@@ -87,7 +122,7 @@ exports.getAllOrders = async (req, res) => {
       }
       else{
         h= await Get_mongo_byid(data.cusid)
-      // console.log("customer from db customer get :",h)
+      
         phone=h[0].Number!=''?h[0].Number:null
         email=h[0].email!=''?h[0].email:null
          
@@ -141,7 +176,7 @@ if (data.confirm != null)  tasks[counter].confirm = data.confirm;
       columns,
       columnOrder
     }
-  // console.log(maporderdata)
+
 
     res.status(200).json(maporderdata);
   } catch (error) {
@@ -160,7 +195,7 @@ catch(err)
 {
   res.json(500).json({message:"error in getting the numbers of leads"})
 }
-}
+};
 
 exports.getOrderById = async (req, res) => {
   try {
@@ -171,6 +206,23 @@ exports.getOrderById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getOrderofCustomer=async(req,res)=>{
+  try{
+    const {id}=req.body;
+   if(id){
+    const n=await Order.find({cusid:id,stage:"Won"}).populate("items").populate("stockxitem").populate("labels");
+   
+    return res.status(201).json({data:n})}
+    res.status(201).json({message:"no orders"})
+  
+}
+catch(err)
+{
+  console.log
+  res.json(500).json({message:"error in getting the numbers of leads"})
+}
+}
 
 exports.updateOrder = async (req, res) => {
   try {
@@ -202,7 +254,7 @@ exports.UpdateStages=async(req,res)=>{
   catch{
     res.status(500).json({message:"error on updating kanban order stage"})
   }
-}
+};
 
 exports.deleteOrder = async (req, res) => {
   try {
@@ -213,6 +265,8 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 //different
 
@@ -237,10 +291,23 @@ exports.updatelabels=async (req,res)=>{
 exports.UpdateDescription=async(req,res)=>{
   try{
      
-    const {Description,orderid}=req.body;
-    const order=await  Order.updateOne({_id:orderid},{$set:{Description:Description}});
+    const {Description,orderid,price}=req.body;
+   
+    // Check if price exists and is a valid numeric string
+    const isValidPrice = price && /^\d+(\.\d+)?$/.test(price);
     
-    res.status(201).json({data:order})
+    // Prepare update object
+    const updateObj = { Description };
+    if (isValidPrice) {
+      updateObj.price = parseFloat(price);
+    }
+   
+    const order = await Order.updateOne(
+      {_id: orderid},
+      {$set: updateObj}
+    );
+    
+    res.status(201).json({data: order})
   
   }
   catch(err)
@@ -253,13 +320,14 @@ exports.Getorderofsuppliers=async(req,res)=>{
    const {name}=req.body;
   try
   {
-   // console.log(name)
+
       const o=await Order.find({Supplierid:name}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid");
       let spend=0;
+      
       if(o?.length>0)
       {
         o.map((or)=>{
-         spend+=or.price;
+         spend+=or.sellprice
         })
       }
       res.status(201).json({data:o,spend:spend})
@@ -284,66 +352,81 @@ shippingaddress,
 Sourceofthruth,
 paymentmethod,
 DealOwner,
+getOrderofCustomer
 }=req.body;
   
   try{
+   
     const rev=parseFloat(sell)||0;
     const cog=parseFloat(price)||0;
     const pp=parseFloat(processingfee)||0;
     const sh=parseFloat(Shippingfee)||0
-    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress,
-    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
+    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress.address1,
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
    
+
     let customerid;
     let product;
     let tags=[];
     let shiping;
-    
+  
     //customer 
-    if(order.shopifycustomerid!=null)
+    if(order.cusid.shopifyid!=null)
     {
-      customerid={id:order.shopifycustomerid}
+      customerid={id:order.cusid.shopifyid}
     }
     else{
       customerid= {
-      first_name: order.Name,
-      last_name: " ",
+      first_name: order.Name.split(" ")[0],
+      last_name:  order.Name.split(" ")[1],
       email: order.cusid.email?order.cusid.email:"",
       phone: order.cusid.Number?order.cusid.Number:""
     }
     }
 
-    //product
-
+    // Manage products in Shopify and get line items
     if(order.stockxitem.length>0)
     {
-    product=   order.stockxitem.map((item) => ({
-    title: item.name,
-    price: item.last_sale_price || order.price,
-    quantity: 1,
-    sku: item?.sku,
-     properties: [
-      {
-        name: "Image",
-        value: item.image  // Replace with actual field
-      }
-    ]
-  }))
+      // Handle StockX items
+      const productPromises = order.stockxitem.map(async (item) => {
+        const productData = {
+          title: item.name,
+          price: rev.toString(), // Sell price
+          costPrice: cog.toString(), // Cost price per item (cog)
+          sku: item?.sku || '',
+          image: item.image,
+          tags: 'StockX Product'
+        };
+        
+        const shopifyProduct = await manageShopifyProduct(productData);
+        return {
+          variant_id: shopifyProduct.variantId,
+          quantity: 1
+        };
+      });
+      
+      product = await Promise.all(productPromises);
     }
     else{
-      product= [{
-        title:order.items[0].Name,
-        price:order.items[0].price,
-        quantity:1,
-          properties: [
-      {
-        name: "Image",
-        value: order.items[0].itempics[0]  
-      }
-    ]  
-      }]
+      // Handle regular items
+      const productData = {
+        title: order.items[0].Name,
+        price: rev.toString(), // Sell price
+        costPrice: cog.toString(), // Cost price per item (cog)
+        sku: '',
+        image: order.items[0].itempics[0],
+        tags: 'CRM Product'
+      };
+      
+      const shopifyProduct = await manageShopifyProduct(productData);
+      
+      product = [{
+        variant_id: shopifyProduct.variantId,
+        quantity: 1
+      }];
+     
     }
-
+ 
    //labels
     if(order.labels?.length>0)
     {
@@ -355,20 +438,95 @@ DealOwner,
     else{
       tags=["notags"]
     }
-
     shiping={
-      first_name: order.Name,
-      address1: order.shippingaddress,
+      first_name: order.Name.split(" ")[0],
+      last_name: order.Name.split(" ")[1],
+      address1: shippingaddress.address1,
+      city:shippingaddress.address1,
+      country:shippingaddress.country,
+      postcode:shippingaddress.postcode
     }
+   
+    
 
-if(order.confirm==false)
-{
- 
-     const d=await draftorder(customerid,product,tags,shiping)
-    const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
-  return res.status(201).json({data:o})
- 
-}
+    if(order.confirm==false)
+    {
+      const d=await createShoOrder(customerid.id,product,tags,shiping,rev)
+      const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
+    
+      const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
+        orders_count:(order.cusid.orders_count+1)
+       })
+      return res.status(201).json({data:o})
+    }
+   //if they say they wanted to update the order then do it 
+
+    // else
+    // {
+    //   // Update existing Shopify order
+    //   const client = new shopify.clients.Rest({ session });
+      
+    //   try {
+    //     // First, get the current order to get line item IDs
+    //     const currentOrder = await client.get({
+    //       path: `orders/${order.shopifyorderid}`
+    //     });
+
+    //     // Update the existing order in Shopify with new line item prices
+    //     const orderUpdateData = {
+    //       order: {
+    //         id: order.shopifyorderid,
+    //         line_items: currentOrder.body.order.line_items.map((lineItem, index) => ({
+    //           id: lineItem.id,
+    //           variant_id: lineItem.variant_id,
+    //           quantity: lineItem.quantity,
+    //           price: rev.toString() // Update the price in the line item
+    //         })),
+    //         tags: tags.join(', ')
+    //       }
+    //     };
+
+    //     await client.put({
+    //       path: `orders/${order.shopifyorderid}`,
+    //       data: orderUpdateData,
+    //       type: 'application/json'
+    //     });
+
+    //     // Update the order in our database
+    //     const o = await Order.findOneAndUpdate(
+    //       { _id: _id },
+    //       { 
+    //         $set: {
+    //           Shippingfee: sh,
+    //           processingfee: pp,
+    //           shippingaddress: shippingaddress,
+    //           Sourceofthruth: Sourceofthruth,
+    //           paymentmethod: paymentmethod,
+    //           DealOwner: DealOwner,
+    //           price: cog,
+    //           sellprice: rev,
+    //           Supplierid: Supplierid,
+    //           size: size,
+    //           Name: Name
+    //         }
+    //       },
+    //       { new: true }
+    //     );
+
+        
+    //   } catch (error) {
+    //     console.error('Error updating Shopify order:', error);
+      
+    //   }
+    // }   
+
+
+    //
+    
+    //
+    const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
+      orders_count:(order.cusid.orders_count+1)
+     })
   res.status(201).json({data:"orderupdated"});  
   }
   catch(err)
@@ -387,7 +545,6 @@ exports.Wonorders=async(req,res)=>{
  }
  catch(err)
  {
-   
        res.status(500).json({message:"error on updating Description"})
  }
 }
@@ -465,148 +622,10 @@ try {
   }
 }
 
-exports.reqwondata=async(req,res)=>{
-try {
-    const { interval, startdate, enddate,userid } = req.body;
-    const userIdObj = new mongoose.Types.ObjectId(userid);
-    let detectedInterval = interval;
-    let start = startdate;
-    let end = enddate;
-
-    
-    if (!interval && startdate && enddate) {
-      const diffMillis = new Date(enddate) - new Date(startdate);
-      detectedInterval=giveinterval(interval,startdate,enddate)
-    } else {
-      const l=calculateDateRange(interval,startdate,enddate);
-      start=l.start
-      end=l.end
-    }
-
-    let groupFormat, labels;
-    let get=getGroupFormatlabel(detectedInterval);
-    groupFormat=get.groupFormat;
-    labels=get.labels;
-
-    
-    const data = await Order.aggregate([
-      {
-        $match: {
-           userid: { $in: [userIdObj] }, 
-          createdAt: { $gte: new Date(start), $lte: new Date(end) }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $dateTrunc: {
-              date: "$createdAt",
-              unit:detectedInterval=="day"?  "hour":"day",
-                binSize: 3,
-              timezone: "UTC"
-            }
-          },
-          Won: {
-            $sum: {
-              $cond: [{ $eq: ["$stage", "Won"] }, 1, 0]
-            }
-          },
-          Req: {
-            $sum: {
-              $cond: [
-                { $not: { $in: ["$stage", ["Won", "Lost"]] } },
-                1,
-                0
-              ]
-            }
-          }
-        }
-      },
-      {
-        $sort: { _id: 1 }
-      }
-    ]);
-
-    
-    let formatted = [];
-     formatted = labels&&labels.length>0&& labels.map(label => ({
-        name: label,
-        Won: 0,
-        Request: 0
-      }));
-
-    if (detectedInterval === "day") {
-      formatted=getLast24HourLabels().formatted
-      data.forEach(entry => {
-        const hour = new Date(entry._id).getUTCHours(); // hour form the monogo result
-        let bucket = Math.floor(hour / 3) * 3;        // 
-        let label = `${bucket.toString().padStart(2, '0')}:00`;
-        let index = labels.indexOf(label);
-          //  console.log(label,bucket,hour)
-        if (index !== -1) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Request += entry.Req;
-        }
-        else{
-            for(i=0;i<2;i++)
-            {
-               bucket+=1;
-               
-               label = `${bucket.toString().padStart(2, '0')}:00`
-               index = labels.indexOf(label);
-                if(index !== -1)
-                {
-                  break;
-                }
-            }
-          formatted[index].Won += entry.Won;
-          formatted[index].Request += entry.Req;
-        }
-      });
-      // console.log(formatted);
-      // console.log(data);
-      // console.log(labels);
-   
-       
-    } 
-    else if(detectedInterval==="week") {
-       data&& data.length>0&& data.map((entry) => {
-        let kk=new Date(entry._id);
-        let index=kk.getDay();
-        if(index)
-        {
-         formatted[index].Won += entry.Won;
-           formatted[index].Request += entry.Req;
-        }
-    });
-        
-    
-   
-    }
-    else if(detectedInterval==="year")
-    {
-      data&& data.length>0&&  data.map((entry) => {
-        let kk=new Date(entry._id);
-        let index=kk.getMonth();
-        if(index)
-        {
-           formatted[index].Won += entry.Won;
-           formatted[index].Request += entry.Req;
-        }
-    });
-    }
-    res.status(200).json({ data: formatted });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "error getting request vs won data" });
-  }
-}
-
-exports.wonloastdata=async(req,res)=>{
-
+exports.reqwondata = async (req, res) => {
   try {
-    const { interval, startdate, enddate ,userid} = req.body;
-      const userIdObj = new mongoose.Types.ObjectId(userid);
+    const { interval, startdate, enddate, userid } = req.body;
+    const userIdObj = new mongoose.Types.ObjectId(userid);
     let detectedInterval = interval;
     let start = startdate;
     let end = enddate;
@@ -614,110 +633,188 @@ exports.wonloastdata=async(req,res)=>{
     if (!interval && startdate && enddate) {
       detectedInterval = giveinterval(interval, startdate, enddate);
     } else {
-      const range = calculateDateRange(interval, startdate, enddate);
+      const range = calculateDateRange(interval || "month", startdate, enddate);
       start = range.start;
       end = range.end;
     }
 
     let groupFormat, labels;
-    const groupResult = getGroupFormatlabel(detectedInterval);
+    const groupResult = getGroupFormatlabel(detectedInterval || "month");
     groupFormat = groupResult.groupFormat;
     labels = groupResult.labels;
 
-    // MongoDB aggregation
+    if (!labels || labels.length === 0) {
+      return res.status(400).json({ message: "Invalid interval specified" });
+    }
+
+    // For month interval, we need to get the raw data without date truncation
     const data = await Order.aggregate([
       {
         $match: {
-            userid: { $in: [userIdObj] }, 
+          userid: { $in: [userIdObj] },
           createdAt: { $gte: new Date(start), $lte: new Date(end) }
         }
       },
       {
-        $group: {
-          _id: {
-            $dateTrunc: {
-              date: "$createdAt",
-              unit: detectedInterval === "day" ? "hour" : "day",
-              binSize: 3,
-              timezone: "UTC"
-            }
-          },
-          Won: {
-            $sum: {
-              $cond: [{ $eq: ["$stage", "Won"] }, 1, 0]
-            }
-          },
-          Lost: {
-            $sum: {
-              $cond: [{ $eq: ["$stage", "Lost"] }, 1, 0]
-            }
-          }
+        $project: {
+          day: { $dayOfMonth: "$createdAt" },
+          stage: 1,
+          createdAt: 1
         }
-      },
-      {
-        $sort: { _id: 1 }
       }
     ]);
 
-    // Format result
-    let formatted = labels && labels.length > 0 && labels.map(label => ({
+    let formatted = labels.map(label => ({
+      name: label,
+      Won: 0,
+      Request: 0
+    }));
+
+    if (detectedInterval === "day") {
+      data.forEach(entry => {
+        const hour = new Date(entry.createdAt).getUTCHours();
+        const bucket = Math.floor(hour / 3);
+        if (bucket >= 0 && bucket < 8) {
+          if (entry.stage === "Won") {
+            formatted[bucket].Won += 1;
+          } else if (!["Won", "Lost"].includes(entry.stage)) {
+            formatted[bucket].Request += 1;
+          }
+        }
+      });
+    } else if (detectedInterval === "month") {
+      data.forEach(entry => {
+        const day = entry.day;
+        // Find which 5-day interval this day belongs to
+        const labelIndex = labels.findIndex(label => {
+          const [startDay, endDay] = label.split('-').map(Number);
+          return day >= startDay && day <= endDay;
+        });
+        
+        if (labelIndex !== -1) {
+          if (entry.stage === "Won") {
+            formatted[labelIndex].Won += 1;
+          } else if (!["Won", "Lost"].includes(entry.stage)) {
+            formatted[labelIndex].Request += 1;
+          }
+        }
+      });
+    } else if (detectedInterval === "year") {
+      data.forEach(entry => {
+        const monthIndex = new Date(entry.createdAt).getMonth();
+        if (monthIndex >= 0 && monthIndex < 12) {
+          if (entry.stage === "Won") {
+            formatted[monthIndex].Won += 1;
+          } else if (!["Won", "Lost"].includes(entry.stage)) {
+            formatted[monthIndex].Request += 1;
+          }
+        }
+      });
+    }
+
+    res.status(200).json({ data: formatted });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "error getting request vs won data" });
+  }
+};
+
+exports.wonloastdata = async (req, res) => {
+  try {
+    const { interval, startdate, enddate, userid } = req.body;
+    const userIdObj = new mongoose.Types.ObjectId(userid);
+    let detectedInterval = interval;
+    let start = startdate;
+    let end = enddate;
+
+    if (!interval && startdate && enddate) {
+      detectedInterval = giveinterval(interval, startdate, enddate);
+    } else {
+      const range = calculateDateRange(interval || "month", startdate, enddate);
+      start = range.start;
+      end = range.end;
+    }
+
+    let groupFormat, labels;
+    const groupResult = getGroupFormatlabel(detectedInterval || "month");
+    groupFormat = groupResult.groupFormat;
+    labels = groupResult.labels;
+
+    if (!labels || labels.length === 0) {
+      return res.status(400).json({ message: "Invalid interval specified" });
+    }
+
+    // For month interval, we need to get the raw data without date truncation
+    const data = await Order.aggregate([
+      {
+        $match: {
+          userid: { $in: [userIdObj] },
+          createdAt: { $gte: new Date(start), $lte: new Date(end) }
+        }
+      },
+      {
+        $project: {
+          day: { $dayOfMonth: "$createdAt" },
+          stage: 1,
+          createdAt: 1
+        }
+      }
+    ]);
+
+    let formatted = labels.map(label => ({
       name: label,
       Won: 0,
       Lost: 0
     }));
 
     if (detectedInterval === "day") {
-      const labelObj = getLast24HourLabels();
-      labels = labelObj.labels;
-      formatted = labelObj.formatted.map(f => ({ ...f, Lost: 0 }));
-
       data.forEach(entry => {
-        const hour = new Date(entry._id).getUTCHours();
-        let bucket = Math.floor(hour / 3) * 3;
-        let label = `${bucket.toString().padStart(2, '0')}:00`;
-        let index = labels.indexOf(label);
-
-        if (index !== -1) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Lost += entry.Lost;
-        } else {
-          for (let i = 0; i < 2; i++) {
-            bucket += 1;
-            label = `${bucket.toString().padStart(2, '0')}:00`;
-            index = labels.indexOf(label);
-            if (index !== -1) break;
-          }
-          if (index !== -1) {
-            formatted[index].Won += entry.Won;
-            formatted[index].Lost += entry.Lost;
+        const hour = new Date(entry.createdAt).getUTCHours();
+        const bucket = Math.floor(hour / 3);
+        if (bucket >= 0 && bucket < 8) {
+          if (entry.stage === "Won") {
+            formatted[bucket].Won += 1;
+          } else if (entry.stage === "Lost") {
+            formatted[bucket].Lost += 1;
           }
         }
       });
-    } else if (detectedInterval === "week") {
+    } else if (detectedInterval === "month") {
       data.forEach(entry => {
-        const index = new Date(entry._id).getDay();
-        if (formatted[index]) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Lost += entry.Lost;
+        const day = entry.day;
+        // Find which 5-day interval this day belongs to
+        const labelIndex = labels.findIndex(label => {
+          const [startDay, endDay] = label.split('-').map(Number);
+          return day >= startDay && day <= endDay;
+        });
+        
+        if (labelIndex !== -1) {
+          if (entry.stage === "Won") {
+            formatted[labelIndex].Won += 1;
+          } else if (entry.stage === "Lost") {
+            formatted[labelIndex].Lost += 1;
+          }
         }
       });
     } else if (detectedInterval === "year") {
       data.forEach(entry => {
-        const index = new Date(entry._id).getMonth();
-        if (formatted[index]) {
-          formatted[index].Won += entry.Won;
-          formatted[index].Lost += entry.Lost;
+        const monthIndex = new Date(entry.createdAt).getMonth();
+        if (monthIndex >= 0 && monthIndex < 12) {
+          if (entry.stage === "Won") {
+            formatted[monthIndex].Won += 1;
+          } else if (entry.stage === "Lost") {
+            formatted[monthIndex].Lost += 1;
+          }
         }
       });
     }
-   
 
     res.status(200).json({ data: formatted });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "error getting won vs lost data" });
   }
-}
+};
 
 exports.otherdetails=async(req,res)=>{
   try
@@ -852,6 +949,7 @@ function getLast24HourLabels(step = 3) {
 
   return { labels, formatted };
 }
+
 function getdaystilldate(arr,detectedInterval){
   let array=[];
 if(detectedInterval==="week")
@@ -876,16 +974,17 @@ else if(detectedInterval==="year")
 }
 
 }
+
 function giveinterval(interval, startdate, enddate) {
   if (!interval && startdate && enddate) {
     const diffMillis = new Date(enddate) - new Date(startdate);
     const diffInDays = diffMillis / (1000 * 60 * 60 * 24);
 
     if (diffInDays > 90) return "year";
-    if (diffInDays > 14) return "week";
+    if (diffInDays > 14) return "month";
     return "day";
   }
-  return interval;
+  return interval || "month"; // Default to month if no interval specified
 }
 
 function calculateDateRange(interval, startdate, enddate) {
@@ -895,40 +994,64 @@ function calculateDateRange(interval, startdate, enddate) {
   if (!start || !end) {
     end = new Date();
     if (interval === "year") {
-      const past = new Date();
-      past.setFullYear(end.getFullYear() - 1);
-      start = past;
-    } else if (interval === "week") {
-      start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
+      start = new Date(end.getFullYear(), 0, 1); // Start from January 1st
+      start.setHours(0, 0, 0, 0);
+    } else if (interval === "month") {
+      start = new Date(end.getFullYear(), end.getMonth(), 1); // Start from 1st of current month
+      start.setHours(0, 0, 0, 0);
     } else if (interval === "day") {
-      start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+      start = new Date(end);
+      start.setHours(0, 0, 0, 0);
+    } else {
+      // Default to month view
+      start = new Date(end.getFullYear(), end.getMonth(), 1);
+      start.setHours(0, 0, 0, 0);
     }
   }
 
+  end.setHours(23, 59, 59, 999);
   return { start, end };
 }
-function getGroupFormatlabel(detectedInterval) {
-    let groupFormat, labels;
 
-    switch (detectedInterval) {
-      case "year":
-        
-        groupFormat = { $month: "$createdAt" };
-        labels =  getdaystilldate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],detectedInterval);
-        break;
-      case "week":
-        groupFormat = { $dayOfWeek: "$createdAt" };
-        labels =  getdaystilldate(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],detectedInterval);
-        break;
-      case "day":
-        groupFormat = { $hour: "$createdAt" }; // still truncate by hour
-        labels = getLast24HourLabels().labels; // 8 blocks
-        break;
-      default:
-        groupFormat = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
-    }
-    return {groupFormat,labels}
+function getGroupFormatlabel(detectedInterval) {
+  let groupFormat, labels;
+
+  switch (detectedInterval) {
+    case "year":
+      groupFormat = { $month: "$createdAt" };
+      labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      break;
+    case "month":
+      groupFormat = { $dayOfMonth: "$createdAt" };
+      const today = new Date();
+      const currentDay = today.getDate();
+      labels = [];
+      for (let i = 1; i <= currentDay; i += 5) {
+        const endDay = Math.min(i + 4, currentDay);
+        labels.push(`${i}-${endDay}`);
+      }
+      break;
+    case "day":
+      groupFormat = { $hour: "$createdAt" };
+      labels = Array.from({ length: 8 }, (_, i) => {
+        const hour = i * 3;
+        return `${hour.toString().padStart(2, '0')}:00`;
+      });
+      break;
+    default:
+      // Default to month view if interval is not recognized
+      groupFormat = { $dayOfMonth: "$createdAt" };
+      const defaultToday = new Date();
+      const defaultCurrentDay = defaultToday.getDate();
+      labels = [];
+      for (let i = 1; i <= defaultCurrentDay; i += 5) {
+        const endDay = Math.min(i + 4, defaultCurrentDay);
+        labels.push(`${i}-${endDay}`);
+      }
+  }
+  return { groupFormat, labels };
 }
+
 async function getRevenueBetweenDates(start, end, userid = null, stages = null) {
   const matchQuery = {
     createdAt: {
@@ -956,6 +1079,7 @@ async function getRevenueBetweenDates(start, end, userid = null, stages = null) 
 
   return result.length > 0 ? result[0].totalRevenue : 0;
 }
+
 async function getNewLeadOrderCount(userid, start, end ) {
   const matchQuery = {
     stage: "New Lead"
@@ -1012,28 +1136,40 @@ async function getWonRevenue(userid = null, start = null, end = null) {
     {
       $group: {
         _id: null,
-        total: { $sum: "$price" }
+        total:{$sum:"$sellprice"},
+      
       }
     }
   ]);
-
+  
+  
   return result[0]?.total || 0;
 }
 
 async function getWonProfit(userid = null, start = null, end = null) {
-  const match = buildMatchQuery("Won", userid, start, end);
+  const match = {
+    ...buildMatchQuery("Won", userid, start, end),
+    confirm: true  // Add condition for confirmed orders
+  };
 
-  const result = await Order.aggregate([
+ const result = await Order.aggregate([
     { $match: match },
     {
       $addFields: {
         processingFeeNum: { $toDouble: { $ifNull: ["$processingfee", "0"] } },
-        shippingFeeNum: { $toDouble: { $ifNull: ["$Shippingfee", "0"] } }
+        shippingFeeNum: { $toDouble: { $ifNull: ["$Shippingfee", "0"] } },
+        sellPriceNum: { $toDouble: { $ifNull: ["$sellprice", "0"] } },
+        priceNum: { $toDouble: { $ifNull: ["$price", "0"] } }
       }
     },
     {
       $project: {
-        profit: { $subtract: ["$price", { $add: ["$processingFeeNum", "$shippingFeeNum"] }] }
+        profit: {
+          $subtract: [
+            { $subtract: ["$sellPriceNum", "$priceNum"] },
+            { $add: ["$shippingFeeNum", "$processingFeeNum"] }
+          ]
+        }
       }
     },
     {
@@ -1044,5 +1180,6 @@ async function getWonProfit(userid = null, start = null, end = null) {
     }
   ]);
 
-  return result[0]?.totalProfit || 0;
+  // Return totalProfit or 0 if no result
+  return result.length > 0 ? result[0].totalProfit : 0;
 }

@@ -4,6 +4,7 @@
  import SupplierSlice from "./features/Supplier/SupplierSlice"
  import CustomerCrmslice from "./features/CustomerCrm/CustomerCrmslice"
  import OrderReivewSlice from "./features/OrederReview/OrderReviewSlice"
+ import Mainslice from "./features/Main/Mainslice"
  export const makeStore=()=>{
     return configureStore({
         reducer:{
@@ -11,7 +12,8 @@
            Leads:leadsSlice,
            Sup:SupplierSlice,
            Cus:CustomerCrmslice,
-           Rew:OrderReivewSlice
+           Rew:OrderReivewSlice,
+           Main:Mainslice
         }
     })
  }

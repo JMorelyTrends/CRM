@@ -1,5 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit'
-import { Task } from '@/app/Components/Small comps/Types'
+import { Custprop, Task } from '@/app/Components/Small comps/Types'
  type Suggest={
     _id: string,
     Stockxid?: string,
@@ -31,7 +31,7 @@ import { Task } from '@/app/Components/Small comps/Types'
       zip:string,
       country:string,
     },
-  socialhandel:string,
+  socialhandel?:string,
   
   }
    type dCustArray = Cust[];
@@ -42,14 +42,20 @@ import { Task } from '@/app/Components/Small comps/Types'
     Custprop:Cust,
     dCustomerArray:dCustArray,
     MongocustomersArray:dCustArray,
-    Selectedonecustomer:Cust|null,
+    Selectedonecustomer:Custprop|null,
     Openshopifymatch:boolean,
     OpenMongomatch:boolean,
-    MatchedCustomer:Cust|null,
-    SubmitingCustomer:Cust|null,
+    MatchedCustomer:Custprop|null,
+    SubmitingCustomer:Custprop|null,
     Ordercreated:Task|null,
     flow:string,
+    Shflag:boolean
+    completeCustomer:boolean,
+    noofleads:string
+   // UpShCus:Cust        // to hold the custoemrs which going to be updated from crm 
   };
+  
+  
   
   
  export  const initialState: NewReqState = {
@@ -93,7 +99,10 @@ import { Task } from '@/app/Components/Small comps/Types'
     MatchedCustomer:null,
     SubmitingCustomer:null,
     Ordercreated:null,
-    flow:"stockx"
+    flow:"stockx",
+    Shflag:false,
+    completeCustomer:false,
+    noofleads:""
   };
   
  export const NewRequestSlice= createSlice({
@@ -133,11 +142,26 @@ reducers:{
     }),
     Addflow:((state , action)=>{
      state.flow=action.payload;              //this thing is to tell is the flow is from stockx or manuall
+    }),
+    Updating_Customer_shopify:((state,action)=>{
+      state.Custprop=action.payload
+    }),
+    ToogleShflag:((state)=>{
+     state.Shflag=!state.Shflag
+    }),
+    ToogleCustomerComplete:((state)=>{
+      state.completeCustomer=!state.completeCustomer
+    }),
+    Addnoofleads:((state,action)=>{
+      state.noofleads=action.payload
     })
 
 }
 },
 );
 export const {addItem,Toggleleadsrenderstep,Addshopifycustomer,Addmongodbcustomer,
-  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,AddSubmitingCustomer,Addcreatedorder,Addflow}=NewRequestSlice.actions;
+  Addselectedcusotmer,Toogleshopifypopup,Tooglemongopopup,ADD_Matched_cutomer,
+  AddSubmitingCustomer,Addcreatedorder,Addflow,Updating_Customer_shopify,ToogleShflag,
+  ToogleCustomerComplete,Addnoofleads
+}=NewRequestSlice.actions;
 export default NewRequestSlice.reducer

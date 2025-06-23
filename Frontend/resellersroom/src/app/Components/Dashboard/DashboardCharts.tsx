@@ -180,32 +180,39 @@ const getpidata = async () => {
 
   return (
     <div className="w-full h-[76vh] flex gap-4">
-      <div className="w-[35%] h-full p-0  rounded-2xl flex justify-center items-center overflow-auto">
-        {pieData&&pieData.length>0&&
-        <PieChart width={400} height={400}>
-          <Pie
-            data={pieData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label
-            outerRadius={100}
-            dataKey="value"
-          >
-            {pieData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-        <Tooltip 
-    formatter={(value: number, name: number) => [`${value}`, `${name}`]}
-    contentStyle={{ borderRadius: '8px', padding: '8px' }}
-  />
-        </PieChart>
-        }
+      <div className="w-[35%] h-full p-2 rounded-2xl flex flex-col justify-center items-center overflow-auto bg-white shadow-md">
+        <h1 className="text-sm font-bold mb-2 text-black">Order Distribution</h1>
+        {pieData && pieData.length > 0 && (
+          <PieChart width={300} height={300}>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+            
+              outerRadius={90}
+              dataKey="value"
+            >
+              {pieData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+           
+            <Legend 
+              layout="vertical" 
+              verticalAlign="middle" 
+              align="right"
+              wrapperStyle={{
+                paddingLeft: '10px',
+                fontSize: '12px'
+              }}
+            />
+          </PieChart>
+        )}
       </div>
 
       <div className="w-[65%] h-full bg-white rounded-2xl overflow-y-auto p-4 py-9 text-center">
-      <h1 className=" text-lg font-bold mb-3 text-black">Request vs Won Deals</h1>
+      <h1 className=" text-lg font-bold mb-3 text-black">Requests vs Won Deals</h1>
         <div className="mb-6">
         { reqwon&& reqwon.length>0&&  <LineChart width={550} height={300} data={reqwon}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -218,7 +225,7 @@ const getpidata = async () => {
           </LineChart>}
         </div>
         <div className="mb-6">
-                  <h1 className=" text-lg font-bold mb-3 text-black">Won vs lost</h1>
+                  <h1 className=" text-lg font-bold mb-3 text-black">Won vs lost Deals</h1>
         {wonlost&&wonlost.length>0&&  <LineChart width={550} height={300} data={wonlost}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />

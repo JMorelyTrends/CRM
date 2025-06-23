@@ -1,5 +1,5 @@
 const Supplier= require("../Models/Supplier")
-
+const mongoose=require("mongoose")
 exports.CreateSupplier=async(req,res)=>{
 
     const {newSupplier}=req.body;
@@ -37,11 +37,18 @@ exports.CreateSupplier=async(req,res)=>{
 
 exports.getthemall=async(req,res)=>{
     try{
-        const supp=await Supplier.find({});
+      const {userid}=req.body;
+
+      if (!userid || !mongoose.Types.ObjectId.isValid(userid)) {
+         return res.status(400).json({ message: 'Invalid or missing userid' });
+       }
+        const supp=await Supplier.find({ userid: { $in: [userid] } });
+        
         res.status(201).json({supps:supp})
     }
     catch(err)
     {
+     console.log(err)
           res.status(500).json({ message: err.message || 'Something went wrong' });
     }
 }

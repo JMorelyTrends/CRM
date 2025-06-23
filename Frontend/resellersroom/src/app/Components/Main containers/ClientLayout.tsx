@@ -3,10 +3,12 @@ import { useState,useEffect  } from "react";
 import Sidebar from "../Main containers/Sidebar";
 import Navbar from "../Main containers/Navbar";
 import { SelectionProvider } from "../../Context/Leads/SelectionContext";
-
+import { useDispatch } from "react-redux";
+import { Adduserid } from "@/lib/features/Main/Mainslice";
 import axios from "axios";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  const dispatch=useDispatch();
   // const pathname = usePathname();
   const [sideOpen, setSideOpen] = useState(true);
 
@@ -19,6 +21,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
        if (typeof window !== 'undefined') {
         // LocalStorage code here
         localStorage.setItem('tempcred',res.data.id )
+       dispatch( Adduserid(res.data.id))
         }
    
       }

@@ -1,29 +1,48 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Customerprop } from "@/app/Components/Small comps/Types";
+import { Custprop } from "@/app/Components/Small comps/Types";
 
 
 interface CustomerState {
-  Customers: Customerprop[];
-  Selected_customer:Customerprop;
+  Customers: Custprop[];
+  Selected_customer:Custprop;
   openedit:boolean,
   opennewcus:boolean,
+  Newcuscrm:boolean
 }
 
-const initialState: CustomerState = {
+export const initialState: CustomerState = {
   Customers: [],
-  Selected_customer:{
-  id:'',
-  Name:'',
-  Email:'',
-  Phone:'',
-  SocialHandle:'',
-  emailMarketingConsent:'',
-  Custoemrfrom:'',
-  TotalSpent:0,
-  TotalOrders:0
+  Selected_customer: {
+    _id: '',
+    shopifyid: null, // Default is `null` in the schema
+    first_name: '',
+    last_name: '',
+    email: '',
+    Number: '', // You might want to map this to `Number` in the schema
+    orders_count: 0, // renamed to match schema
+    total_spend: '', // renamed to match schema (string)
+  
+    userid: '',
+    emailMarketingConsent: {
+      consentUpdatedAt: null,
+      marketingOptInLevel: 'SINGLE_OPT_IN', // default
+      marketingState: 'SUBSCRIBED' // default
+    },
+    socialhandel: '', // added because it’s in schema
+    address: {
+      total_spent:'',
+  adress1:'',
+  city:'',
+  zip:'',
+  country:''
+    }, // flattened from defaultAddress
+    tags: [],
+    customerfrom: 'mongodb', // default
+  
   },
-  openedit:false,
-  opennewcus:false
+  openedit: false,
+  opennewcus: false,
+  Newcuscrm:false
 };
 
 const CustoemrSlice=createSlice({
@@ -41,10 +60,13 @@ const CustoemrSlice=createSlice({
         },
         Toogle_Newcus:(state)=>{
             state.opennewcus=!state.opennewcus;
-        }
+        },
+        Toogle_Newcuscrm:(state)=>{
+            state.Newcuscrm=!state.Newcuscrm;
+        },
     }
 })
 
-export const {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus}=CustoemrSlice.actions;
+export const {AddCustomers,AddSelectedCustomer,Toogle_Editopen,Toogle_Newcus,Toogle_Newcuscrm}=CustoemrSlice.actions;
 
 export default CustoemrSlice.reducer;

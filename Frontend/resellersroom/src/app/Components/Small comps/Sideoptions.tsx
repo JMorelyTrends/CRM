@@ -3,9 +3,14 @@ import React,{useEffect,useState} from 'react';
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/Resellerstore';
 const Slide = ({img, name, link, number}: {img: string, link: string, name: string, number: null|string}) => {
     const pathname = usePathname();
     const [nleads,setnleads]=useState<number>(0)
+    const noofleads=useSelector((state:RootState)=>state.NewReq.noofleads)
+
+
     useEffect(()=>{
        const fetchleadsnumber=async()=>{
         const n=(await axios.get(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getnumberofleads`)).data;
@@ -13,7 +18,7 @@ const Slide = ({img, name, link, number}: {img: string, link: string, name: stri
         setnleads(n.data)
        }
        fetchleadsnumber()
-    },[])
+    },[noofleads])
     return(
                         <Link href={link} passHref legacyBehavior prefetch={true} >
 

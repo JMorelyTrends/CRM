@@ -5,9 +5,9 @@ import { TaskPanel } from './TaskPanel';
 import { Clock } from 'lucide-react';
 import { Task } from "../Small comps/Types";
 import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
-
-
-
+import { useDispatch } from 'react-redux';
+import { AddOrderid, ToogleCompleteorder,Addcurrentorder } from '@/lib/features/OrederReview/OrderReviewSlice';
+import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 interface DraggableCardProps {
   task: Task;
   disableDrag?: boolean;
@@ -28,7 +28,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
     disabled: disableDrag,
   });
 
-
+const dispatch=useDispatch()
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -66,6 +66,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
   };
 
   const handleClickUp = (e: React.MouseEvent) => {
+    
     if (startpos) {
       const x = e.clientX - startpos.x;
       const y = e.clientY - startpos.y;
@@ -77,9 +78,18 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
         {
           setShowPanel(true);
         }
-        else{
-         
+        else if( task.cusid?.email!="" && task?.phone!=""){
+          dispatch(AddOrderid(task._id))
+           dispatch(Addcurrentorder(task))
+          
           setwonpopup(true)
+          dispatch(ToogleCompleteorder())
+        }
+        else {
+         
+          dispatch(AddSelectedCustomer(task.cusid))
+          dispatch(AddOrderid(task._id))
+          dispatch(Toogle_Editopen())
         }
       }
     }
@@ -87,7 +97,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
 
   return (
  <>  
-  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={task} update={false} />}
+  {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup}  update={false} />}
   <div
       ref={setNodeRef}
       onPointerDown={handleClickDown}
@@ -95,15 +105,15 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
       style={style}
       {...(!disableDrag && listeners)}
       {...(!disableDrag && attributes)}
-      className={`relative w-[94%] h-[300px] text-black ${
+      className={`relative w-[94%] h-[326px] text-black ${
         task.stage === 'Won' ? 'bg-[#B7CBAF]' :
         task.stage === 'Lost' ? 'bg-[#B56060]' : 'border-1 border-black '
-      } rounded-md cursor-pointer flex flex-col transition-all duration-300 ease-in-out  hover:shadow-lg hover:shadow-black`}
+      } rounded-md cursor-pointer flex flex-col transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-black p-3`}
     >
       {showPanel && <TaskPanel setopenlabeldialog={()=>false}  openlabeldialog={false} open={showPanel} setOpen={setShowPanel} task={clickedTask} fetchallorders={fetchallorders} />}
 
       {/* Dropdown */}
-      <div className="absolute top-2 right-2 sm:block md:hidden z-50">
+      <div className="absolute top-3 right-3 sm:block md:hidden z-50">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -135,21 +145,21 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
       </div>
 
       {/* Image */}
-      <div className="h-[35%]  flex justify-center items-center">
-        <div className="w-[76%] h-full rounded-2xl flex justify-center overflow-hidden">
+      <div className="h-[33%] flex justify-center items-center ">
+        <div className="w-[80%] h-full rounded-2xl flex justify-center overflow-hidden">
           <img
             src={image?image:"no image"}
             alt=""
-            className="w-full h-full object-cover rounded-2xl p-2"
+            className="w-full h-full object-contain rounded-2xl p-1"
           />
         </div>
       </div>
 
    {/* Bottom content */}
-    <div className="h-[65%] rounded-xl flex flex-col justify-center items-center px-2 gap-1  text-sm w-full">
+    <div className="h-[68%] rounded-xl flex flex-col justify-start items-center px-3 gap-1.5 text-sm w-full">
     
               {/* Tags */}
-              <div className="w-full flex gap-2 items-center justify-start min-h-[24px] flex-wrap ">
+              <div className="w-full flex gap-2 items-center justify-start min-h-[24px] flex-wrap mb-0.5">
             {task.labels?.slice(0, 3).map((label, index) => (
               <div
                 key={index}
@@ -169,32 +179,48 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ task, disableDrag = false
               </div>
               
               {/* Name */}
-              <div className="w-full font-bold text-md truncate ">{task?.Name}</div>
+              <div className="w-full font-bold text-md truncate mb-0.5">{task?.Name}</div>
     
-              <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
+              <div className="w-full text-xs font-semibold truncate text-[#4774B1] mb-0.5">
                 {task?.email}
               </div>
-              <div className="w-full text-xs font-semibold truncate text-[#4774B1] ">
+              <div className="w-full text-xs font-semibold truncate text-[#4774B1] mb-0.5">
                 {task?.phone!=null?task.phone:" "}
               </div>
                
               {/* StockX and manual item Name */}
-              <div className="w-full text-xs font-semibold truncate ">
+              <div className="w-full text-xs font-semibold truncate mb-0.5">
                 {task.stockxitem.length > 0 ? task.stockxitem[0]?.name : task.items && task.items[0]?.Name}
+              </div>
+
+                {/* Price */}
+                <div className="w-full text-xs font-light truncate mb-0.5">
+                {
+  task?.stockxitem?.length > 0 && task?.stockxitem[0]?.last_sale_price
+    ? (task.price === 0 
+        ? task.stockxitem[0].last_sale_price 
+        : task.price || 0)
+    :task?.items&& task?.items?.length > 0
+      ? (task.price !== 0 
+          ? task.items?.[0]?.price || 0
+          : task.price || 0)
+      : task.price || 0
+}
+
               </div>
               
             
-               {/* StockX and manual item Name */}
-               <div className="w-full text-xs font-light truncate ">
+               {/* Condition */}
+               <div className="w-full text-xs font-light truncate capitalize mb-0.5">
                 {task.condition}
               </div>
-               {/* StockX and manual item Name */}
-               <div className="w-full text-xs font-light truncate ">
+               {/* Size */}
+               <div className="w-full text-xs font-light truncate capitalize mb-0.5">
                 {task.size}
               </div>
               
               {/* Created Date */}
-              <div className="w-full flex justify-start items-start gap-1 mt-1 ">
+              <div className="w-full flex justify-start items-start mt-auto">
                 <div className="rounded-2xl flex items-center gap-1 bg-[#374D71] text-white text-[10px] px-2 py-1">
                   <Clock color="white" size={14} />
                   <span>{creationdate}</span>

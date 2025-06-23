@@ -16,7 +16,7 @@ function Requestpanle({sideopen,suggesteddata,setsuggesteddata}:
   const [spin,setspin]=useState<boolean>(false);
   const Getdata=async(msg:string)=>{
     setspin(true);
-   const data= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/getstock`,{
+   const data= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/getstockstore`,{
     search:msg
    })
  

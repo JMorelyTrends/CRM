@@ -43,12 +43,16 @@ function useIsSmallScreen() {
 }
 
 function Page() {
+
   const router=useRouter()
   const isSmallScreen = useIsSmallScreen();
   const [orders,setorders]=useState<Task[]>()
   const [total_spent,settotal_spent]=useState<number>(0)
   const [Newopen,setNewopen]=useState<boolean>(false)
   const [supplier,setsupplier]=useState<Supplier>()
+
+
+
   const s = useSelector(
     (state: RootState) => state.Sup.SelectedSupplier
   );
@@ -64,8 +68,9 @@ function Page() {
     if(supplier&&supplier._id)
     { const o=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Getorderofsuppliers`,{
       name:supplier._id
+      
      })
-     console.log(o.data)
+   
      setorders(o.data.data)
      settotal_spent(o.data.spend)}
   }
@@ -82,11 +87,11 @@ function Page() {
  const formatDate = (dateString: string) => {
   const timeZone = 'Europe/London'; // or your desired timezone
   const zonedDate = toZonedTime(dateString, timeZone);
-  return format(zonedDate, "d MMMM yyyy 'at' h a");
+  return format(zonedDate, "d MMM 'at' h:mm a");
 };
 
   return (
-    <div className="w-full h-[100vh]  flex flex-col items-center ">
+    <div className="w-[80vw] h-[100vh]  flex flex-col items-center ">
       {!isSmallScreen && <Header />}
 
      <UpSup
@@ -185,25 +190,25 @@ function Page() {
   <h2 className="text-xl font-bold text-black">Orders</h2>
 
   <div className="w-full flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 rounded-lg p-3">
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-10 w-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-10 w-full">
       {orders && orders.length > 0 ? (
         orders.map((order) => (
           <div
             key={order._id}
             className="bg-white shadow-md rounded-lg border border-gray-200 flex flex-col gap-2"
-            style={{ width: "280px", height: "180px" }}
+            style={{ width: "100%", height: "200px" }}
           >
-            <div className="text-black px-2 text-sm pt-2 flex gap-2 ">
-              <div className="w-fit ">
+            <div className="text-black px-4 py-2.5 text-sm flex items-center justify-between border-b border-gray-100">
+              <div className="text-gray-600 whitespace-nowrap">
                 {formatDate(order.createdAt)}
               </div>
-              <div className="w-fit flex gap-1.5 items-center ">
-                from <Store size={16} strokeWidth={0.75} /> online store
+              <div className="flex items-center gap-1.5 text-gray-600 whitespace-nowrap">
+                from <Store size={14} strokeWidth={0.75} /> online store
               </div>
             </div>
 
-            <div className="flex px-2 gap-2 flex-1 overflow-hidden">
-              <div className="w-[100px] h-[100px] shrink-0">
+            <div className="flex px-4 gap-4 flex-1 overflow-hidden">
+              <div className="w-[120px] h-[120px] shrink-0">
                 <img
                  src={
                      order?.stockxitem?.[0]?.image ??
@@ -215,14 +220,14 @@ function Page() {
                 />
               </div>
               <div className="flex-1 flex flex-col justify-around min-w-0 overflow-hidden">
-                <div className="text-2xl font-bold text-black line-clamp-3 break-words text-nowrap overflow-hidden text-ellipsis">
+                <div className="text-xl font-bold text-black line-clamp-2 break-words">
                   {order.Name ? order.Name : "N/A"}
                 </div>
-                <div className="text-sm font-light p-2 text-black text-wrap">
+                <div className="text-sm text-gray-600 line-clamp-2">
                   {order.shippingaddress ? order.shippingaddress : "N/A"}
                 </div>
-                <div className="font-bold text-xl line-clamp-3 break-words text-[#4774B1]">
-                  £ {order.price ? order.price : "N/A"} Profits
+                <div className="font-bold text-lg text-[#4774B1]">
+                  £ {order.price && order.sellprice && order.Shippingfee && order.processingfee ?  order.sellprice-order.price - parseFloat (order.Shippingfee )- parseFloat(order.processingfee)  : "N/A"} Profits
                 </div>
               </div>
             </div>

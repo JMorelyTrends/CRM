@@ -26,11 +26,19 @@ const LeadCols = (props: Props) => {
     {
       props.tasks.map((task:Task)=>{
         if(task.stockxitem.length>0 && task?.stockxitem[0]?.last_sale_price){
-        c+=task?.stockxitem[0]?.last_sale_price;
+          if(task.price==0){
+        c+=task?.stockxitem[0]?.last_sale_price;}
+        else{
+          c+=task?.price||0
+        }
       }
         else if( task?.items?.length&& task?.items?.length >0){
-         c+=task.items[0].price;
-        
+          if(task.price!=0){
+            c+=task.items[0].price;
+          }
+            else{
+              c+=task?.price||0
+            }
         }
         settotalprice(c)
       })

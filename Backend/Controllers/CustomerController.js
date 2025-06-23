@@ -1,38 +1,12 @@
 process.env.SHOPIFY_LOG = "error";
 const Customer = require("../Models/Custormer");
+const ShopifyCustomer=require("../Models/ShopifyCustomers")
 const Order = require("../Models/Order");
 const mongoose = require("mongoose");
 const Orderreview=require("../Models/Orderreview")
 require("@shopify/shopify-api/adapters/node");
-const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
-const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
-const { response } = require("express");
-
-const customLogger = {
-  log: (severity, message) => {
-    if (severity === "error") {
-      //console.error(`[${severity}] ${message}`);
-    }
-  },
-};
-
-const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET,
-  apiVersion: ApiVersion.April25,
-  isCustomStoreApp: true,
-  adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
-  isEmbeddedApp: false,
-  hostName: process.env.SHOPIFY_STORE_DOMAIN,
-  scopes: ["read_customers", "write_draft_orders", "write_orders"],
-  logger: customLogger,
-  restResources,
-});
-const { DraftOrder } = shopify.rest;
-
-const session = shopify.session.customAppSession(
-  process.env.SHOPIFY_STORE_DOMAIN
-);
+const {session,shopify}=require("../utils/ShopifyConnect")
+const opencage = require('opencage-api-client');
 
 const normalizePhoneNumber = (phone) => {
   if (!phone) return "";
@@ -42,12 +16,17 @@ const normalizePhoneNumber = (phone) => {
   if (phone.startsWith("0")) return `+44${phone.slice(1)}`;
   return phone;
 };
+ const isValid = (field) => field && field.trim() !== "";
+
+
+ //---------------------------------------------CUSTOMER CREATION---------------------------------------------
+ 
 const createCustomer = async (req, res) => {
   try {
     const { newCustomer } = req.body;
+    const client = new shopify.clients.Rest({ session });
 
-    const isValid = (field) => field && field.trim() !== "";
-
+ // STEP-1: if no unique identifier exists just send back
     if (
       !isValid(newCustomer.email) &&
       !isValid(newCustomer.number) &&
@@ -58,13 +37,16 @@ const createCustomer = async (req, res) => {
       });
     }
 
-    let queryParts = [];
+
+   //STEP-2: CHECK IN SHOPIIFY IF THE CUSTOMER EXISTS
+    let queryParts = []; 
     if (isValid(newCustomer.email))
       queryParts.push(`email:${newCustomer.email.trim()}`);
     if (isValid(newCustomer.number)) {
-      const normalizedPhone = normalizePhoneNumber(newCustomer.number);
-      queryParts.push(`phone:${normalizedPhone}`);
+      const normalizedPhone = newCustomer.number;
+      queryParts.push(`phone:${newCustomer.number}`);
     }
+    
     const query = queryParts.join(" OR ");
 
     let customerData = { customers: [] };
@@ -81,7 +63,7 @@ const createCustomer = async (req, res) => {
         email: customerData.customers[0].email,
         first_name: customerData.customers[0].first_name,
         last_name: customerData.customers[0].last_name,
-        total_spent: customerData.customers[0].total_spent,
+        total_spend: customerData.customers[0].total_spent,
         orders_count: customerData.customers[0].orders_count,
         customerfrom: "shopify",
         Number: customerData.customers[0].phone,
@@ -96,7 +78,7 @@ const createCustomer = async (req, res) => {
         customer: newCustomer,
       });
     }
-
+//STEP-3: CHECK IN DB IF THE CUSTOMER EXISTS
     const searchConditions = [];
     if (isValid(newCustomer.email))
       searchConditions.push({ email: newCustomer.email.trim() });
@@ -113,13 +95,76 @@ const createCustomer = async (req, res) => {
         customer: existingCustomer,
       });
     }
+   
+     // --- Step 4: Create if not exists ---
+    if (isValid(newCustomer.email)||isValid(newCustomer.number)) {
+    
+      // Create customer on Shopify
+      const shopifyCustomerPayload = {
+        email: newCustomer.email.trim(),
+        first_name: newCustomer.first_name || "",
+        last_name:newCustomer.last_name||"",
+        phone: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
+      };
+      const createdShopifyCustomer = ( await client.post({
+  path: 'customers',
+  data: {
+    customer: {
+      email: newCustomer.email,
+      first_name: newCustomer.first_name || '',
+      last_name:newCustomer.last_name||'',
+      phone: newCustomer.number || '',
+      tags: 'Crm Customer',
+      addresses: [
+        {
+          address1: newCustomer.address || '',
+          city: newCustomer.city || '',
+          zip: newCustomer.postcode || ''
+        }
+      ],
+    },
+  },
+  type: 'application/json',
+})).body.customer
+    
+      // Return the created customer from Shopify
+      const responseCustomer = {
+        first_name:createdShopifyCustomer.first_name,
+        last_name:createdShopifyCustomer.last_name,
+        shopifyid: createdShopifyCustomer.id,
+        email: createdShopifyCustomer.email,
+        // total_spend: createdShopifyCustomer.total_spent,
+        // orders_count: createdShopifyCustomer.orders_count,
+        customerfrom: "mongodb",
+        Number: createdShopifyCustomer.phone,
+        address: createdShopifyCustomer.default_address?.address1 || "",
+        City: createdShopifyCustomer.default_address?.city || "",
+        postcode: createdShopifyCustomer.default_address?.zip || "",
+        userid:newCustomer.userid,
+        socialhandel: isValid(newCustomer.social)
+        ? newCustomer.social.trim()
+        : "",
+      };
+
+     const k= await Customer.create(responseCustomer)
+
+      return res.status(201).json({
+        message: "Customer created in Shopify.",
+        customer: k,
+      });
+    }
+
+
+
 
     const createdCustomer = await Customer.create({
-      Name: isValid(newCustomer.name) ? newCustomer.name.trim() : "",
+      first_name: isValid(newCustomer.first_name) ? newCustomer.first_name.trim() : "",
+      last_name: isValid(newCustomer.last_name) ? newCustomer.last_name.trim() : "",
       email: isValid(newCustomer.email) ? newCustomer.email.trim() : "",
       Number: isValid(newCustomer.number) ? newCustomer.number.trim() : "",
       address: isValid(newCustomer.address) ? newCustomer.address.trim() : "",
       City: isValid(newCustomer.city) ? newCustomer.city.trim() : "",
+      
       Postcode: isValid(newCustomer.postcode)
         ? newCustomer.postcode.trim()
         : "",
@@ -134,15 +179,41 @@ const createCustomer = async (req, res) => {
       customer: createdCustomer,
     });
   } catch (error) {
-    console.error(error);
+  
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+
+
+
+//-------------------------------------------CUSTOMER CRM---------------------------------------------- 
 const getAllCustomers = async (req, res) => {
   try {
-    const customers = await Customer.find();
-    res.status(200).json(customers);
+    const {userid}=req.body;
+   
+    const customers = await Customer.find({userid});
+    
+    // Calculate total count
+    const totalCount = customers.length;
+    
+    // Calculate subscribed customers count
+    const subscribedCount = customers.filter(customer => 
+      customer.emailMarketingConsent?.marketingState === 'subscribed'
+    ).length;
+    
+    // Calculate percentage (handle division by zero)
+    const subscribedPercentage = totalCount > 0 
+      ? ((subscribedCount / totalCount) * 100).toFixed(2)
+      : 0;
+
+    res.status(200).json({
+      Customers: customers,
+      totalCustomers:totalCount,
+      subscribedCount,
+      optin: `${subscribedPercentage}`
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -151,7 +222,7 @@ const getAllCustomers = async (req, res) => {
 const getCustomerById = async (req, res) => {
   try {
     const { id } = req.body;
-    //console.log(id)
+  
     const customer = await Customer.findById(id);
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
@@ -162,6 +233,8 @@ const getCustomerById = async (req, res) => {
   }
 };
 
+
+//---------------------------------------------SEARCH ENGINE FOR CUSTOMER ( NEW LEADS MAKING!)-----------------------
 const getCustomers_from_shopify_mongo = async (req, res) => {
   const { search, id } = req.body;
 
@@ -206,21 +279,27 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
     }
 
     const regexConditions = nameParts.map((part) => ({
-      Name: { $regex: new RegExp(part, "i") },
+      first_name: { $regex: new RegExp(part, "i") },
     }));
 
     mongoQuery = {
-      $and: [
-        { userid: id },
-        {
-          $or: [
-            ...regexConditions,
-            { socialhandel: { $regex: new RegExp(search, "i") } },
-            { Number: { $regex: new RegExp(search, "i") } },
-          ],
-        },
+  $and: [
+    { userid: id },
+    {
+      $or: [
+        ...regexConditions,
+        { socialhandel: { $regex: new RegExp(search, "i") } },
+        { Number: { $regex: new RegExp(search, "i") } },
       ],
-    };
+    },
+    {
+      $or: [
+        { email: { $exists: false } },
+        { email: { $in: [null, ""] } }, // check for null or empty
+      ],
+    },
+  ],
+};
   }
 
   try {
@@ -228,6 +307,8 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
       Customer.find(mongoQuery),
       shopify.rest.Customer.search({ session, query }),
     ]);
+
+   
 
     const d = customerData.customers.map((customer) => ({
       _id: customer.id,
@@ -245,6 +326,7 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
       },
     }));
 
+   
     res.status(200).json({ d, dm: mongodata });
   } catch (error) {
     console.error(error);
@@ -252,32 +334,405 @@ const getCustomers_from_shopify_mongo = async (req, res) => {
   }
 };
 
+
+//-------------------------------------------UPDATES----------------------------------------
+
+//this update is for wehre you need to keep the flow like leads or making new request
+
 const updateCustomer = async (req, res) => {
   try {
-    const { Name, email, address, Postcode, id } = req.body;
+     const {Cust ,orderid} = req.body;
+     const client = new shopify.clients.Rest({ session });
+  
 
-    // Find and update
-    const updatedCustomer = await Customer.findByIdAndUpdate(
-      id,
-      { Name, email, address, Postcode },
-      { new: true, runValidators: true }
-    );
+     //step check if the customer exists in the shopify
 
-    if (!updatedCustomer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
+     let queryParts = [];
+     if (isValid(Cust.email))
+       queryParts.push(`email:${Cust.email.trim()}`);
+     if (isValid(Cust.phone)) {
+       const normalizedPhone = normalizePhoneNumber(Cust.phone);
+       queryParts.push(`phone:${normalizedPhone}`);
+     }
+     const query = queryParts.join(" OR ");
+ 
+     let customerData = { customers: [] };
+     if (queryParts.length > 0) {
+       customerData = await shopify.rest.Customer.search({
+         session,
+         query,
+       });
+      
+     }
+ 
+     if (customerData.customers.length > 0) {
 
+       const newCustomer = {
+         _id: customerData.customers[0].id,
+         email: customerData.customers[0].email,
+         first_name: customerData.customers[0].first_name,
+         last_name: customerData.customers[0].last_name,
+         total_spend: customerData.customers[0].total_spent,
+         orders_count: customerData.customers[0].orders_count,
+         customerfrom: "shopify",
+         Number: customerData.customers[0].phone,
+         address: {
+           address1: customerData.customers[0].default_address?.address1 || "",
+           city: customerData.customers[0].default_address?.city || "",
+           zip: customerData.customers[0].default_address?.zip || "",
+         },
+       };
+        
+
+       return res.status(200).json({
+         alert: "Exists in Shopify database",
+         customer: newCustomer,
+       });
+     }
+
+     const createdShopifyCustomer = ( await client.post({
+      path: 'customers',
+      data: {
+        customer: {
+          email: Cust.email,
+          first_name: Cust.firstName|| '',
+          last_name:Cust.lastName||'',
+          phone: Cust.phone || '',
+          tags: 'Crm Customer',
+          addresses: [
+            {
+              address1: Cust.address || '',
+              city: Cust.city || '',
+              zip: Cust.postcode || ''
+            }
+          ],
+        },
+      },
+      type: 'application/json',
+    })).body.customer
+
+    const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+      first_name:Cust.firstName,
+      last_name:Cust.lastName,
+      shopifyid:createdShopifyCustomer.id,
+      total_spend: createdShopifyCustomer.total_spent || 0,
+      orders_count: createdShopifyCustomer.orders_count || 0,
+      email:Cust.email,
+      Number:Cust.phone,
+      socialhandel:Cust.social||"",
+      emailMarketingConsent: {
+        consentUpdatedAt: new Date(),
+        marketingOptInLevel: 'SINGLE_OPT_IN',
+        marketingState: 'unsubscribed'
+      }
+     }}, { new: true })
+     
+     if(orderid)
+     {
+    
+       const t=await Order.findByIdAndUpdate({
+        _id:orderid
+       },{
+        $set:{
+          cusid:re._id,
+          Name:Cust.firstName+' '+Cust.lastName
+        }
+       });
+     }
     res.status(200).json({
       message: "Customer updated successfully",
-      customer: updatedCustomer,
+      customer: re,
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  } 
+  
+  catch (error) {
+ console.log(error)
+    const errors = error?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0])
+       {
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+      
+        const d="phone"+re;
+        res.status(501).json({data:d})
+
+      } else if (errors?.email) {
+        const d = "email " + re;
+        res.status(501).json({data:d})
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+
+        res.status(501).json({data:d})
+    }
   }
 };
 
-//to get all the customers from orders
+//this update for the customercrm where the customers which have email or phone(need testing) in sync
+//cuscrmupdate needs to be handel a case where if i send a customer where shopifyid is not there it should handle it 
+const Cuscrmupdate = async (req, res) => {
+  try{
+    const {Cust}=req.body;
+   
+    const client = new shopify.clients.Rest({ session });
 
+    if(Cust.id)
+    {
+      
+         const response = await shopify.rest.Customer.find({
+          session,
+          id:Cust.id , // numeric ID, not GID
+        });
+    
+        response.first_name = Cust.firstName;
+        response.last_name = Cust.lastName;
+        response.phone = Cust.phone;
+        response.email = Cust.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+        const t = await response.save({ update: true });
+
+        const d=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+          first_name:Cust.firstName||"",
+          last_name:Cust.lastName||"",
+          email:isValid(Cust.email)&&Cust.email||"",
+          Number:isValid(Cust.phone)&&Cust.phone||"",
+          socialhandel:Cust.social||"",
+        }})
+        return res.status(201).json({message:"Customer is updated"})
+    }
+    else if(isValid(Cust.email)|| isValid(Cust.phone))
+    {
+      const createdShopifyCustomer = ( await client.post({
+        path: 'customers',
+        data: {
+          customer: {
+            email: Cust.email,
+            first_name: Cust.firstName|| '',
+            last_name:Cust.lastName||'',
+            phone: Cust.phone || '',
+            tags: 'Crm Customer',
+            addresses: [
+              {
+                address1: Cust.address || '',
+                city: Cust.city || '',
+                zip: Cust.postcode || ''
+              }
+            ],
+          },
+        },
+        type: 'application/json',
+      })).body.customer
+      const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+        first_name:Cust.firstName,
+        last_name:Cust.lastName,
+        shopifyid:createdShopifyCustomer.id,
+        email:Cust.email,
+        Number:Cust.phone,
+        socialhandel:Cust.social||"",
+       
+       }}, { new: true })
+       
+       return res.status(201).json({message:"Customer is updated"})
+    }
+    else if(Cust.social){
+      const re=await Customer.findOneAndUpdate({_id:Cust._id},{$set:{
+        first_name:Cust.firstName,
+        last_name:Cust.lastName,
+        socialhandel:Cust.social||"",
+       
+       }}, { new: true })
+       return res.status(201).json({message:"Customer is updated"})
+    }
+  }
+  catch (error) {
+  
+    const errors = error?.response?.body?.errors;
+    if (errors?.phone) {
+      return res.status(501).json({ data: "phone " + errors.phone[0] });
+    } else if (errors?.email) {
+      
+      return res.status(501).json({ data: "email " + errors.email[0] });
+    }
+
+    return res.status(501).json({ data: "Something went wrong with Shopify update" });
+  }
+}
+
+
+//when you are just updating the customer on shopify you dont get it for crm until now (shopifyupdatedprop)
+const updateshopifycustomer=async(req,res)=>{
+  try {
+     const {customer}=req.body;
+  
+     const response = await shopify.rest.Customer.find({
+       session,
+       id:customer.id , // numeric ID, not GID
+     });
+ 
+     response.first_name = customer.firstName;
+     response.last_name = customer.lastName;
+     response.phone = customer.phone;
+     response.email = customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
+     const t = await response.save({ update: true });
+     const re=await shopify.rest.Customer.find({
+       session,
+       id:customer.id , // numeric ID, not GID
+     });
+     
+     const ur = {
+       _id:customer.id, 
+       first_name: re.first_name,
+       last_name: re.last_name,
+       Name: `${re.first_name} ${re.last_name}`,
+       email: re.email,
+       total_spent: re.total_spent,
+       orders_count: re.orders_count.toString(),
+       customerfrom: "shopify", // Assuming you're marking the source
+       Number: re.phone || null,
+       address: {
+         adress1: re.default_address?.address1 || "",
+         city: re.default_address?.city || "",
+         zip: re.default_address?.zip || "",
+         country: re.default_address?.country || "",
+       },
+     };
+ 
+     //console.log(response)
+     res.status(201).json({data:ur})
+   }
+    catch (err) {
+   
+     const errors = err?.response?.body.errors;
+     if (Object.values(errors)[0]?.[0]) {
+ 
+       const re = Object.values(errors)[0]?.[0];
+       if (errors?.phone) {
+         const d= re;
+         res.status(501).json({data:d})
+ 
+       } else if (errors?.email) {
+         const d = "email " + re;
+         res.status(501).json({data:d})
+       }
+       else if(errors?.sms_marketing_consent){
+        res.status(501).json({data:re})
+       }
+     } else {
+       const re = "something went wrong with shpoify update";
+ 
+         res.status(501).json({data:d})
+     }
+   }
+ }
+
+//--------------------------------------UPDATES END-------------------------------------------------
+
+
+
+
+
+//--------------------------------------------WHERE WHERE IT SAYS USE THIS CUSTOMER IN CRM THIS IS THE FUNCTION--------------------
+
+const UseShopiyfcustomer=async(req,res)=>{  //when you entered the email to the  customer which dont have email hten this api hit when user press use
+try{
+  const {Cust,orderid}=req.body;
+
+
+
+  //Step-1 check if that email have in our db or not if yes return that customer id
+ 
+  
+  const searchConditions = [];
+  if (isValid(Cust.email)) {
+    searchConditions.push({ email: Cust.email.trim() });
+  }
+  if (isValid(Cust.phone)) {
+    const normalizedPhone = normalizePhoneNumber(Cust.phone);
+    searchConditions.push({ Number: normalizedPhone });
+  }
+
+  const t = searchConditions.length > 0 ? await Customer.findOne({ $or: searchConditions }) : null;
+  const order= await Order.findOne({_id:orderid})
+  if(t)
+  {
+     //if there is hte customer which are present with that mail that order will be given to that customer
+     // find hte order and give t._id ot that order cusid 
+
+     const newo=await Order.findByIdAndUpdate({
+      _id:orderid
+     },{
+      $set:{
+        cusid:t._id,
+        Name:t.first_name+' '+t.last_name
+      }
+     });
+
+     return res.status(201).json({message:"order user updated"});
+  }
+  
+
+  //STEP 2 check if the email is in the shopify
+
+  let queryParts = [];
+  if (isValid(Cust.email))
+    queryParts.push(`email:${Cust.email.trim()}`);
+  if (isValid(Cust.Number)) {
+    const normalizedPhone = normalizePhoneNumber(Cust.Number);
+    queryParts.push(`phone:${normalizedPhone}`);
+  }
+  const query = Cust._id?Cust._id:queryParts.join(" OR ");
+  const E=Cust.email.trim();
+  const d = await shopify.rest.Customer.search({ session, query });
+  
+  if(d && d.customers.length>0)
+  {
+    const iid=await Customer.findOneAndUpdate({
+    _id:order.cusid
+    },{
+      $set:{
+        shopifyid:d.customers[0]?.id,
+        first_name:d.customers[0]?.first_name,
+        last_name:d. customers[0].last_name,
+        email:d.customers[0].email,
+        orders_count:d.customers[0].orders_count,
+        total_spend:d.customers[0].total_spent,
+        // tshopifyspent:d.customers[0].total_spent, // just to know how much customer eran on shopify before we get it on crm to give initail tier
+        Number:d.customers[0].phone,
+        userid:order.userid,
+        emailMarketingConsent:{
+          consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
+          marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
+          marketingState:d.customers[0].email_marketing_consent.state
+        }
+      }
+    })
+
+    const nn=await Order.findByIdAndUpdate({
+      _id:orderid
+     },{
+      $set:{
+        cusid:iid._id,
+        Name:d.customers[0]?.first_name+' '+d.customers[0].last_name
+      }
+     });
+     return res.status(201).json({message:"order user updated"});
+   
+  }
+
+  //STEP 3 if customer is not in shopoify and db create one
+  
+  
+     
+      
+
+}
+catch(err)
+{
+  console.log(err)
+  res.status(500).json({message:"something worng with the customer"})
+}
+}
+
+//--------------------------------------------IDK SEEMS IMPORTANT-------------------------------------------------------
 const getAllCustomerOrderStats = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -332,11 +787,9 @@ const getAllCustomerOrderStats = async (req, res) => {
     const dbm=await Customer.find({userid:userId});
     const mergedCustomers = [];
   
-  //  console.log(mongoBuckets.get('682ee56c7c3e911370a40ab9'))
   
 
     for (const customer of dbm) {
-   // console.log(mongoBuckets.get(customer?._id.toString())) 
       mergedCustomers.push({
         id: customer?._id,
         Name: customer?.Name || "",
@@ -373,6 +826,7 @@ const getAllCustomerOrderStats = async (req, res) => {
   }
 };
 
+
 const deleteCustomer = async (req, res) => {
   try {
     const { id } = req.body;
@@ -385,6 +839,66 @@ const deleteCustomer = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+
+//--------------------------------get address which we need to create shipping address on order completion--------------//
+
+// Address suggestions endpoint
+const getaddress = async (req, res) => {
+  try {
+    const { searchText } = req.body;
+    if (!searchText || searchText.trim().length < 2) {
+      return res.status(400).json({ message: "Please provide at least 2 characters to search" });
+    }
+    const API_KEY = process.env.GEOAPIFY_API_KEY;
+    if (!API_KEY) throw new Error('GEOAPIFY_API_KEY not configured');
+    const apiUrl = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(searchText)}&limit=8&apiKey=${API_KEY}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'API request failed');
+    // Map Geoapify features to our suggestion format
+    const suggestions = (data.features || []).map(f => ({
+      address: f.properties.formatted,
+      city: f.properties.city || f.properties.town || f.properties.village || '',
+      country: f.properties.country || '',
+      postcode: f.properties.postcode || '',
+      // Optionally, you can add lat/lon if needed:
+      // lat: f.properties.lat,
+      // lon: f.properties.lon
+    }));
+    res.status(200).json({ success: true, suggestions });
+  } catch (error) {
+    console.error('Geoapify address lookup error:', error);
+    res.status(500).json({ message: "Server error while getting address", error: error.message });
+  }
+}
+
+// Address details endpoint
+const getaddressdetails = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: "Missing address id" });
+    const API_KEY = process.env.GET_ADDRESS_API_KEY;
+    if (!API_KEY) throw new Error('GET_ADDRESS_API_KEY not configured');
+    const detailsUrl = `https://api.getaddress.io/get/${id}?api-key=${API_KEY}`;
+    const detailsResponse = await fetch(detailsUrl);
+    const details = await detailsResponse.json();
+    if (!detailsResponse.ok) throw new Error(details.Message || 'API request failed');
+    // Return full address details
+    res.status(200).json({ success: true, details });
+  } catch (error) {
+    console.error('Address details lookup error:', error);
+    res.status(500).json({ message: "Server error while getting address details", error: error.message });
+  }
+}
+
+///--------------------------------end of this address api--------------------------------------------------//
+
+
+
+
+
 
 //this api is for the mongodb custoemr update which is on the new request section it will take a whole update customer and find it by _id then update all the document
 //check if
@@ -457,29 +971,45 @@ const Updatecusnewreq = async (req, res) => {
   }
 };
 
+
 const update_Customer_Crm = async (req, res) => {
   const { Cust } = req.body;
  
   try {
-    if (Cust.Custoemrfrom=== "Mongodb") {
-      const re=await Customer.findOneAndUpdate({_id:Cust.id},{$set:{
-         Name:Cust.Name,
-         Email:Cust.email,
-         Number:Cust.Number,
-         socialhandel:Cust.socialhandel,
-      }})
+
+    // if (Cust.Custoemrfrom=== "Mongodb") {
+    //   const re=await Customer.findOneAndUpdate({_id:Cust.id},{$set:{
+    //      Name:Cust.Name,
+    //      Email:Cust.email,
+    //      Number:Cust.Number,
+    //      socialhandel:Cust.socialhandel,
+    //   }})
  
-      return res.status(201).json({msg:"mongodb custoemr updated sucessfully"})
-    }
-     else {
-      const re = await shopifycustomer(Cust);  
-    return res.status(201).json({msg:"shopify custoemr updated sucessfully"});
-    }
+    //   return res.status(201).json({msg:"mongodb custoemr updated sucessfully"})
+    // }
+    //  else {
+    //   const re = await shopifycustomer(Cust);  
+    // return res.status(201).json({msg:"shopify custoemr updated sucessfully"});
+    // }
+
+    await shopifycustomer(Cust)
+    const c=await ShopifyCustomer.findOneAndUpdate({_id:Cust._id},{
+      $set:{
+         firstName:Cust.firstName,
+         lastName:Cust.lastName,
+         email:Cust.email,
+         phone:Cust.phone
+      }
+    })
+    
+    res.status(201).json({msg:"shopify custoemr updated sucessfully"});
+
    
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 const getshopifyorders = async (req, res) => {
   const { userid } = req.body;
@@ -490,18 +1020,21 @@ const getshopifyorders = async (req, res) => {
       .sort({ shopifycreatedat: -1 })
       .lean();
 
+     
     const createdAfter = latestOrder
-      ? new Date(latestOrder.createdAt).toISOString()
+      ? new Date(new Date(latestOrder.shopifycreatedat).getTime() - 60000).toISOString()
       : '2025-05-22T00:00:00Z';
-      
-
+    
+ //console.log(createdAfter)
     const client = new shopify.clients.Graphql({ session });
-
     let query = buildOrderQuery(null, createdAfter);
+   
     let totalorders = [];
 
     let result = await client.query({ data: query });
     let orders = result.body.data.orders.edges.map(edge => edge.node);
+    // Filter out orders with CRM order tag
+    orders = orders.filter(order => !order.tags.includes('CRM order'));
     totalorders.push(orders);
 
     let hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
@@ -514,14 +1047,15 @@ const getshopifyorders = async (req, res) => {
       result = await client.query({ data: query });
 
       orders = result.body.data.orders.edges.map(edge => edge.node);
+      // Filter out orders with CRM order tag
+      orders = orders.filter(order => !order.tags.includes('CRM order'));
       totalorders.push(orders);
 
       hasNextPage = result.body.data.orders.pageInfo.hasNextPage;
       nextCursor = result.body.data.orders.pageInfo.endCursor;
     }
-
+     
     const shopifyOrders = totalorders.flat();
-  
     // Populate into DB
     const savePromises = shopifyOrders.map(async (order) => {
       const check=await Orderreview.find({name:order.name});
@@ -538,12 +1072,7 @@ const getshopifyorders = async (req, res) => {
           0
         ),
       }));
-
-      // const metadata = order.metafields.edges.map((m) => ({
-      //   name: m.node.namespace,
-      //   value: parseFloat(m.node.value) || 0,
-      // }));
-
+      
       const shipfee = parseFloat(order.shippingLine?.originalPriceSet?.shopMoney?.amount || 0);
       const dbOrder = new Orderreview({
         soid: order.id,
@@ -551,17 +1080,25 @@ const getshopifyorders = async (req, res) => {
         firstName: order.customer?.firstName || '',
         lastName: order.customer?.lastName || '',
         phone: order.customer?.phone || '',
-        Revenue:order.sellprice,
+        Revenue: order.totalPrice,
         shipingfee: shipfee,
         linedata: lineItems,
-        shopifycreatedat:order.createdAt,
+        shopifycreatedat: order.createdAt,
+        customer: order.customer,
+        subtotal: parseFloat(order.currentSubtotalPriceSet?.shopMoney?.amount || order.subtotalPrice || 0),
+        discount: parseFloat(order.currentTotalDiscountsSet?.shopMoney?.amount || order.totalDiscounts || 0),
+        taxes: parseFloat(order.currentTotalTaxSet?.shopMoney?.amount || order.totalTax || 0),
         userid,
+        status:"active",
+        statusupdate:new Date(),
       });
      return dbOrder.save();
     });
 
     await Promise.allSettled(savePromises);
-    const sendingorders=await Orderreview.find().sort({shopifycreatedat:-1});
+    const sendingorders=await Orderreview.find({userid:userid})
+      .populate("Supplier_Name")
+    .sort({shopifycreatedat:-1});
     
     res.status(201).json({ data: sendingorders, count: shopifyOrders.length });
   } 
@@ -570,6 +1107,46 @@ const getshopifyorders = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+
+
+const createshopifycustoemr=async(req,res)=>{
+try{
+   const {data}=req.body;
+   
+    const client = new shopify.rest.Customer({ session });
+
+    const response = await client.create({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          email_marketing_consent: {
+            marketing_opt_in_level: 'SINGLE_OPT_IN',
+            marketing_state: 'unsubscribed',
+            consent_updated_at: new Date().toISOString(),
+          },
+        });
+
+}
+  catch (err) {
+    const errors = err?.response?.body.errors;
+    if (Object.values(errors)[0]?.[0]) {
+
+      const re = Object.values(errors)[0]?.[0];
+      if (errors?.phone) {
+        throw new Error(re);
+      } else if (errors?.email) {
+        const d = "email " + re;
+        throw new Error(d);
+      }
+    } else {
+      const re = "something went wrong with shpoify update";
+      throw new Error(re);
+    }
+  }
+}
 
 //FUNCTIONS
 
@@ -584,26 +1161,29 @@ const get_shopify_byid = async (id) => {
   return d;
 };
 
+
+
+
 //Draf order here becasue our shopify session is here i should make it sepearte module in near future
 
-async function draftorder(customerid, product, tags, shiping) {
-  const draftOrder = new DraftOrder({ session });
+// async function draftorder(customerid, product, tags, shiping) {
+ 
+//   const draftOrder = new DraftOrder({ session });
 
-  draftOrder.line_items = product;
+//   draftOrder.line_items = product;
 
-  draftOrder.customer = customerid;
+//   draftOrder.customer = customerid;
 
-  draftOrder.use_customer_default_address = true;
+//   draftOrder.use_customer_default_address = true;
 
-  draftOrder.shipping_address = shiping;
+//   draftOrder.shipping_address = shiping;
+//   draftOrder.email=customerid.email
 
-  const response = await draftOrder.save({
-    update: true,
-  });
-   
-  
-   return draftOrder.id
-};
+//   const response = await draftOrder.save({
+//     update: true,
+//   });
+//    return draftOrder.id
+// };
 
 //to get customers
 
@@ -684,24 +1264,22 @@ const getcustoemrwithorders = async (shopifyMap) => {
 const shopifycustomer = async (Customer) => {
   try {
     const client = new shopify.rest.Customer({ session });
+    const id=Customer.id;   
     const response = await shopify.rest.Customer.find({
       session,
-      id: Customer.id, // numeric ID, not GID
+      id: id,   // numeric ID, not GID
     });
-
     response.first_name = Customer.firstName;
     response.last_name = Customer.lastName;
     response.phone = Customer.phone;
     response.email = Customer.email; // give the correct data which is in Custoemr and when addidn phone and email shopify can give error so handel it to notify the user
     const t = await response.save({ update: true });
-
-    return response;
+    return t;
   }
-   catch (err) {
+    catch (err) {
     const errors = err?.response?.body.errors;
     if (Object.values(errors)[0]?.[0]) {
-
-      const re = Object.values(errors)[0]?.[0];
+    const re = Object.values(errors)[0]?.[0];
       if (errors?.phone) {
         throw new Error(re);
       } else if (errors?.email) {
@@ -715,13 +1293,43 @@ const shopifycustomer = async (Customer) => {
   }
 };
 
+const getshopifybyid_store=async(id,userid)=>{
+
+ const d = await shopify.rest.Customer.search({ session, id: id });
+
+ const ch=await Customer.findOne({shopifyid:d.customers[0].id});
+ 
+ if(!ch){
+
+ const iid=await Customer.create({
+  shopifyid:d.customers[0]?.id,
+  first_name:d.customers[0]?.first_name,
+  last_name:d. customers[0].last_name,
+  email:d.customers[0].email,
+  orders_count:d.customers[0].orders_count,
+  total_spend:d.customers[0].total_spent||0,
+  // tshopifyspent:d.customers[0].total_spent,
+  Number:d.customers[0].phone,
+  userid:userid,
+  emailMarketingConsent:{
+    consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
+    marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
+    marketingState:d.customers[0].email_marketing_consent.state
+  }
+ })
+ return iid._id;
+}
+ else{
+ 
+  return ch._id
+ }
+}
+
 function buildOrderQuery(afterCursor = null, createdAfter) {
   return {
     query: `
       {
-        orders(first: 100, query: "created_at:>=${createdAfter}"${
-      afterCursor ? `, after: "${afterCursor}"` : ""
-    }) {
+        orders(first: 100, query: "created_at:>=${createdAfter}"${afterCursor ? `, after: "${afterCursor}"` : ""}) {
           edges {
             cursor
             node {
@@ -730,57 +1338,252 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
               createdAt
               totalPrice
               email
-       lineItems(first: 10) {
-                       edges {
-                         node {
-                           title
-                           quantity
-                           originalUnitPriceSet {
-                             shopMoney {
-                               amount
-                               currencyCode
-                             }
-                           }
-                           discountedUnitPriceSet {
-                             shopMoney {
-                               amount
-                               currencyCode
-                             }
-                           }
-                         }
-                       }
-        }
-              
-         shippingLine {
-                      title
-                      originalPriceSet  {
-                        shopMoney {
-                          amount
-                          currencyCode
-                        }
+              tags
+              currentSubtotalPriceSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              currentTotalDiscountsSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              currentTotalTaxSet {
+                shopMoney {
+                  amount
+                  currencyCode
+                }
+              }
+              lineItems(first: 10) {
+                edges {
+                  node {
+                    title
+                    quantity
+                    originalUnitPriceSet {
+                      shopMoney {
+                        amount
+                        currencyCode
                       }
                     }
-                   customer {
-                     id
-                     firstName
-                     lastName
-                     email
-                     phone
-                   }
-                 }
+                    discountedUnitPriceSet {
+                      shopMoney {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
+              }
+              shippingLine {
+                title
+                originalPriceSet  {
+                  shopMoney {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+              customer {
+                id
+                firstName
+                lastName
+                email
+                phone
+              }
+            }
           }
-       pageInfo {
-        hasNextPage
-        hasPreviousPage
-        startCursor
-        endCursor
-      }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+          }
         }
-        
       }
     `,
   };
 };
+
+async function createShoOrder(customerid, product, tags, shipping, rev) {
+  const client = new shopify.clients.Rest({ session });
+  
+  // product should now be array of { variant_id: number, quantity: number }
+  const orderData = {
+    order: {
+      line_items: product,
+      customer: {
+        id: customerid
+      },
+      shipping_address: {
+        first_name: shipping.first_name || '',
+        last_name: shipping.last_name || '',
+        address1: shipping.address1 || '',
+        address2: shipping.address2 || '',
+        city: shipping.city || '',
+        province: shipping.province || '',
+        country: shipping.country || '',
+        zip: shipping.postcode || '',
+       
+      },
+      financial_status: 'paid',
+      tags: 'CRM order',
+      transactions: [
+        {
+          kind: 'sale',
+          status: 'success',
+          amount: rev
+        }
+      ]
+    }
+  };
+
+  try {
+    const response = await client.post({
+      path: 'orders',
+      data: orderData,
+      type: 'application/json'
+    });
+    return response.body.order.id;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+}
+
+//--------------------------------------------PRODUCT MANAGEMENT FUNCTIONS---------------------------------------------
+
+// Search for existing product in Shopify by name
+const searchShopifyProduct = async (productName) => {
+  try {
+    const client = new shopify.clients.Rest({ session });
+    const response = await client.get({
+      path: 'products',
+      query: { title: productName }
+    });
+    
+    if (response.body.products && response.body.products.length > 0) {
+      return response.body.products[0]; // Return first matching product
+    }
+    return null;
+  } catch (error) {
+    console.error('Error searching Shopify product:', error);
+    return null;
+  }
+};
+
+// Create new product in Shopify
+const createShopifyProduct = async (productData) => {
+  try {
+    const client = new shopify.clients.Rest({ session });
+    
+    const productPayload = {
+      product: {
+        title: productData.title,
+        body_html: productData.description || '',
+        vendor: 'CRM',
+        product_type: 'General',
+        tags: productData.tags || 'CRM Product',
+        variants: [
+          {
+            price: productData.price.toString(),
+            sku: productData.sku || '',
+            inventory_quantity: 999, // Set high inventory
+            inventory_management: 'shopify',
+            cost: productData.costPrice ? productData.costPrice.toString() : '0.00'
+          }
+        ],
+        images: productData.image ? [
+          {
+            src: productData.image
+          }
+        ] : []
+      }
+    };
+
+    const response = await client.post({
+      path: 'products',
+      data: productPayload,
+      type: 'application/json'
+    });
+
+    return response.body.product;
+  } catch (error) {
+    console.error('Error creating Shopify product:', error);
+    throw error;
+  }
+};
+
+// Update existing product in Shopify
+const updateShopifyProduct = async (productId, productData) => {
+  try {
+    const client = new shopify.clients.Rest({ session });
+    
+    // Update product basic info
+    const productPayload = {
+      product: {
+        id: productId,
+        title: productData.title,
+        variants: [
+          {
+            id: productData.variantId,
+            price: productData.price.toString(),
+            sku: productData.sku || '',
+            cost: productData.costPrice ? productData.costPrice.toString() : '0.00'
+          }
+        ]
+      }
+    };
+
+    await client.put({
+      path: `products/${productId}`,
+      data: productPayload,
+      type: 'application/json'
+    });
+
+    return { id: productId };
+  } catch (error) {
+    console.error('Error updating Shopify product:', error);
+    throw error;
+  }
+};
+
+// Main product management wrapper function
+const manageShopifyProduct = async (productData) => {
+  try {
+    // Search for existing product
+    const existingProduct = await searchShopifyProduct(productData.title);
+    
+    if (existingProduct) {
+      // Product exists, update it
+      const variantId = existingProduct.variants[0].id;
+      const updatedProduct = await updateShopifyProduct(existingProduct.id, {
+        ...productData,
+        variantId: variantId
+      });
+      return {
+        productId: existingProduct.id,
+        variantId: variantId,
+        isNew: false
+      };
+    } else {
+      // Product doesn't exist, create it
+      const newProduct = await createShopifyProduct(productData);
+      return {
+        productId: newProduct.id,
+        variantId: newProduct.variants[0].id,
+        isNew: true
+      };
+    }
+  } catch (error) {
+    console.error('Error managing Shopify product:', error);
+    throw error;
+  }
+};
+
+//--------------------------------------------PRODUCT MANAGEMENT END---------------------------------------------
 
 module.exports = {
   createCustomer,
@@ -792,8 +1595,21 @@ module.exports = {
   Updatecusnewreq,
   Get_mongo_byid,
   get_shopify_byid,
-  draftorder,
+  // draftorder,
+  createShoOrder,
   getAllCustomerOrderStats,
   update_Customer_Crm,
-  getshopifyorders
+  updateshopifycustomer,
+  getshopifyorders,
+  createshopifycustoemr,
+  getshopifybyid_store,
+  UseShopiyfcustomer,
+  Cuscrmupdate,
+  // Product management functions
+  searchShopifyProduct,
+  createShopifyProduct,
+  updateShopifyProduct,
+  manageShopifyProduct,
+  getaddress,
+  getaddressdetails,
 };

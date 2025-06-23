@@ -14,18 +14,23 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.800.0",
     "@aws-sdk/s3-request-presigner": "^3.800.0",
+    "@getaddress/autocomplete": "^3.0.9",
     "@shopify/shopify-api": "^11.12.0",
     "@vlourme/stockx-api": "^1.0.3",
     "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "fuse.js": "^7.1.0",
+    "getaddress-api": "^2.3.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.1",
     "node-fetch": "^2.7.0",
     "nodemon": "^3.1.9",
+    "opencage-api-client": "^1.1.0",
+    "raw-body": "^3.0.0",
     "sneaks-api": "^1.2.3"
   }
 }

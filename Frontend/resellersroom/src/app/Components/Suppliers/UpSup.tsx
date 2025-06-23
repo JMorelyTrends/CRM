@@ -15,6 +15,7 @@ import { X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import { AddselectedSup } from "@/lib/features/Supplier/SupplierSlice";
+import PhoneInput from "../Small comps/PhoneInput";
 import axios from "axios";
 type Props = {
   open: boolean;
@@ -23,7 +24,7 @@ type Props = {
 
 const UpSup = (props: Props) => {
     
-    //redux data
+    
       const supplier = useSelector(
         (state: RootState) => state.Sup.SelectedSupplier
       );
@@ -37,7 +38,7 @@ const UpSup = (props: Props) => {
   const [website, setWebsite] = useState<string>("");
 
   // Brand selection
-  const [isOpen, setIsOpen] = useState(false);
+
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 
   //useeffects
@@ -61,10 +62,15 @@ const UpSup = (props: Props) => {
     // setSupplierName("");
     // setSelectedBrands([]);
   };
-
+  const getlastn = (s:string, n:number) => s.slice(-n);
   const handleUpdate = async() => {
-    if (number && number.length !== 11) {
-      return toast.error("Number should be 11 characters long");
+    if (number) {
+      const cleanNumber = number.replace(/^\+/, '');
+      const phoneNumber = getlastn(cleanNumber, 10);
+      if (phoneNumber.length !== 10) {
+        toast.error("Phone number must be 10 digits");
+        return;
+      }
     }
 
     if (
@@ -128,7 +134,7 @@ const UpSup = (props: Props) => {
               }
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
-            <input
+            {/* <input
               type="text"
               placeholder="Number"
               value={number}
@@ -136,7 +142,8 @@ const UpSup = (props: Props) => {
                 setNumber(e.target.value)
               }
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
+            /> */}
+              <PhoneInput number={number} setNumber={setNumber} />
             <input
               type="email"
               placeholder="Email"
@@ -158,23 +165,9 @@ const UpSup = (props: Props) => {
 
             {/* Brand Dropdown */}
             <BrandSelector
-              isOpen={isOpen}
-              setIsOpen={setIsOpen}
               selectedBrands={selectedBrands}
               setSelectedBrands={setSelectedBrands}
             />
-
-            {/* Show selected brands */}
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {selectedBrands.map((brand, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-300 text-xs px-3 py-1 rounded-full text-black font-medium"
-                >
-                  {brand}
-                </span>
-              ))}
-            </div>
 
             {/* Buttons */}
             <div className="flex justify-between mt-4">

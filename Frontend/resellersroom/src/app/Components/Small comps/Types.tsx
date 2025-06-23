@@ -1,4 +1,3 @@
-
 export type labeltype={
   label:{name:string,
   col:string,
@@ -49,20 +48,29 @@ export type additem={
   _id:string,
   first_name:string,
   last_name:string,
-  Name:string,
+  shopifyid:string|null,
+  Name?:string,
   email:string,
-  total_spent:string,
-  orders_count:string,
+  total_spend:string,
+  orders_count:number,
   customerfrom:string,
   Number:string|null
-  address:{
-    adress1:string,
-    city:string,
-    zip:string,
-    country:string,
-  },
+  
   socialhandel:string,
-
+  emailMarketingConsent: {
+    consentUpdatedAt: Date | null;
+    marketingOptInLevel: string;
+    marketingState: string;
+  };
+  userid:string,
+  tags:string[],
+  total_spent?:string,
+ address:{ total_spent?:string
+  adress1?:string,
+  city?:string,
+  zip?:string,
+  country?:string
+}
 }
 export type dCustomerArray = Custprop[];
 
@@ -89,7 +97,7 @@ export type Task = {
   labels: labeltype[];
   Description: string;
   Condition: string;
-  cusid: string | null;
+  cusid: Custprop | null;
 
   // Existing optional fields
   items?: additem[];
@@ -112,6 +120,11 @@ export type Task = {
   paymentmethod?: string | null;
   DealOwner?: string | null;
   confirm?: boolean;
+  linedata?:Slinedata[];
+  shipingfee:string,
+  Source_of_truth?:string,
+  Supplier_Name?:Supplier
+  Revenue?:string
 };
 
 export type column={
@@ -151,7 +164,7 @@ export type OrderRpr={
     name?: string;
     value?: number;
   }[];
-  Supplier_Name?:string,
+  Supplier_Name?:Sup,
   Source_of_truth?:string,
   Traffic_Source?:string,
   profit?:number,
@@ -159,13 +172,15 @@ export type OrderRpr={
   shopifycreatedat?: Date;
   createdAt?: string|Date; // from timestamps: true
   updatedAt?: Date;
-  approved?:boolean, // from timestamps: true
+  approved?:boolean,
+ // from timestamps: true
 }
 
 
 //suppliers types
 
 export type Sup={
+  _id?:string,
     Name:string|null,
     Number:string|null,
     Email:string|null,
@@ -209,4 +224,46 @@ export type Customerprop={
   TotalOrders:number,
   Custoemrfrom:string,
   id:string,
+}
+
+//CustomerCrm
+export interface IShopifyCustomer {
+  _id: string;
+  first_name: string;
+  last_name: string;
+  shopifyid: string | null;
+  email: string;
+  customerfrom: string;
+  orders_count: number;
+  total_spend: string;
+  Number: string | null;
+  address: string;
+  socialhandel: string;
+  emailMarketingConsent: {
+    consentUpdatedAt: Date | null;
+    marketingOptInLevel: string;
+    marketingState: string;
+  };
+  tshopifyspent?:number,
+  userid: string;
+  tags: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface GeocodingResult {
+  formatted: string;
+  components: {
+    road?: string;
+    house_number?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
+  geometry: {
+    lat: number;
+    lng: number;
+  };
 }

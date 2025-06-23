@@ -13,7 +13,6 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 // Get single user by ID
 exports.getUserById = async (req, res) => {
   try {
@@ -24,7 +23,6 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 // Create a new user
 exports.createUser = async (req, res) => {
   try {
@@ -77,7 +75,6 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 // Login a user
 exports.loginUser = async (req, res) => {
   try {

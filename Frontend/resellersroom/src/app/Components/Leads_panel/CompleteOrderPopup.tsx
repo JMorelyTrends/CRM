@@ -2,37 +2,81 @@
 "use client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, X } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Task, labeltype } from "../Small comps/Types";
+import { Plus, Check, X, MapPin } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import {  labeltype } from "../Small comps/Types";
 import { Supplier } from "../Small comps/Types";
 import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-export function CompleteOrderPopup({
+import SupplierDropdown from "./SupplierDropdown";
+import { useDispatch, useSelector } from "react-redux";
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import { RootState } from "@/lib/Resellerstore";
+import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
+
+// Custom debounce function
+function useDebounce<A>(callback: (arg: A) => void, delay: number) {
+  const [timeoutRef, setTimeoutRef] = useState<NodeJS.Timeout | null>(null);
+
+  return useCallback(
+    (arg: A) => {
+      if (timeoutRef) clearTimeout(timeoutRef);
+
+      const timeout = setTimeout(() => {
+        callback(arg);
+      }, delay);
+
+      setTimeoutRef(timeout);
+    },
+    [callback, delay, timeoutRef]
+  );
+}
+
+interface AddressSuggestion {
+  address: string;
+  city: string;
+  country: string;
+  postcode: string;
+}
+
+export function CompleteOrderPopup({ 
   open,
   setOpen,
-  task,
+  // task,
   fetchallorders,
   update,
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  task: Task;
+  // task: Task;
   fetchallorders: () => void;
   update:boolean
-}) {
-  const [productName, setProductName] = useState(task.Name);
-  const [size, setSize] = useState(task.size);
-  const [costPrice, setCostPrice] = useState<string>(task.stockxitem?.[0]?.last_sale_price?.toString() ||task.items?.[0]?.price.toString() ||'');
-  const [shippingFee, setShippingFee] = useState<string>(task.Shippingfee?task.Shippingfee:'');
-  const [processingFee, setProcessingFee] = useState<string>(task.processingfee?task.processingfee:'');
+})
+ {
+
+  const dispatch=useDispatch()
+  const task=useSelector((state:RootState)=>state.Rew.currentorder)
+  const isOpen=useSelector((state:RootState)=>state.Rew.completeorder);
+  const [productName, setProductName] = useState(task?.Name ?? '');
+  const [size, setSize] = useState(task?.size ?? '');
+  const [costPrice, setCostPrice] = useState<string>(task?.stockxitem?.[0]?.last_sale_price?.toString() ?? task?.items?.[0]?.price?.toString() ?? '');
+  const [shippingFee, setShippingFee] = useState<string>(task?.Shippingfee ?? '');
+  const [processingFee, setProcessingFee] = useState<string>(task?.processingfee ?? '');
   const [supplierUsed, setSupplierUsed] = useState<string>('');
-  const [shippingAddress, setShippingAddress] = useState<string>(task.shippingaddress?task.shippingaddress:'');
-  const [dealOwner, setDealOwner] = useState<string>(task.DealOwner?task.DealOwner:'');
-  const [sourceOfTruth, setSourceOfTruth] = useState<string>(task.Sourceofthruth?task.Sourceofthruth:'');
-  const [paymentMethod, setPaymentMethod] = useState<string>(task.paymentmethod?task.paymentmethod:'');
-  const [sell,setsell]=useState<string>(task.sellprice?task.sellprice.toString():"")
+  const [shippingAddress, setShippingAddress] = useState<string>(task?.shippingaddress ?? '');
+  const [shippingAddressObj, setShippingAddressObj] = useState<{
+    address1: string;
+    city: string;
+    postcode: string;
+    country: string;
+  } | null>(null);
+  const [dealOwner, setDealOwner] = useState<string>(task?.DealOwner ?? '');
+  const [sourceOfTruth, setSourceOfTruth] = useState<string>(task?.Sourceofthruth ?? '');
+  const [paymentMethod, setPaymentMethod] = useState<string>(task?.paymentmethod ?? '');
+  const [sell,setsell]=useState<string>(task?.sellprice?.toString() ?? '')
+  const [userid, setuserid] = useState<string | null>("");
+
 //usestates for feautres
   const [selectedLabels, setSelectedLabels] = useState<labeltype[]>(task?.labels ?? []);
   const [LabelDialogOpen,setLabelDialogOpen]=useState<boolean>(false)
@@ -40,20 +84,126 @@ export function CompleteOrderPopup({
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
   const [newLabel, setNewLabel] = useState("");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
-
   const [availsuppliers,setavailsuppliers]=useState<Supplier[]>()
-
-
+  
 const router=useRouter()
-  useEffect(()=>{
-    const getsuppliers=async()=>{
-     const sup=await axios.get(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`);
-     console.log(sup.data.supps)
-      setavailsuppliers(sup.data.supps)
-    }
-    getsuppliers();
 
-  },[])
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
+  const addressDropdownRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Address search function
+  const searchAddress = async (searchText: string) => {
+    if (searchText.length < 2) {
+      setAddressSuggestions([]);
+      return;
+    }
+    setIsLoadingAddress(true);
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getaddress`, {
+        searchText
+      });
+      if (response.data.success) {
+        setAddressSuggestions(response.data.suggestions);
+        setShowAddressDropdown(true);
+      }
+    } catch {
+      toast.error("Error fetching address suggestions");
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  };
+
+  // Debounced search function
+  const debouncedSearch = useDebounce<string>((searchText) => { void searchAddress(searchText); }, 500);
+
+  // Handle address input change
+  const handleAddressChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setShippingAddress(value);
+    setSelectedAddress(null);
+    debouncedSearch(value);
+  };
+
+  // Handle address selection (no details API needed)
+  const handleAddressSelect = (suggestion: AddressSuggestion) => {
+    const addressObj = {
+      address1: `${suggestion.address}${suggestion.postcode ? ', ' + suggestion.postcode : ''} ${suggestion.country ? suggestion.country : ''}`.trim(),
+      city: suggestion.city,
+      postcode: suggestion.postcode,
+      country: suggestion.country
+    };
+    setShippingAddress(
+      [suggestion.address, suggestion.city, suggestion.postcode, suggestion.country].filter(Boolean).join('\n')
+    );
+    setShippingAddressObj(addressObj);
+    setSelectedAddress(suggestion);
+    setShowAddressDropdown(false);
+  };
+
+  // Clear selected address
+  const clearSelectedAddress = () => {
+    setShippingAddress('');
+    setSelectedAddress(null);
+    setShowAddressDropdown(false);
+  };
+
+  // Show dropdown when textarea is focused
+  const handleTextareaFocus = () => {
+    if (addressSuggestions.length > 0 && !selectedAddress) {
+      setShowAddressDropdown(true);
+    }
+  };
+
+  // Hide dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        addressDropdownRef.current &&
+        !addressDropdownRef.current.contains(event.target as Node) &&
+        textareaRef.current &&
+        !textareaRef.current.contains(event.target as Node)
+      ) {
+        setShowAddressDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [addressDropdownRef, textareaRef]);
+
+  useEffect(() => {
+    dispatch(Toggleleadsrenderstep(0));
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("tempcred");
+      setuserid(id);
+    }
+  }, [dispatch]);
+
+  const getsuppliers=async()=>{
+    try{ const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
+      userid
+     });
+     console.log(sup.data.supps)
+      setavailsuppliers(sup.data.supps)}
+      catch{
+        toast.error("something wrong when fetching suppliers")
+      }
+    }
+
+
+  useEffect(()=>{
+   if(userid!==""&&userid)
+   {
+
+    getsuppliers();
+   }
+   console.log(userid)
+  },[userid])
 
   useEffect(() => {
     if (open && task) {
@@ -66,7 +216,7 @@ else{
   setCostPrice(task.price?task.price?.toString():"undefined")
 }
 
-setShippingFee(task.Shippingfee?task.Shippingfee:'');
+      setShippingFee(task.Shippingfee?task.Shippingfee:'');
       setProcessingFee(task.processingfee?task.processingfee:'');
       setSupplierUsed((task.Supplierid&&task.Supplierid?._id)?task.Supplierid._id:'');
       setShippingAddress(task.shippingaddress?task.shippingaddress:'');
@@ -75,14 +225,9 @@ setShippingFee(task.Shippingfee?task.Shippingfee:'');
       setPaymentMethod(task.paymentmethod?task.paymentmethod:'');
       setSelectedLabels(task.labels??[]);
       setsell(task.sellprice?task.sellprice.toString():'') 
-    
- 
     }
     
   }, [task, open]);
-
-
-
 
   const AddnewLabel = async (color: string, label: string) => {
     try {
@@ -137,6 +282,7 @@ setShippingFee(task.Shippingfee?task.Shippingfee:'');
       console.error("Failed to update labels", err);
     }
   };
+
   const handleDeleteLabel=async(id:string)=>{
     try{
        await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/features/dellabel`,{
@@ -205,20 +351,20 @@ setShippingFee(task.Shippingfee?task.Shippingfee:'');
     "bg-teal-400",
     "bg-indigo-400",
   ];
+
 const Orderreview =()=>{
 
        router.push('/Leads/OrderReview')
 }
-  const Submit=async()=>{
-   
 
-    if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
+  const Submit=async()=>{
+    if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&selectedAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
      
       await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
         {
-         _id:task._id,
+         _id:task?._id,
          price:costPrice,
          sell:sell,
          Name:productName,
@@ -226,7 +372,7 @@ const Orderreview =()=>{
          Supplierid:supplierUsed,
          Shippingfee:shippingFee,
          processingfee:processingFee,
-         shippingaddress:shippingAddress,
+         shippingaddress:shippingAddressObj,
          Sourceofthruth:sourceOfTruth,
          paymentmethod:paymentMethod,
          DealOwner:dealOwner,
@@ -235,6 +381,7 @@ const Orderreview =()=>{
       fetchallorders()
    toast.success("order updated")
        setOpen(false)
+       dispatch(ToogleCompleteorder())
        if(update==false){
        router.push('/Leads/OrderReview')
       }
@@ -247,34 +394,35 @@ const Orderreview =()=>{
 
  
   return (
-
     <>
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={()=>dispatch(ToogleCompleteorder())}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
+        <DialogHeader className="text-center flex justify-center items-center">
           <DialogTitle>Complete Order Details</DialogTitle>
         </DialogHeader>
 
         {/* Image + Name */}
         <div className="flex items-center gap-4 mb-6">
          <div className=" w-[40%] h-full"> <img
-            src={task?.stockxitem?.[0]?.image ||task.items&&task.items[0].itempics[0]|| '/placeholder.jpg'}
-            alt={task.Name}
+            src={task?.stockxitem?.[0]?.image ?? task?.items?.[0]?.itempics?.[0] ?? '/placeholder.jpg'}
+            alt={task?.Name ?? ''}
             className="w-[150px] h-[150px] object-contain rounded "
           />
           </div>
           <div className="  w-[60%] h-full flex gap-4   flex-col justify-center items-center text-center">
-                       <div className="text-lg font-semibold">{task.Name} </div>
-                       <div className="text-sm font-semibold text-[#4774B1]">{task.email}</div>
-                       <div className="text-sm font-semibold text-[#4774B1]">{task.phone}</div>
+                       <div className="text-lg font-semibold text-wrap">{task?.stockxitem?.[0]?.name} </div>
+                       <div className="text-lg font-semibold">{task?.Name} </div>
+                       <div className="text-sm font-semibold text-[#4774B1]">{task?.email}</div>
+                       <div className="text-sm font-semibold text-[#4774B1]">{task?.phone}</div>
           </div>
+          
         </div>
 
              {/* Inputs in 2 balanced columns */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
   <div className="space-y-4">
     <div>
-      <label className="block text-sm font-medium">Confirm Product Name</label>
+      <label className="block text-sm font-medium">Confirm Customer Name</label>
       <input type="text" className="w-full border rounded px-3 py-2 mt-1"
         value={productName} onChange={(e) => setProductName(e.target.value)} />
     </div>
@@ -306,7 +454,11 @@ const Orderreview =()=>{
                       } 
         }/>
     </div>
-<div>
+
+  {
+    availsuppliers && availsuppliers.length>0 && <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
+  }
+{/* <div>
   <label className="block text-sm font-medium">Supplier Used</label>
   <select
     className="w-full border rounded px-3 py-2 mt-1"
@@ -320,14 +472,14 @@ const Orderreview =()=>{
       </option>
     ))}
   </select>
-</div>
+</div> */}
     <div>
       <label className="block text-sm font-medium">Deal Owner</label>
       <select className="w-full border rounded px-3 py-2 mt-1"
         value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
         <option value="">Select Deal Owner</option>
-        <option value="Owner A">Alfy</option>
-        <option value="Owner B">Fran</option>
+        <option value="Owner A">ALFIE</option>
+        <option value="Owner B">FRAN</option>
       
       </select>
     </div>
@@ -361,10 +513,57 @@ const Orderreview =()=>{
     } 
         />
     </div>
-    <div>
+    <div className="relative">
       <label className="block text-sm font-medium">Confirm Shipping Address</label>
-      <textarea rows={3} className="w-full border rounded px-3 py-2 mt-1"
-        value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} />
+      <div className="relative">
+        <textarea 
+          ref={textareaRef}
+          rows={3} 
+          className="w-full border rounded px-3 py-2 mt-1"
+          value={shippingAddress} 
+          onChange={handleAddressChange}
+          onFocus={handleTextareaFocus}
+          placeholder="Start typing an address..."
+        />
+        {selectedAddress && (
+          <button
+            onClick={clearSelectedAddress}
+            className="absolute right-2 top-2 p-1 hover:bg-gray-100 rounded-full"
+            title="Clear address"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Address Suggestions Dropdown */}
+      {showAddressDropdown && addressSuggestions.length > 0 && !selectedAddress && (
+        <div ref={addressDropdownRef} className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+          {addressSuggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+              onClick={() => handleAddressSelect(suggestion)}
+            >
+              <MapPin size={16} className="text-gray-400" />
+              <div className="text-sm">
+                <div className="font-medium">{suggestion.address}</div>
+                <div className="text-gray-500">
+                  {[suggestion.city, suggestion.postcode]
+                    .filter(Boolean)
+                    .join(', ')}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isLoadingAddress && (
+        <div className="absolute right-3 top-3">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+        </div>
+      )}
     </div>
     <div>
       <label className="block text-sm font-medium">Source of Truth</label>
@@ -391,6 +590,7 @@ const Orderreview =()=>{
         <option value="Bank Transfer">Bank Transfer</option>
         <option value="PayPal">PayPal</option>
         <option value="Cash">Cash</option>
+        <option value="Crypto">Crypto</option>
       </select>
     </div>
   </div>
@@ -424,17 +624,17 @@ const Orderreview =()=>{
              
              {/* Submit Button */}
             {
-             update==false&& (task.confirm==false?<div className="flex justify-end">
+             update==false&& (task?.confirm==false?<div className="flex justify-end">
                <Button onClick={() =>Submit()}>Submit</Button>
              </div>:<div className="flex justify-end">
                <Button onClick={() =>Orderreview()}>Order review</Button>
              </div>)
              }
              {
-              update==true&&task&&
-              <div className="flex justify-end">
-                <Button onClick={()=>Submit()}>Update</Button>
-              </div>
+              // update==true&&task&&
+              // <div className="flex justify-end">
+              //   <Button onClick={()=>Submit()}>Update</Button>
+              // </div>
              }
       </DialogContent>
     </Dialog>
@@ -510,8 +710,7 @@ const Orderreview =()=>{
           <Button onClick={() => AddnewLabel(selectedColor, newLabel)}>Add</Button>
         </DialogContent>
       </Dialog>
-
-     
     </>
   );
+  
 }

@@ -5,7 +5,8 @@ import axios from "axios";
 import { Custprop, dCustomerArray } from "../Small comps/Types";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
-import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder} from "@/lib/features/Newrequest/NewRequestSlice";
+import { Toggleleadsrenderstep, Addshopifycustomer,Addmongodbcustomer, Addselectedcusotmer, addItem ,Addcreatedorder, Addnoofleads} from "@/lib/features/Newrequest/NewRequestSlice";
+import { toast } from "sonner";
 
 const debounce = <T extends unknown[]>( func: (...args: T) => void,delay: number ) => {
     let timer: ReturnType< typeof setTimeout>;
@@ -34,7 +35,7 @@ const Firsthalf = ({
 }: FirstHalfProps) => {
   const dispatch = useDispatch();
   const selectedItems = useSelector((state: RootState) => state.NewReq.selectedItems);
-  console.log(selectedItems)
+ 
   const [shopifyCustomers, setShopifyCustomers] = useState<dCustomerArray>([]);
   const [mongoCustomers, setMongoCustomers] = useState<dCustomerArray>([]);
   const [userId, setUserId] = useState<string | null>("");
@@ -55,7 +56,7 @@ const Firsthalf = ({
         search: query,
         id: userId,
       });
-
+      console.log(data.d)
       setMongoCustomers(data.dm);
       setShopifyCustomers(data.d);
       dispatch(Addshopifycustomer(data.d));
@@ -71,8 +72,10 @@ const Firsthalf = ({
   return (
     <div className="w-full h-[45%] flex flex-col gap-0.5">
       {/* Selected Product Name */}
-      <div className="h-[20%] w-full flex justify-center items-center text-md font-bold">
-        {selectedItems?.name}
+      <div className="h-[20%] w-full flex justify-center items-center ">
+        <div className="w-[80%] text-center truncate text-nowrap text-md font-bold overflow-hidden px-2">
+          <span className="truncate">{selectedItems?.name}</span>
+        </div>
       </div>
 
       {/* Product Image */}
@@ -90,17 +93,18 @@ const Firsthalf = ({
       <div className="h-[30%] flex flex-col">
         {selectedcustomer ? (
           <div className="w-full h-full flex justify-center items-center">
-            <div className="flex flex-col w-[80%] h-[90%] bg-white rounded-2xl p-2 text-sm text-black">
-              <div className="font-semibold">
+            <div className="flex flex-col gap-1 w-[80%] h-[98%] bg-white rounded-2xl p-2 text-sm text-black text-nowrap">
+              <div className="font-semibold truncate max-w-[90%]">
               
                 {
                 selectedcustomer.customerfrom === "shopify"
                   ? "Name : "+`${selectedcustomer.first_name} ${selectedcustomer.last_name}`
-                  : selectedcustomer.Name!=''?"Name : "+selectedcustomer.Name:selectedcustomer.socialhandel!=''?"Socials : "+selectedcustomer.socialhandel:""
+                  : selectedcustomer.first_name!=''&& selectedcustomer.last_name!=''?
+                  "Name : "+selectedcustomer.first_name + ' '+selectedcustomer.last_name:selectedcustomer.socialhandel!=''?"Socials : "+selectedcustomer.socialhandel:""
                   
                   }
               </div>
-              <div className="text-gray-600">{
+              <div className="text-gray-600 truncate max-w-[90%]">{
               
               selectedcustomer.email!=''?
               "Email: "+ selectedcustomer.email:
@@ -167,19 +171,24 @@ const Firsthalf = ({
                           key={`mongo-${index}`}
                           className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                           onClick={() => {
-                            setsearchclient(customer.Name);
+                            setsearchclient(customer.first_name+" "+customer.last_name);
                             dispatch(Addselectedcusotmer(customer))    //if something go wrong with customer it have to do with this bit
                             setselectedcustomer(customer);
                             setsugbox(false);
                           }}
                         >
-                          <div className="font-medium">{
-                        
-                             customer.Name!=''?customer.Name:customer.socialhandel!=''?customer.socialhandel:customer.Number?customer.Number:""
-
-                        
-                        }</div>
-                          <div className="text-gray-500 text-xs">{customer.email !==''?customer.email:(customer.Number && customer.Name!='' ||customer.socialhandel!='' )?customer.Number:""}</div>
+                          <div className="font-medium">
+                            {
+                                 customer.first_name !== '' 
+                                   ? (customer.last_name !== '' 
+                                       ? customer.first_name + ' ' + customer.last_name 
+                                       : customer.first_name)
+                                   : (customer.socialhandel !== '' 
+                                       ? customer.socialhandel 
+                                       : (customer.Number ? customer.Number : ""))
+                                 }
+                               </div>
+                          <div className="text-gray-500 text-xs">{customer.email !==''?customer.email:(customer.Number && customer.first_name!=''&&customer.last_name ||customer.socialhandel!='' )?customer.Number:""}</div>
                         </div>
                       ))}
                     </>
@@ -288,9 +297,9 @@ const Secondhalf = ({
           className="bg-gray-50 border border-black text-gray-900 text-sm rounded-lg w-full p-2.5"
         >
           <option value="">Choose Condition</option>
-          <option value="new"> New</option>
-          <option value="used">Pre Loved</option>
-          <option value="both">Any Condition</option>
+          <option value="New"> New</option>
+          <option value="pre-loved">Preloved</option>
+          <option value="Any">Any Condition</option>
         </select>
       </div>
 
@@ -330,6 +339,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   const [sugbox, setsugbox] = useState<boolean>(false);
   const [userid, setUserid] = useState<string | null>("");
 
+  const numofleads=useSelector((state:RootState)=>state.NewReq.noofleads)
  
   useEffect(()=>{
     setSelectedcustomer(t)
@@ -338,13 +348,17 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       setUserid(localStorage.getItem("tempcred"));
-  
+      
     }
     
   }, []);
 
   const submitRequest=async(size:string,Selectcondition:string,customer:Custprop|null)=>{
-    // console.log("seleted customer :",customer)
+   
+    if(selectedCondition==""||!selectedCondition){
+      toast("please Select Product Condition")
+      return
+    }
     // console.log("size             :",size)
     // console.log("condition        : ",Selectcondition)
     let Name;
@@ -362,7 +376,10 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
     }
     else if(customer?.customerfrom=='mongodb')
     {
-       Name=customer.Name!=''?customer.Name:customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
+       Name=customer.first_name!=''&&customer.last_name!=''?customer.first_name+' '+customer.last_name   
+       :
+       customer.first_name!=''?customer.first_name:
+       customer.socialhandel!=''?customer.socialhandel:customer.email!=''?customer.email:customer.Number!=''?customer.Number:"N/a"
     }
     let newOrder=null;
     if(customer!=null && selectedItems && f==="stockx" )
@@ -370,6 +387,8 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
        newOrder={
         customerid:customer._id,
         Name:Name,
+        first_name:customer.first_name,
+        last_name:customer.last_name,
         Stockxid:selectedItems._id,
         clientFrom:customer.customerfrom?customer.customerfrom:null,
         size,
@@ -382,6 +401,8 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
           newOrder={
             customerid:customer._id,
             items:selectedItems._id,
+            first_name:customer.first_name,
+            last_name:customer.last_name,
             Name:Name,
             clientFrom:customer.customerfrom?customer.customerfrom:null,
             size,
@@ -395,8 +416,8 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
       const result=await   axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/CreateOrders`,{
         newOrder:newOrder
       })
-      
-      console.log(result)
+      dispatch(Addselectedcusotmer(null))
+      dispatch(Addnoofleads(numofleads+1))
       dispatch(Addcreatedorder(result.data.data))
       dispatch(Toggleleadsrenderstep(4))
   

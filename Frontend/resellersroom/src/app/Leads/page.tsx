@@ -14,14 +14,19 @@ import {
 import DraggableCard from "../Components/Leads_panel/DraggableCard";
 import axios from "axios";
 import { useDispatch } from "react-redux";
+import EditPopup from "../Components/Customer/Editpopup";
 //import { Reseller, RootState } from "@/lib/Resellerstore";
-import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import {  Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
 import { statetype, Task } from "../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
 import { useIsSmallScreen } from "../Components/Small comps/Issmall";
+import { Addcurrentorder, AddOrderid, AddSelectedOrder,ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
+
 const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
 });
+
 
 type Props = object;
 
@@ -37,7 +42,7 @@ export default function Page({}: Props) {
   const [wonpopup,setwonpopup]=useState<boolean>(false)
   const [wontask,setwontask]=useState<Task|null>(null)
 
-const lockRef = useRef(false);
+  const lockRef = useRef(false);
 
   
 
@@ -62,6 +67,7 @@ const lockRef = useRef(false);
       setuserid(id);
     }
   }, []);
+
   const fetchallorders = async () => {
     if (userid != "") {
       const mongodata = (
@@ -72,7 +78,7 @@ const lockRef = useRef(false);
           }
         )
       ).data;
-      console.log(mongodata);
+     console.log(mongodata) 
       setstate(mongodata);
       getprices(mongodata); // pass fresh state to getprices
     }
@@ -269,14 +275,24 @@ function timeout(ms: number) {
           taskid: currenttask,
           newstage: destinationCol.id,
         }
-        
       );
      
       if(destinationCol.title=='Won')
       {
         await timeout(700);
-        setwontask(currenttask)
-        setwonpopup(true)
+        if(currenttask.cusid&& currenttask.cusid?.email!="" && currenttask?.phone!="")
+        {
+          setwontask(currenttask)
+        dispatch(Addcurrentorder(currenttask))
+          setwonpopup(true)
+          dispatch(ToogleCompleteorder())
+          dispatch(AddSelectedOrder(currenttask))
+        }
+        else{
+          dispatch(AddSelectedCustomer(currenttask.cusid))
+          dispatch(AddOrderid(currenttask._id))
+          dispatch(Toogle_Editopen())
+        }
       }
     }
       catch (error) {
@@ -350,11 +366,20 @@ function timeout(ms: number) {
     <DndContext onDragStart={DragStart} onDragEnd={DragEnd} sensors={sensors}>
        {/* Header with Leads label and search bar */}
      {/* Header with Leads label and search bar */}
-     {wonpopup && wontask &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup} task={wontask} update={false} />}
+     {wonpopup && wontask  &&<CompleteOrderPopup  fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup}  update={false} />}
+
+     <EditPopup getcustomers={fetchallorders} method="leads" /> 
    {!isSmallScreen&& 
    
-   <div className="w-full flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white  sticky top-0 z-40">
-      <h1 className=" text-3xl font-semibold text-gray-800 dark:text-[#888888]">Leads Management</h1>
+   <div className="w-[80vw] flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white sticky top-0 z-40">
+      <div className="flex items-center gap-2">
+        <img 
+          src="/images/Lead.png" 
+          alt="Leads Icon" 
+          className="w-8 h-8 text-gray-800 dark:text-[#888888]"
+        />
+        <h1 className="text-3xl font-semibold text-[#888888] dark:text-[#888888]">Lead Management</h1>
+      </div>
       <input
         type="text"
         value={search}
@@ -364,7 +389,9 @@ function timeout(ms: number) {
         placeholder="Search by customer and product "
         className="w-full lg:w-54 px-4 py-2 border-2 text-xs p-4 text-black border-gray-300 rounded-lg "
       />
-    </div>}
+    </div>
+    
+    }
 
       <div className="overflow-x-auto pb-4 w-full">
       <div className="flex w-max space-x-4">

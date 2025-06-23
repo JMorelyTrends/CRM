@@ -51,7 +51,7 @@ useEffect(() => setIsClient(true), []);
             This Year
           </button>
 
-          <button
+          {/* <button
             onClick={() => {
               setactive("week");
               setinternval("week");
@@ -61,7 +61,7 @@ useEffect(() => setIsClient(true), []);
             }`}
           >
             This Month
-          </button>
+          </button> */}
 
           <button
             onClick={() => {
@@ -83,9 +83,9 @@ useEffect(() => setIsClient(true), []);
             ["Live Request", otherdetails.liveRequests],
             ["Need to Source", otherdetails.needToSource],
             ["New Orders", otherdetails.newOrders],
-            ["Live Request:Won", `${otherdetails.liveRequests}:${otherdetails.wonOrders} `],
-            ["Won profit", otherdetails.wonProfit],
-            ["Won Revenue", otherdetails.wonRevenue],
+            ["Live vs Won", `${otherdetails.liveRequests}:${otherdetails.wonOrders} `],
+            ["Won profit", `${otherdetails.wonProfit} £`],
+            ["Won Revenue", `${otherdetails.wonRevenue} £`],
            
           ].map(([title, value], i) => (
             <div

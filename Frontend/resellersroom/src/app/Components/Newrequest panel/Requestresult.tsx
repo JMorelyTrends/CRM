@@ -68,7 +68,7 @@ const Requestresult = ({suggesteddata,spin}: {suggesteddata:Suggest[], spin:bool
              //here the flow is changing
       setnotfound(!notfound); 
     }}
-    ><span>Product Not found</span></div>  
+    ><span>Product Not Found</span></div>  
     </div>
     
     <div className="w-full h-[90%] overflow-y-auto flex flex-col gap-4 p-2">

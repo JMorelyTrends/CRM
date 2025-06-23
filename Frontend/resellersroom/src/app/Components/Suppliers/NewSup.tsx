@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import BrandSelector from "./BrandSelector";
@@ -15,31 +15,38 @@ import {
 import { Button } from "@/components/ui/button";
 import {  X } from "lucide-react";
 import { CloudDownload } from "lucide-react";
-
+import {  useDispatch} from 'react-redux';
+import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
+import PhoneInput from "../Small comps/PhoneInput";
 type Props = {
   Newopen: boolean;
   setNewopen: React.Dispatch<React.SetStateAction<boolean>>;
   getallsups:  React.Dispatch<React.SetStateAction<void>>; 
 };
 
-const NewSup = (props: Props) => {
+const NewSup = (props: Props) => {  
+  const dispatch=useDispatch()
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [dragActive, setDragActive] = useState(false);
   const [filedata, setfiledata] = useState<File | null>(null);
+  const [userid,setuserid]=useState<string|null>("")
+  useEffect(() => {
+    dispatch(Toggleleadsrenderstep(0));
+    if (typeof window !== "undefined") {
+      const id = localStorage.getItem("tempcred");
+      setuserid(id);
+    }
+    //move to login
+  }, []);
 
   //inputs states
   const [supplierName, setSupplierName] = useState<string>("");
   const [number, setNumber] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [website, setWebsite] = useState<string>("");
-
-
-
-
   //Brand selection
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 
   const close = () => {
     props.setNewopen(false);
@@ -53,13 +60,19 @@ const NewSup = (props: Props) => {
 
 
   };
-
+  const getlastn = (s:string, n:number) => s.slice(-n);
   const Submit = async () => {
-    if (number && number.length != 11) {
-      return toast.error("number should be 11 character long");
+   
+    if (number) {
+      const cleanNumber = number.replace(/^\+/, '');
+      const phoneNumber = getlastn(cleanNumber, 10);
+      if (phoneNumber.length !== 10) {
+        toast.error("Phone number must be 10 digits");
+        return;
+      }
     }
     if (
-      supplierName &&
+      supplierName && userid&&
       ((number && !email) || (!number && email) || (number && email))
     ) {
       let imageUrl = "";
@@ -97,6 +110,8 @@ const NewSup = (props: Props) => {
         ...(website && { Website: website }),
         ...(selectedBrands && { Brand: selectedBrands }),
         ...(imageUrl && { image: imageUrl }),
+        userid
+
       };
       try {
         await axios.post(
@@ -117,7 +132,6 @@ const NewSup = (props: Props) => {
       );
     }
   };
-
 
   return (
     <Dialog open={props.Newopen} onOpenChange={() => close()}>
@@ -216,7 +230,7 @@ const NewSup = (props: Props) => {
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
-              <input
+              {/* <input
                 type="text"
                 placeholder="Number"
                 value={number}
@@ -224,7 +238,8 @@ const NewSup = (props: Props) => {
                   setNumber(e.target.value)
                 }
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
+              /> */}
+                <PhoneInput number={number} setNumber={setNumber} />
               <input
                 type="email"
                 placeholder="Email"
@@ -247,24 +262,9 @@ const NewSup = (props: Props) => {
 
             {/* Dropdown */}
             <BrandSelector
-            isOpen={isOpen}
-            setIsOpen={setIsOpen}
             selectedBrands={selectedBrands}
             setSelectedBrands={setSelectedBrands}
-
             />
-
-            {/* Show selected brands below (optional preview) */}
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {selectedBrands.map((brand, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-300 text-xs px-3 py-1 rounded-full text-black font-medium"
-                >
-                  {brand}
-                </span>
-              ))}
-            </div>
 
             {/* Buttons */}
             <div className="flex justify-between mt-4">
