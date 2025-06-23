@@ -456,7 +456,7 @@ const Orderreview =()=>{
     </div>
 
   {
-    availsuppliers && availsuppliers.length>0 && <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
+    availsuppliers &&  <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
   }
 {/* <div>
   <label className="block text-sm font-medium">Supplier Used</label>
