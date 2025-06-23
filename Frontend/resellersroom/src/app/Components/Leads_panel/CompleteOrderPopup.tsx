@@ -2,8 +2,8 @@
 "use client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Check, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Plus, Check, X, MapPin } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {  labeltype } from "../Small comps/Types";
 import { Supplier } from "../Small comps/Types";
 import axios from "axios";
@@ -14,6 +14,35 @@ import { useDispatch, useSelector } from "react-redux";
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
 import { RootState } from "@/lib/Resellerstore";
 import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
+
+// Custom debounce function
+function useDebounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+) {
+  const [timeoutRef, setTimeoutRef] = useState<NodeJS.Timeout | null>(null);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef) clearTimeout(timeoutRef);
+
+      const timeout = setTimeout(() => {
+        callback(...args);
+      }, delay);
+
+      setTimeoutRef(timeout);
+    },
+    [callback, delay, timeoutRef]
+  );
+}
+
+interface AddressSuggestion {
+  address: string;
+  city: string;
+  country: string;
+  postcode: string;
+}
+
 export function CompleteOrderPopup({ 
   open,
   setOpen,
@@ -39,6 +68,12 @@ export function CompleteOrderPopup({
   const [processingFee, setProcessingFee] = useState<string>(task?.processingfee ?? '');
   const [supplierUsed, setSupplierUsed] = useState<string>('');
   const [shippingAddress, setShippingAddress] = useState<string>(task?.shippingaddress ?? '');
+  const [shippingAddressObj, setShippingAddressObj] = useState<{
+    address1: string;
+    city: string;
+    postcode: string;
+    country: string;
+  } | null>(null);
   const [dealOwner, setDealOwner] = useState<string>(task?.DealOwner ?? '');
   const [sourceOfTruth, setSourceOfTruth] = useState<string>(task?.Sourceofthruth ?? '');
   const [paymentMethod, setPaymentMethod] = useState<string>(task?.paymentmethod ?? '');
@@ -56,6 +91,94 @@ export function CompleteOrderPopup({
   
 const router=useRouter()
 
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
+  const addressDropdownRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Address search function
+  const searchAddress = async (searchText: string) => {
+    if (searchText.length < 2) {
+      setAddressSuggestions([]);
+      return;
+    }
+    setIsLoadingAddress(true);
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getaddress`, {
+        searchText
+      });
+      if (response.data.success) {
+        setAddressSuggestions(response.data.suggestions);
+        setShowAddressDropdown(true);
+      }
+    } catch (error) {
+      toast.error("Error fetching address suggestions");
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  };
+
+  // Debounced search function
+  const debouncedSearch = useDebounce(searchAddress, 500);
+
+  // Handle address input change
+  const handleAddressChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setShippingAddress(value);
+    setSelectedAddress(null);
+    debouncedSearch(value);
+  };
+
+  // Handle address selection (no details API needed)
+  const handleAddressSelect = (suggestion: AddressSuggestion) => {
+    const addressObj = {
+      address1: `${suggestion.address}${suggestion.postcode ? ', ' + suggestion.postcode : ''} ${suggestion.country ? suggestion.country : ''}`.trim(),
+      city: suggestion.city,
+      postcode: suggestion.postcode,
+      country: suggestion.country
+    };
+    setShippingAddress(
+      [suggestion.address, suggestion.city, suggestion.postcode, suggestion.country].filter(Boolean).join('\n')
+    );
+    setShippingAddressObj(addressObj);
+    setSelectedAddress(suggestion);
+    setShowAddressDropdown(false);
+  };
+
+  // Clear selected address
+  const clearSelectedAddress = () => {
+    setShippingAddress('');
+    setSelectedAddress(null);
+    setShowAddressDropdown(false);
+  };
+
+  // Show dropdown when textarea is focused
+  const handleTextareaFocus = () => {
+    if (addressSuggestions.length > 0 && !selectedAddress) {
+      setShowAddressDropdown(true);
+    }
+  };
+
+  // Hide dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        addressDropdownRef.current &&
+        !addressDropdownRef.current.contains(event.target as Node) &&
+        textareaRef.current &&
+        !textareaRef.current.contains(event.target as Node)
+      ) {
+        setShowAddressDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [addressDropdownRef, textareaRef]);
+
   useEffect(() => {
     dispatch(Toggleleadsrenderstep(0));
     if (typeof window !== "undefined") {
@@ -65,12 +188,16 @@ const router=useRouter()
   }, []);
 
   const getsuppliers=async()=>{
-     const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
+    try{ const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
       userid
      });
      console.log(sup.data.supps)
-      setavailsuppliers(sup.data.supps)
+      setavailsuppliers(sup.data.supps)}
+      catch{
+        toast.error("something wrong when fetching suppliers")
+      }
     }
+
 
   useEffect(()=>{
    if(userid!==""&&userid)
@@ -234,7 +361,7 @@ const Orderreview =()=>{
 }
 
   const Submit=async()=>{
-    if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&shippingAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
+    if(productName &&size&&costPrice&&shippingFee&&processingFee&&supplierUsed&&selectedAddress&&dealOwner&&sourceOfTruth&&paymentMethod)
     {
      
       await axios.post(
@@ -248,7 +375,7 @@ const Orderreview =()=>{
          Supplierid:supplierUsed,
          Shippingfee:shippingFee,
          processingfee:processingFee,
-         shippingaddress:shippingAddress,
+         shippingaddress:shippingAddressObj,
          Sourceofthruth:sourceOfTruth,
          paymentmethod:paymentMethod,
          DealOwner:dealOwner,
@@ -389,10 +516,57 @@ const Orderreview =()=>{
     } 
         />
     </div>
-    <div>
+    <div className="relative">
       <label className="block text-sm font-medium">Confirm Shipping Address</label>
-      <textarea rows={3} className="w-full border rounded px-3 py-2 mt-1"
-        value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} />
+      <div className="relative">
+        <textarea 
+          ref={textareaRef}
+          rows={3} 
+          className="w-full border rounded px-3 py-2 mt-1"
+          value={shippingAddress} 
+          onChange={handleAddressChange}
+          onFocus={handleTextareaFocus}
+          placeholder="Start typing an address..."
+        />
+        {selectedAddress && (
+          <button
+            onClick={clearSelectedAddress}
+            className="absolute right-2 top-2 p-1 hover:bg-gray-100 rounded-full"
+            title="Clear address"
+          >
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Address Suggestions Dropdown */}
+      {showAddressDropdown && addressSuggestions.length > 0 && !selectedAddress && (
+        <div ref={addressDropdownRef} className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+          {addressSuggestions.map((suggestion, index) => (
+            <div
+              key={index}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+              onClick={() => handleAddressSelect(suggestion)}
+            >
+              <MapPin size={16} className="text-gray-400" />
+              <div className="text-sm">
+                <div className="font-medium">{suggestion.address}</div>
+                <div className="text-gray-500">
+                  {[suggestion.city, suggestion.postcode]
+                    .filter(Boolean)
+                    .join(', ')}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isLoadingAddress && (
+        <div className="absolute right-3 top-3">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+        </div>
+      )}
     </div>
     <div>
       <label className="block text-sm font-medium">Source of Truth</label>

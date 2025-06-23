@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const Orderreview=require("../Models/Orderreview")
 require("@shopify/shopify-api/adapters/node");
 const {session,shopify}=require("../utils/ShopifyConnect")
+const opencage = require('opencage-api-client');
 
 const normalizePhoneNumber = (phone) => {
   if (!phone) return "";
@@ -841,7 +842,58 @@ const deleteCustomer = async (req, res) => {
 
 
 
+//--------------------------------get address which we need to create shipping address on order completion--------------//
 
+// Address suggestions endpoint
+const getaddress = async (req, res) => {
+  try {
+    const { searchText } = req.body;
+    if (!searchText || searchText.trim().length < 2) {
+      return res.status(400).json({ message: "Please provide at least 2 characters to search" });
+    }
+    const API_KEY = process.env.GEOAPIFY_API_KEY;
+    if (!API_KEY) throw new Error('GEOAPIFY_API_KEY not configured');
+    const apiUrl = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(searchText)}&limit=8&apiKey=${API_KEY}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'API request failed');
+    // Map Geoapify features to our suggestion format
+    const suggestions = (data.features || []).map(f => ({
+      address: f.properties.formatted,
+      city: f.properties.city || f.properties.town || f.properties.village || '',
+      country: f.properties.country || '',
+      postcode: f.properties.postcode || '',
+      // Optionally, you can add lat/lon if needed:
+      // lat: f.properties.lat,
+      // lon: f.properties.lon
+    }));
+    res.status(200).json({ success: true, suggestions });
+  } catch (error) {
+    console.error('Geoapify address lookup error:', error);
+    res.status(500).json({ message: "Server error while getting address", error: error.message });
+  }
+}
+
+// Address details endpoint
+const getaddressdetails = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: "Missing address id" });
+    const API_KEY = process.env.GET_ADDRESS_API_KEY;
+    if (!API_KEY) throw new Error('GET_ADDRESS_API_KEY not configured');
+    const detailsUrl = `https://api.getaddress.io/get/${id}?api-key=${API_KEY}`;
+    const detailsResponse = await fetch(detailsUrl);
+    const details = await detailsResponse.json();
+    if (!detailsResponse.ok) throw new Error(details.Message || 'API request failed');
+    // Return full address details
+    res.status(200).json({ success: true, details });
+  } catch (error) {
+    console.error('Address details lookup error:', error);
+    res.status(500).json({ message: "Server error while getting address details", error: error.message });
+  }
+}
+
+///--------------------------------end of this address api--------------------------------------------------//
 
 
 
@@ -1366,10 +1418,15 @@ async function createShoOrder(customerid, product, tags, shipping, rev) {
         id: customerid
       },
       shipping_address: {
-        address1: shipping.address1 || shipping,
-        country: 'United Kingdom',
-        first_name: "test",
-        last_name: 'test'
+        first_name: shipping.first_name || '',
+        last_name: shipping.last_name || '',
+        address1: shipping.address1 || '',
+        address2: shipping.address2 || '',
+        city: shipping.city || '',
+        province: shipping.province || '',
+        country: shipping.country || '',
+        zip: shipping.postcode || '',
+       
       },
       financial_status: 'paid',
       tags: 'CRM order',
@@ -1552,5 +1609,7 @@ module.exports = {
   searchShopifyProduct,
   createShopifyProduct,
   updateShopifyProduct,
-  manageShopifyProduct
+  manageShopifyProduct,
+  getaddress,
+  getaddressdetails,
 };

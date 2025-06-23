@@ -250,3 +250,20 @@ export interface IShopifyCustomer {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface GeocodingResult {
+  formatted: string;
+  components: {
+    road?: string;
+    house_number?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
+  geometry: {
+    lat: number;
+    lng: number;
+  };
+}

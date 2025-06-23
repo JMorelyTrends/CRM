@@ -356,12 +356,12 @@ getOrderofCustomer
 }=req.body;
   
   try{
-    
+   
     const rev=parseFloat(sell)||0;
     const cog=parseFloat(price)||0;
     const pp=parseFloat(processingfee)||0;
     const sh=parseFloat(Shippingfee)||0
-    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress,
+    const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress.address1,
     Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
    
 
@@ -377,8 +377,8 @@ getOrderofCustomer
     }
     else{
       customerid= {
-      first_name: order.Name,
-      last_name: " ",
+      first_name: order.Name.split(" ")[0],
+      last_name:  order.Name.split(" ")[1],
       email: order.cusid.email?order.cusid.email:"",
       phone: order.cusid.Number?order.cusid.Number:""
     }
@@ -439,8 +439,12 @@ getOrderofCustomer
       tags=["notags"]
     }
     shiping={
-      first_name: order.Name,
-      address1: shippingaddress,
+      first_name: order.Name.split(" ")[0],
+      last_name: order.Name.split(" ")[1],
+      address1: shippingaddress.address1,
+      city:shippingaddress.address1,
+      country:shippingaddress.country,
+      postcode:shippingaddress.postcode
     }
    
     

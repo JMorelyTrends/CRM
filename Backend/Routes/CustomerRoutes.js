@@ -14,7 +14,9 @@ const {
 createshopifycustoemr,
 updateshopifycustomer,
 UseShopiyfcustomer,
-Cuscrmupdate
+Cuscrmupdate,
+getaddress,
+getaddressdetails
 } = require("../Controllers/CustomerController");
 
 // Routes
@@ -32,6 +34,8 @@ router.post("/cratenewhsopifycustomer",createshopifycustoemr)
 router.post("/updateshopifycustomer",updateshopifycustomer);
 router.post("/usethecustomer",UseShopiyfcustomer)
 router.post("/Cuscrmupdate",Cuscrmupdate)
+router.post("/getaddress",getaddress)
+router.post("/getaddressdetails",getaddressdetails)
 
 
 module.exports = router;
