@@ -143,7 +143,7 @@ const Newcustomer = (props: Props) => {
         className="w-full flex-1 bg-[#EBEBEB] rounded-xl overflow-auto p-6 flex flex-col gap-4"
       >
         <div className="flex flex-col">
-          <label className="mb-1 font-medium">first Name</label>
+          <label className="mb-1 font-medium">First Name</label>
           <input
             type="text"
             value={first_name}
@@ -178,7 +178,7 @@ const Newcustomer = (props: Props) => {
         </div>
 
         <div className="flex flex-col">
-          <label className="mb-1 font-medium">Social Media handel</label>
+          <label className="mb-1 font-medium">Social Media handle</label>
           <input
             type="text"
            

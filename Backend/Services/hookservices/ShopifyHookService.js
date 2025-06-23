@@ -201,15 +201,14 @@ class ShopifyHookService{
 
     static async handleOrderRefund(orderData) 
     {
-         console.log("refund data :",orderData)
+      
         const [d, k] = await Promise.all([
             Orderreview.findOne({ soid: orderData.order_id }),
             Order.findOne({ shopifyorderid: orderData.order_id }).populate("cusid")
         ]);
-        console.log("Review",d)
-        console.log("orders =",k)
+       
         const status = (d && d.status) || (k && k.status) || null;
-        console.log("Status",status)
+     
         if(status !=="active"){
          return
         }
@@ -222,7 +221,7 @@ class ShopifyHookService{
             
       
             const cu = await Customer.findOne({ shopifyid: d.customer.id });
-            console.log("actual customer ",cu) 
+          
            //Step 3: check if the customer is in our customer db or not
 
             if (cu) {
@@ -247,9 +246,9 @@ class ShopifyHookService{
         }
         else if(k)
             {
-                console.log("order review ",d)
+             
                 const cu=k.cusid
-                console.log("actual customer ",cu) 
+               
                 if (cu) {
                     const o = Math.max(0, cu.orders_count - 1);
                     const tsp = Math.max(0, cu.total_spend - totalRefunded);

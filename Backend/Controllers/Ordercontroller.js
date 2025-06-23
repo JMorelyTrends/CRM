@@ -212,14 +212,18 @@ exports.getOrderofCustomer=async(req,res)=>{
     const {id}=req.body;
    if(id){
     const n=await Order.find({cusid:id,stage:"Won"}).populate("items").populate("stockxitem").populate("labels");
-   
-    return res.status(201).json({data:n})}
+    let price=0;
+    n.map((d)=>{
+      price+=d.sellprice
+    })
+
+    return res.status(201).json({data:n,p:price})}
     res.status(201).json({message:"no orders"})
   
 }
 catch(err)
 {
-  console.log
+  
   res.json(500).json({message:"error in getting the numbers of leads"})
 }
 }
