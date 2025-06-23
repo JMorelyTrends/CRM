@@ -6,7 +6,7 @@ const Orderreview = require("../../Models/Orderreview");
 class ShopifyHookService{
     static async processEvent(eventType,data)
     {
-        console.log(eventType)  
+    
         switch (eventType) {
             
             case 'orders/create':
@@ -102,15 +102,25 @@ class ShopifyHookService{
             Orderreview.findOne({ soid: orderData.id }),
             Order.findOne({ shopifyorderid: orderData.id }).populate("cusid")
         ]);
-        const status=d?d.status:k?k.status:null;
+        const status = (d && d.status) || (k && k.status) || null;
 
         //--------------------------1 Refund to delete( which will just )----------------------------------//
-        if(status=="Refund")
+        if(status=="Refunded")
         {
-            if(!d&&k)
+            if(d&&!k)
             {
+                
               return  await Orderreview.deleteOne({ soid: orderData.id });
 
+            }
+            else if (!d && k)
+            {
+                return  await Order.findOneAndUpdate({_id:k._id},{
+                    $set:{
+                        status:"deleted",
+                        statusupdate:new Date()
+                    }
+                })
             }
             //here we nee dot see if we want to delete the order which are created on crm
         }
@@ -132,8 +142,7 @@ class ShopifyHookService{
                     $set: {
                         total_spend: tsp,
                         orders_count: o,
-                        status:"deleted",
-                        statusupdate:new Date()
+                       
                     }
                 });
 
@@ -152,10 +161,16 @@ class ShopifyHookService{
                     $set: {
                         total_spend: tsp,
                         orders_count: o,
+                       
+                       
+                    }
+                });
+                await Order.findOneAndUpdate({_id:k._id},{
+                    $set:{
                         status:"deleted",
                         statusupdate:new Date()
                     }
-                });
+                })
 
             }
         }
@@ -186,22 +201,22 @@ class ShopifyHookService{
 
     static async handleOrderRefund(orderData) 
     {
-        // console.log("refund data :",orderData)
+         console.log("refund data :",orderData)
         const [d, k] = await Promise.all([
-            Orderreview.findOne({ soid: orderData.id }),
-            Order.findOne({ shopifyorderid: orderData.id }).populate("cusid")
+            Orderreview.findOne({ soid: orderData.order_id }),
+            Order.findOne({ shopifyorderid: orderData.order_id }).populate("cusid")
         ]);
-        console.log(orderData)
-        const status=d?d.status:k?k.status:null;
-        console.log(status)
+        console.log("Review",d)
+        console.log("orders =",k)
+        const status = (d && d.status) || (k && k.status) || null;
+        console.log("Status",status)
         if(status !=="active"){
          return
         }
         const totalRefunded = (orderData.transactions || [])
         .filter(tx => tx.kind === 'refund' && tx.status === 'success')
         .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-        console.log("total refund money :",totalRefunded)
-        console.log(k)
+      
         if(d)
         { 
             
@@ -217,10 +232,17 @@ class ShopifyHookService{
                     $set: {
                         total_spend: tsp,
                         orders_count: o,
-                        status:"Refunded",
+                       
                         statusupdate:new Date()
                     }
                 },{new:true});
+
+                await Orderreview.findOneAndUpdate({_id:d._id},{
+                    $set:{
+                        status:"Refunded",
+                        statusupdate:new Date()
+                    }
+                })
             }
         }
         else if(k)
@@ -235,10 +257,17 @@ class ShopifyHookService{
                         $set: {
                             total_spend: tsp,
                             orders_count: o,
-                            status:"Refunded",
+                           
                         statusupdate:new Date()
                         }
                     },{new:true});
+                    
+                    await Order.findOneAndUpdate({_id:k._id},{
+                        $set:{
+                            status:"Refunded",
+                            statusupdate:new Date()
+                        }
+                    })
     
                 }
             }

@@ -100,7 +100,7 @@ const Page = () => {
         };
 
         const getTierInfo = (totalSpend: number, tshopifySpend: number) => {
-          const total = totalSpend + tshopifySpend;
+          const total = totalSpend;
           if (total >= 3001) {
             return { tier: 'Platinum', color: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300' };
           } else if (total >= 1251) {

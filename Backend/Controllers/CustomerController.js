@@ -692,9 +692,9 @@ try{
         first_name:d.customers[0]?.first_name,
         last_name:d. customers[0].last_name,
         email:d.customers[0].email,
-        // orders_count:d.customers[0].orders_count,
-        // total_spend:d.customers[0].total_spent,
-        tshopifyspent:d.customers[0].total_spent, // just to know how much customer eran on shopify before we get it on crm to give initail tier
+        orders_count:d.customers[0].orders_count,
+        total_spend:d.customers[0].total_spent,
+        // tshopifyspent:d.customers[0].total_spent, // just to know how much customer eran on shopify before we get it on crm to give initail tier
         Number:d.customers[0].phone,
         userid:order.userid,
         emailMarketingConsent:{
@@ -1254,9 +1254,9 @@ const getshopifybyid_store=async(id,userid)=>{
   first_name:d.customers[0]?.first_name,
   last_name:d. customers[0].last_name,
   email:d.customers[0].email,
-  // orders_count:d.customers[0].orders_count,
-  // total_spend:d.customers[0].total_spent||0,
-  tshopifyspent:d.customers[0].total_spent,
+  orders_count:d.customers[0].orders_count,
+  total_spend:d.customers[0].total_spent||0,
+  // tshopifyspent:d.customers[0].total_spent,
   Number:d.customers[0].phone,
   userid:userid,
   emailMarketingConsent:{
