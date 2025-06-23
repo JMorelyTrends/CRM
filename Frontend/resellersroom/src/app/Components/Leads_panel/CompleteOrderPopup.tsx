@@ -261,7 +261,7 @@ else{
   const Labeltoggle = async (label: labeltype) => {
     if (!task?._id) return;
    
-    console.log(selectedLabels)
+   
     
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
@@ -456,7 +456,7 @@ const Orderreview =()=>{
     </div>
 
   {
-    availsuppliers && availsuppliers.length>0 && <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
+    availsuppliers &&   <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
   }
 {/* <div>
   <label className="block text-sm font-medium">Supplier Used</label>
