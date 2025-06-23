@@ -29,7 +29,7 @@ const Page = () => {
   const selectedCustomer = useSelector((state: RootState) => state.Cus.Selected_customer);
   const [search, setSearch] = useState("");
   const [order, setorder] = useState<Task[]|null>(null);
- 
+  const [tp,settp]=useState<number>(0)
 
   const getorders = async () => {
     try {
@@ -38,6 +38,7 @@ const Page = () => {
           id: selectedCustomer._id,
         });
       setorder(k.data.data);
+      settp(k.data.p)
     } catch  {
       toast.error("Something wrong with getting order for this customer");
     }
@@ -140,13 +141,13 @@ const Page = () => {
             {/* Orders Card */}
             <div className="flex-1 bg-[#F3F3F3] rounded-xl p-3">
               <div className="text-sm font-semibold mb-1">Total Orders</div>
-              <div className="text-xl font-bold">{selectedCustomer.orders_count || 0}</div>
+              <div className="text-xl font-bold">{order?.length || 0}</div>
             </div>
 
             {/* Spend Card */}
             <div className="flex-1 bg-[#F3F3F3] rounded-xl p-3">
               <div className="text-sm font-semibold mb-1">Total Spend</div>
-              <div className="text-xl font-bold">${selectedCustomer.total_spend || 0}</div>
+              <div className="text-xl font-bold">£{tp|| 0}</div>
             </div>
           </div>
         </div>
@@ -158,7 +159,7 @@ const Page = () => {
             <div className="flex items-center gap-2">
               <h3 className="text-xl font-bold">Orders</h3>
               <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
-                {selectedCustomer.orders_count || 0}
+                {order?.length || 0}
               </span>
             </div>
             <input

@@ -287,7 +287,7 @@ const Page = () => {
                       <td className="px-4 py-2 text-center">{customer.Number}</td>
                       <td className="px-4 py-2 text-center">{customer.email}</td>
                       <td className="px-4 py-2 text-center">{customer.socialhandel || '-'}</td>
-                      <td className="px-4 py-2 text-center">{customer.total_spend}</td>
+                      <td className="px-4 py-2 text-center">£{customer.total_spend}</td>
                       <td className="px-4 py-2 text-center">{customer.orders_count || 0}</td>
                       <td className="px-4 py-2 text-center">
                         {(() => {

@@ -446,7 +446,7 @@ const updateCustomer = async (req, res) => {
   } 
   
   catch (error) {
- console.log(error)
+s
     const errors = error?.response?.body.errors;
     if (Object.values(errors)[0]?.[0])
        {
@@ -596,7 +596,7 @@ const updateshopifycustomer=async(req,res)=>{
        },
      };
  
-     //console.log(response)
+
      res.status(201).json({data:ur})
    }
     catch (err) {
@@ -1094,7 +1094,7 @@ const getshopifyorders = async (req, res) => {
       });
      return dbOrder.save();
     });
-
+   
     await Promise.allSettled(savePromises);
     const sendingorders=await Orderreview.find({userid:userid})
       .populate("Supplier_Name")
@@ -1360,6 +1360,7 @@ function buildOrderQuery(afterCursor = null, createdAfter) {
               lineItems(first: 10) {
                 edges {
                   node {
+                    id
                     title
                     quantity
                     originalUnitPriceSet {
