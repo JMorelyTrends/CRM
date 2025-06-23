@@ -387,7 +387,7 @@ const OrdersPage = () => {
       </span>
     </td>
 
-    <td className="px-4 py-2 max-w-[200px] break-words">
+    <td className="px-4 py-2 max-w-[200px] break-words text-wrap">
       {order.shippingaddress || "N/A"}
     </td>
 

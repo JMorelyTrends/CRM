@@ -99,7 +99,7 @@ const Page = () => {
           setSortBy(sort);
         };
 
-        const getTierInfo = (totalSpend: number, tshopifySpend: number) => {
+        const getTierInfo = (totalSpend: number) => {
           const total = totalSpend;
           if (total >= 3001) {
             return { tier: 'Platinum', color: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300' };
@@ -292,8 +292,8 @@ const Page = () => {
                       <td className="px-4 py-2 text-center">
                         {(() => {
                           const totalSpend = Number(customer.total_spend) || 0;
-                          const tshopifySpend = Number(customer.tshopifyspent) || 0;
-                          const { tier, color } = getTierInfo(totalSpend, tshopifySpend);
+                         
+                          const { tier, color } = getTierInfo(totalSpend);
                           return (
                             <button className={`px-2 py-1 rounded-full ${color}`}>
                               {tier}

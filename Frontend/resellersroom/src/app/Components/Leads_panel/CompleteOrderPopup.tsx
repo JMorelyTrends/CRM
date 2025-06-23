@@ -16,18 +16,15 @@ import { RootState } from "@/lib/Resellerstore";
 import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
 
 // Custom debounce function
-function useDebounce<T extends (...args: any[]) => void>(
-  callback: T,
-  delay: number
-) {
+function useDebounce<A>(callback: (arg: A) => void, delay: number) {
   const [timeoutRef, setTimeoutRef] = useState<NodeJS.Timeout | null>(null);
 
   return useCallback(
-    (...args: Parameters<T>) => {
+    (arg: A) => {
       if (timeoutRef) clearTimeout(timeoutRef);
 
       const timeout = setTimeout(() => {
-        callback(...args);
+        callback(arg);
       }, delay);
 
       setTimeoutRef(timeout);
@@ -113,7 +110,7 @@ const router=useRouter()
         setAddressSuggestions(response.data.suggestions);
         setShowAddressDropdown(true);
       }
-    } catch (error) {
+    } catch {
       toast.error("Error fetching address suggestions");
     } finally {
       setIsLoadingAddress(false);
@@ -121,7 +118,7 @@ const router=useRouter()
   };
 
   // Debounced search function
-  const debouncedSearch = useDebounce(searchAddress, 500);
+  const debouncedSearch = useDebounce<string>((searchText) => { void searchAddress(searchText); }, 500);
 
   // Handle address input change
   const handleAddressChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -185,7 +182,7 @@ const router=useRouter()
       const id = localStorage.getItem("tempcred");
       setuserid(id);
     }
-  }, []);
+  }, [dispatch]);
 
   const getsuppliers=async()=>{
     try{ const sup=await axios.post(  `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,{
@@ -634,10 +631,10 @@ const Orderreview =()=>{
              </div>)
              }
              {
-              update==true&&task&&
-              <div className="flex justify-end">
-                <Button onClick={()=>Submit()}>Update</Button>
-              </div>
+              // update==true&&task&&
+              // <div className="flex justify-end">
+              //   <Button onClick={()=>Submit()}>Update</Button>
+              // </div>
              }
       </DialogContent>
     </Dialog>
