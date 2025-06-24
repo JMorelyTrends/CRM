@@ -1,9 +1,8 @@
 const Order = require("../Models/Order");
-const mongoose = require("mongoose");
-
-const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store,manageShopifyProduct}=require("./CustomerController");
 const Customer = require("../Models/Custormer");
-
+const Supplier=require("../Models/Supplier")
+const mongoose = require("mongoose");
+const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store,manageShopifyProduct}=require("./CustomerController");
 // Import Shopify session from CustomerController
 const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
 const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
@@ -366,14 +365,14 @@ getOrderofCustomer
     const pp=parseFloat(processingfee)||0;
     const sh=parseFloat(Shippingfee)||0
     const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress.address1,
-    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate("cusid");
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("Supplierid").populate("cusid");
    
 
     let customerid;
     let product;
     let tags=[];
     let shiping;
-  
+    let brand=""
     //customer 
     if(order.cusid.shopifyid!=null)
     {
@@ -403,6 +402,7 @@ getOrderofCustomer
         };
         
         const shopifyProduct = await manageShopifyProduct(productData);
+        brand=item.brand
         return {
           variant_id: shopifyProduct.variantId,
           quantity: 1
@@ -446,7 +446,7 @@ getOrderofCustomer
       first_name: order.Name.split(" ")[0],
       last_name: order.Name.split(" ")[1],
       address1: shippingaddress.address1,
-      city:shippingaddress.address1,
+      city:shippingaddress.city,
       country:shippingaddress.country,
       postcode:shippingaddress.postcode
     }
@@ -455,12 +455,46 @@ getOrderofCustomer
 
     if(order.confirm==false)
     {
-      const d=await createShoOrder(customerid.id,product,tags,shiping,rev)
-      const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
+      const d = await createShoOrder(customerid.id, product, tags, shiping, rev);
+
+      const ops = [
+        Order.findOneAndUpdate(
+          { _id: _id },
+          { $set: { confirm: true, shopifyorderid: d } },
+          { new: true }
+        ),
+        Customer.findOneAndUpdate(
+          { _id: order.cusid._id },
+          {
+            $inc: {
+              total_spend: rev,
+              orders_count: 1
+            }
+          }
+        )
+      ];
+      
+      if (brand && brand.trim() !== "") {
+        ops.push(
+          Supplier.findOneAndUpdate(
+            { _id: Supplierid },
+            { $addToSet: { Brand: brand } },
+            { new: true }
+          )
+        );
+      } else {
+        ops.push(Promise.resolve(null)); // to keep the Promise.all structure
+      }
+      
+      const [o, cus, k] = await Promise.all(ops);
+     
+
+      // const d=await createShoOrder(customerid.id,product,tags,shiping,rev)
+      // const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
     
-      const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
-        orders_count:(order.cusid.orders_count+1)
-       })
+      // const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
+      //   orders_count:(order.cusid.orders_count+1)
+      //  })
       return res.status(201).json({data:o})
     }
    //if they say they wanted to update the order then do it 

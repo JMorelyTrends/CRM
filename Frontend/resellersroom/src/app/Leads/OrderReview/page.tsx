@@ -398,7 +398,7 @@ const OrdersPage = () => {
                 ? "bg-[#B7CBAF] px-2 py-1 rounded-full"
                 : "bg-[#D79A58] px-2 py-1 rounded-full"
             }>
-              {parseFloat(order.Shippingfee || "0") > 0 && parseFloat(order.processingfee || "0") > 0
+              { order.confirm
                 ? "Approved"
                 : "in progress"}
             </span>
