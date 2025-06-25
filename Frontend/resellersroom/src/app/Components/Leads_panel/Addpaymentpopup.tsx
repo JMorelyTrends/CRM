@@ -27,7 +27,7 @@ export default function AddPaymentPopup({ open, setOpen, onSuccess }: { open: bo
       setPaymentName("");
       setOpen(false);
       if (onSuccess) onSuccess();
-    } catch (err) {
+    } catch {
       toast.error("Failed to add payment method");
     } finally {
       setIsSubmitting(false);
