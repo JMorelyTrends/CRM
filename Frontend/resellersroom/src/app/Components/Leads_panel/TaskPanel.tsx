@@ -266,15 +266,20 @@ export function TaskPanel({
                 </Button>
               </div>
               <div className="mt-4 flex items-center gap-3">
-                <span className="text-sm font-medium">Cost Price :</span>
-                <input
-                  type="text"
-                  value={costPrice}
-                  onChange={handleCostPriceChange}
-                  placeholder="Enter cost price"
-                  className="w-[18%] text-center p-2 border rounded-md text-sm"
-                />
-              </div>
+  <span className="text-sm font-medium">Cost Price :</span>
+  
+  <div className="relative w-[18%]">
+    <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">£</span>
+    <input
+      type="text"
+      value={costPrice}
+      onChange={handleCostPriceChange}
+      placeholder="Enter cost price"
+      className="w-full text-center pl-6 pr-2 py-2 border rounded-md text-sm"
+    />
+  </div>
+</div>
+
             </div>
 
             <div className="mb-4">

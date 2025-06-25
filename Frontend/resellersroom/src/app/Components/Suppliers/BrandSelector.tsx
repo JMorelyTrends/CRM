@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Select from "react-select";
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/lib/Resellerstore';
+import axios from 'axios';
 type selector={
     selectedBrands:string[],
     setSelectedBrands:React.Dispatch<React.SetStateAction<string[]>>
 }
 
 const BrandSelector = ({selectedBrands,setSelectedBrands}:selector) => {
+
+  const userid=useSelector((state:RootState)=>state.Main.userid)
+
+  useEffect(()=>{
+      getbrands()
+  },[userid])
+
+  const getbrands=async()=>{
+    const b=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Brands/getBrands`, {
+      userid
+    })
+    console.log("Brands:",b.data.data)
+  }
+
   const brands: string[] = [
     "Air Jordan",
     "Alexander McQueen",
@@ -48,6 +64,7 @@ const BrandSelector = ({selectedBrands,setSelectedBrands}:selector) => {
     "Supreme",
     "UGG"
   ];
+
 
   // Convert brands to react-select options
   const brandOptions = brands.map((brand) => ({

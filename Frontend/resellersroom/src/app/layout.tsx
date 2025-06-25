@@ -19,7 +19,7 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "CRM",
+  title: "Morley Trend CRM.",
   description: "Morley Trend CRM.",
 };
 
