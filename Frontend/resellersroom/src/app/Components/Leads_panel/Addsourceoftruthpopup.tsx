@@ -25,7 +25,7 @@ export default function AddSourceOfTruthPopup({ open, setOpen, onSuccess }: { op
       setSourceName("");
       setOpen(false);
       if (onSuccess) onSuccess();
-    } catch (err) {
+    } catch  {
       toast.error("Failed to add source of truth");
     } finally {
       setIsSubmitting(false);

@@ -503,7 +503,7 @@ export function CompleteOrderPopup({
         if (update == false) {
           router.push('/Leads/OrderReview');
         }
-      } catch (error) {
+      } catch  {
         toast.error("Failed to update order. Please try again.");
       } finally {
         setIsSubmitting(false);
@@ -530,7 +530,7 @@ export function CompleteOrderPopup({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => {
+      <Dialog open={isOpen} onOpenChange={() => {
         if (!isSubmitting) {
           dispatch(ToogleCompleteorder());
         }
