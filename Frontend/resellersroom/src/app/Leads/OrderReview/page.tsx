@@ -143,9 +143,9 @@ const OrdersPage = () => {
       const matchesFilters = activeFilters.every(filter => {
         switch (filter) {
           case "approved":
-            return order.confirm && parseFloat(order.Shippingfee || "0") > 0 && parseFloat(order.processingfee || "0") > 0;
+            return order.confirm ;
           case "inProgress":
-            return !order.confirm || parseFloat(order.Shippingfee || "0") === 0 || parseFloat(order.processingfee || "0") === 0;
+            return !order.confirm ;
           case "hasSupplier":
             return !!order.Supplierid?.Name;
           case "hasSourceOfTruth":

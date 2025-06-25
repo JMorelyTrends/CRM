@@ -198,7 +198,7 @@ const Page: React.FC<pageProps> = () => {
 
         {/* Cards Container */}
         <div
-          className="w-full h-[65vh] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 
+          className="w-full h-[65vh] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-col-4 gap-4 p-4 
            [&::-webkit-scrollbar]:w-1
            [&::-webkit-scrollbar-track]:bg-gray-100
            [&::-webkit-scrollbar-thumb]:bg-black

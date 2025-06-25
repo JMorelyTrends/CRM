@@ -1431,6 +1431,7 @@ async function createShoOrder(customerid, product, tags, shipping, rev) {
       },
       financial_status: 'paid',
       tags: 'CRM order',
+     
       transactions: [
         {
           kind: 'sale',
@@ -1464,9 +1465,15 @@ const searchShopifyProduct = async (productName) => {
       path: 'products',
       query: { title: productName }
     });
-    
     if (response.body.products && response.body.products.length > 0) {
-      return response.body.products[0]; // Return first matching product
+      // Find the first product with the 'CRM Product' tag
+      //we are doing this so can find the product which are only created by crm and that product will gonna be ammended 
+      //Crm will not update and use the product which are creted organially and by sellers portal
+      const crmProduct = response.body.products.find(product =>
+        product.tags && product.tags.includes('CRM Product')
+      );
+    
+      return crmProduct || null;
     }
     return null;
   } catch (error) {
@@ -1486,7 +1493,8 @@ const createShopifyProduct = async (productData) => {
         body_html: productData.description || '',
         vendor: 'CRM',
         product_type: 'General',
-        tags: productData.tags || 'CRM Product',
+        tags:  'CRM Product',
+        status: 'draft', // <-- Add this line!
         variants: [
           {
             price: productData.price.toString(),
@@ -1557,7 +1565,8 @@ const manageShopifyProduct = async (productData) => {
     // Search for existing product
     const existingProduct = await searchShopifyProduct(productData.title);
     
-    if (existingProduct) {
+    if (existingProduct)
+       {
       // Product exists, update it
       const variantId = existingProduct.variants[0].id;
       const updatedProduct = await updateShopifyProduct(existingProduct.id, {
@@ -1569,7 +1578,8 @@ const manageShopifyProduct = async (productData) => {
         variantId: variantId,
         isNew: false
       };
-    } else {
+    } 
+    else {
       // Product doesn't exist, create it
       const newProduct = await createShopifyProduct(productData);
       return {

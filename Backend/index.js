@@ -42,7 +42,7 @@ app.use("/api/Review",OrderReviewRoute);
 app.use("/api/shcustomer",shcustomerRoutes);
 app.use("/api/PaymentMethods",paymentRoutes);
 app.use("/api/Sourceoftruth",SourceoftruthRoutes)
-app.use("api/Brands",BrandsRoutes)
+app.use("/api/Brands",BrandsRoutes)
 
 const Port = process.env.PORT;
 app.listen(Port, () => {

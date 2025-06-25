@@ -8,14 +8,14 @@ try
     const {search}=req.body;
   //  console.log(search)
    const exactMatch = await StockxDatabase.find({ name: search });
-
+   const safeSearch = escapeRegex(search);
    if (exactMatch.length>0) {
     //  console.log("get the exact match",exactMatch)
      return res.status(200).json({ message: exactMatch });
    }
    const partialMatch = await StockxDatabase.find({
     
-     name: { $regex: `.*${search}.*`, $options: 'i' } 
+     name: { $regex: `.*${safeSearch}.*`, $options: 'i' } 
    });
 
   //  if (partialMatch.length > 0) {
@@ -96,10 +96,10 @@ catch(err)
 exports.Getprepopulate=async(req,res)=>{
   
         const { q } = req.body; 
-      
+        const safeQ = escapeRegex(q);
        
         
-        const regex = new RegExp(q, 'i'); 
+        const regex = new RegExp(safeQ, 'i'); 
       
         try {
           const results = await StockxDatabase.find({
@@ -262,7 +262,9 @@ async function enrichProduct(docId, stockxId) {
     console.error('Enrichment failed for', stockxId, err.message);
   }
 }
-
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 //for the resellers room
 exports.Getdata=async (req,res)=>{
@@ -270,6 +272,7 @@ try
 {
     const {search}=req.body;
  //  console.log(search)
+ const safeSearch = escapeRegex(search);
    const exactMatch = await StockxDatabase.find({ name: search });
 
    if (exactMatch.length>0) {
@@ -280,7 +283,7 @@ try
   
    const partialMatch = await StockxDatabase.find({
     
-     name: { $regex: `.*${search}.*`, $options: 'i' } 
+     name: { $regex: `.*${safeSearch}.*`, $options: 'i' } 
    });
 
    if (partialMatch.length > 0) {
