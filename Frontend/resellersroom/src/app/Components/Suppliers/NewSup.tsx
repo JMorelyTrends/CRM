@@ -61,6 +61,8 @@ const NewSup = (props: Props) => {
 
   };
   const getlastn = (s:string, n:number) => s.slice(-n);
+
+  
   const Submit = async () => {
    
     if (number) {
