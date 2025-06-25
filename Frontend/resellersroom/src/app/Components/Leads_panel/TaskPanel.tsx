@@ -52,7 +52,7 @@ export function TaskPanel({
           ? task.stockxitem[0].last_sale_price 
           : task.price || 0)
       :task?.items&& task?.items?.length > 0
-        ? (task.price !== 0 
+        ? (task.price === 0 
             ? task.items?.[0]?.price || 0
             : task.price || 0)
         : task.price || 0 )
