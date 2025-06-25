@@ -60,7 +60,7 @@ exports.createOrder = async (req, res) => {
           Name: newOrder.Name,
           items:newOrder.items,
          
-          cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:null,
+          cusid:newOrder.clientFrom=='mongodb'?newOrder.customerid:newOrder.clientFrom=="shopify"?id:null,
           size:newOrder.size,
           condition:newOrder.Condition,
           userid:newOrder.userid   
@@ -298,7 +298,7 @@ exports.UpdateDescription=async(req,res)=>{
    
     // Check if price exists and is a valid numeric string
     const isValidPrice = price && /^\d+(\.\d+)?$/.test(price);
-    
+
     // Prepare update object
     const updateObj = { Description };
     if (isValidPrice) {
@@ -373,17 +373,18 @@ getOrderofCustomer
     let tags=[];
     let shiping;
     let brand=""
+    
     //customer 
-    if(order.cusid.shopifyid!=null)
+    if(order?.cusid?.shopifyid!=null)
     {
       customerid={id:order.cusid.shopifyid}
     }
     else{
       customerid= {
-      first_name: order.Name.split(" ")[0],
-      last_name:  order.Name.split(" ")[1],
-      email: order.cusid.email?order.cusid.email:"",
-      phone: order.cusid.Number?order.cusid.Number:""
+      first_name: order?.Name.split(" ")[0],
+      last_name:  order?.Name.split(" ")[1],
+      email: order.cusid?.email?order.cusid?.email:"",
+      phone: order.cusid?.Number?order.cusid?.Number:""
     }
     }
 

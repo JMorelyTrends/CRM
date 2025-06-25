@@ -374,9 +374,9 @@ export function CompleteOrderPopup({
 
   const Labeltoggle = async (label: labeltype) => {
     if (!task?._id) return;
-
+   
     console.log(selectedLabels)
-
+    
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
       ? selectedLabels.filter((l) => l._id !== label._id)
@@ -607,21 +607,35 @@ export function CompleteOrderPopup({
                 </div>
               </div>
 
-              {
-                availsuppliers && <SupplierDropdown availsuppliers={availsuppliers} supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
-              }
-
-              <div>
-                <label className="block text-sm font-medium">Deal Owner</label>
-                <select className="w-full border rounded px-3 py-2 mt-1"
-                  value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
-                  <option value="">Select Deal Owner</option>
-                  <option value="Owner A">ALFIE</option>
-                  <option value="Owner B">FRAN</option>
-
-                </select>
-              </div>
-            </div>
+  {
+    availsuppliers &&  <SupplierDropdown availsuppliers={availsuppliers}  supplierUsed={supplierUsed} setSupplierUsed={setSupplierUsed} getsuppliers={getsuppliers} />
+  }
+{/* <div>
+  <label className="block text-sm font-medium">Supplier Used</label>
+  <select
+    className="w-full border rounded px-3 py-2 mt-1"
+    value={supplierUsed}
+    onChange={(e) => setSupplierUsed(e.target.value)}
+  >
+    <option value="">Select Supplier</option>
+    {availsuppliers&&availsuppliers?.map((supplier) => (
+      <option key={supplier._id} value={supplier._id}>
+        {supplier.Name || "Unnamed Supplier"}
+      </option>
+    ))}
+  </select>
+</div> */}
+    <div>
+      <label className="block text-sm font-medium">Deal Owner</label>
+      <select className="w-full border rounded px-3 py-2 mt-1"
+        value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
+        <option value="">Select Deal Owner</option>
+        <option value="Owner A">ALFIE</option>
+        <option value="Owner B">FRAN</option>
+      
+      </select>
+    </div>
+  </div>
 
             <div className="space-y-5 ">
               <div className="relative">
