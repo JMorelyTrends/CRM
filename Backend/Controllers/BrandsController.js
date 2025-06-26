@@ -15,6 +15,11 @@ exports.getBrands=async(req,res)=>{
 exports.createBrands=async(req,res)=>{
     try{
       const {name,userid}=req.body;
+      // Check if brand already exists for this user
+      const existing = await Brands.findOne({ name: name, userid: userid });
+      if (existing) {
+        return res.status(201).json({ message: "Brand already exists" });
+      }
       const k=await Brands.create({
         name:name,
         userid:userid  
