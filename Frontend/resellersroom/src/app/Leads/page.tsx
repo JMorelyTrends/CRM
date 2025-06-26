@@ -22,6 +22,7 @@ import { statetype, Task } from "../Components/Small comps/Types";
 import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
 import { useIsSmallScreen } from "../Components/Small comps/Issmall";
 import { Addcurrentorder, AddOrderid, AddSelectedOrder,ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
+import { Funnel, ChevronDown } from "lucide-react";
 
 const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
@@ -41,6 +42,7 @@ export default function Page({}: Props) {
   const [search,setserach]=useState<string>("")
   const [wonpopup,setwonpopup]=useState<boolean>(false)
   const [wontask,setwontask]=useState<Task|null>(null)
+  const [leadFilter, setLeadFilter] = useState<"" | "complete" | "incomplete">("");
 
   const lockRef = useRef(false);
 
@@ -369,7 +371,8 @@ function timeout(ms: number) {
      {wonpopup && wontask  &&<CompleteOrderPopup  fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup}  update={false} />}
 
      <EditPopup getcustomers={fetchallorders} method="leads" /> 
-   {!isSmallScreen&& 
+   {
+   !isSmallScreen&& 
    
    <div className="w-[80vw] flex flex-col h-[10vh] lg:flex-row justify-between items-center gap-2 p-4 bg-white sticky top-0 z-40">
       <div className="flex items-center gap-2">
@@ -378,7 +381,8 @@ function timeout(ms: number) {
           alt="Leads Icon" 
           className="w-8 h-8 text-gray-800 dark:text-[#888888]"
         />
-        <h1 className="text-3xl font-semibold text-[#888888] dark:text-[#888888]">Lead Management</h1>
+        <h1 className="text-3xl font-semibold text-[#888888] dark:text-[#888888] mr-5">Lead Management</h1>
+        <ContactFilterDropdown selectedState={leadFilter} setSelectedState={setLeadFilter} />
       </div>
       <input
         type="text"
@@ -392,6 +396,7 @@ function timeout(ms: number) {
     </div>
     
     }
+
 
       <div className="overflow-x-auto pb-4 w-full">
       <div className="flex w-max space-x-4">
@@ -411,9 +416,12 @@ function timeout(ms: number) {
               state.columnOrder &&
               state.columnOrder.map((ColumnId, index) => {
                 const column = state.columns[ColumnId];
-                const tasks = column.taskIds.map(
-                  (taskId) => state.tasks[taskId]
-                ); // Fetch your MongoDB data here if needed
+                let tasks = column.taskIds.map((taskId) => state.tasks[taskId]);
+                if (leadFilter === "complete") {
+                  tasks = tasks.filter(task => task.cusid && (task.cusid.email || task.cusid.Number));
+                } else if (leadFilter === "incomplete") {
+                  tasks = tasks.filter(task => !task.cusid || (!task.cusid.email && !task.cusid.Number));
+                }
                 return (
                   <LeadCols
                     key={index}
@@ -475,7 +483,7 @@ function timeout(ms: number) {
         </div>
       )}
 </div>
-</div>
+      </div>
       <DragOverlay>
         {activeCard ? (
           <DraggableCard
@@ -541,3 +549,78 @@ function timeout(ms: number) {
 //     "Lost",
 //   ],
 // };
+
+
+interface ContactFilterDropdownProps {
+  selectedState: "" | "complete" | "incomplete";
+  setSelectedState: (val: "" | "complete" | "incomplete") => void;
+}
+
+const ContactFilterDropdown: React.FC<ContactFilterDropdownProps> = ({ selectedState, setSelectedState }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative w-fit ">
+      <button
+        type="button"
+        onClick={() => setIsDropdownOpen((open) => !open)}
+        className="flex items-center text-black gap-2 px-4 py-2 bg-white border border-black rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <Funnel size={16} />
+        <span className="text-sm font-medium">
+          {selectedState === "complete"
+            ? "Complete"
+            : selectedState === "incomplete"
+            ? "Incomplete"
+            : "All Leads"}
+        </span>
+        <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isDropdownOpen && (
+        <div
+          ref={dropdownRef}
+          className="absolute top-full text-black left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px] py-1"
+        >
+          <div
+            onClick={() => {
+              setSelectedState("");
+              setIsDropdownOpen(false);
+            }}
+            className="px-4 py-2 cursor-pointer hover:bg-gray-50"
+          >
+            All Leads
+          </div>
+          <div
+            onClick={() => {
+              setSelectedState("complete");
+              setIsDropdownOpen(false);
+            }}
+            className="px-4 py-2 cursor-pointer hover:bg-gray-50"
+          >
+            Complete
+          </div>
+          <div
+            onClick={() => {
+              setSelectedState("incomplete");
+              setIsDropdownOpen(false);
+            }}
+            className="px-4 py-2 cursor-pointer hover:bg-gray-50"
+          >
+            Incomplete
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
