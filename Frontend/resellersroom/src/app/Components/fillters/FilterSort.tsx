@@ -18,6 +18,9 @@ interface FilterSortProps {
   sortOptions: SortOption[];
   onFilterChange: (filters: string[]) => void;
   onSortChange: (sort: string) => void;
+  brandOptions?: string[];
+  onBrandChange?: (brand: string) => void;
+  showBrandDropdown?: boolean;
 }
 
 const FilterSort: React.FC<FilterSortProps> = ({
@@ -27,11 +30,15 @@ const FilterSort: React.FC<FilterSortProps> = ({
   sortOptions,
   onFilterChange,
   onSortChange,
+  brandOptions,
+  onBrandChange,
+  showBrandDropdown,
 }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [selectedSort, setSelectedSort] = useState<string>('');
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
 
   const handleFilterToggle = (value: string) => {
     const newFilters = selectedFilters.includes(value)
@@ -141,7 +148,26 @@ const FilterSort: React.FC<FilterSortProps> = ({
             )}
           </div>
 
-          {/* Active Filters Display */}
+          {/* Brand Dropdown */}
+          {showBrandDropdown && (
+            <div className="relative">
+              <select
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium min-w-[120px]"
+                value={selectedBrand}
+                onChange={e => {
+                  setSelectedBrand(e.target.value);
+                  if (onBrandChange) onBrandChange(e.target.value);
+                }}
+              >
+                <option value="">All Brands</option>
+                {brandOptions && brandOptions.map((brand, idx) => (
+                  <option key={idx} value={brand}>{brand}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Active Filters Display
           {selectedFilters.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {selectedFilters.map((filter) => (
@@ -159,7 +185,7 @@ const FilterSort: React.FC<FilterSortProps> = ({
                 </div>
               ))}
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>

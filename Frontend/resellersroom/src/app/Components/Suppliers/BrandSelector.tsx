@@ -29,9 +29,7 @@ const BrandSelector = ({ selectedBrands, setSelectedBrands }: selector) => {
       });
       // If backend returns array of objects, map to names. If array of strings, use directly.
       let brandList = b.data.data;
-      if (Array.isArray(brandList) && brandList.length > 0 && typeof brandList[0] === 'object') {
-        brandList = brandList.map((brand: any) => brand.name || brand.label || brand.value || "");
-      }
+     
       setBrands(brandList);
     } catch (e) {
       setBrands([]);
