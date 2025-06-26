@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import NewSup from "../Components/Suppliers/NewSup";
 import axios from "axios";
 import { Sup } from "../Components/Small comps/Types"
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { AddselectedSup } from "@/lib/features/Supplier/SupplierSlice";
 import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
@@ -62,8 +62,7 @@ const Header = (props: hprops) => {
 const Page: React.FC<pageProps> = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const pathname = usePathname();
-  const showBrandDropdown = pathname?.toLowerCase().startsWith("/suppliercrm");
+  const showBrandDropdown = true;
   const [suppliers, setsuppliers] = useState<Sup[]>();
   const [userid, setuserid] = useState<string | null>("");
   const [search, setsearch] = useState<string>("");
