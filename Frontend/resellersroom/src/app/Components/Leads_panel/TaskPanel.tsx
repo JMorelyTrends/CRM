@@ -15,6 +15,7 @@ import { labeltype,Task } from "../Small comps/Types";
 
 import {  useDispatch  } from 'react-redux';
 import {addLabel}from "../../../lib/features/Leads/LeadsSlice"
+import { toast } from "sonner";
 
 
 
@@ -178,6 +179,20 @@ export function TaskPanel({
     "bg-teal-400", "bg-indigo-400"
   ];
 
+  // Add this function for deleting the task
+  const handleDeleteTask = async () => {
+    if (!task?._id) return;
+     try{
+        await axios.delete(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/deleteorders`,{
+          data: { id:task._id }
+        })
+        fetchallorders();
+     }
+     catch{
+      toast.error("error occur while deleting a lead")
+     }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={() => SupmitDesription()}>
@@ -291,6 +306,12 @@ export function TaskPanel({
                 className="w-full rounded-md border p-2 text-sm resize-none"
                 placeholder="Add task description..."
               />
+            </div>
+            {/* Delete Task Button */}
+            <div className="flex justify-center my-4">
+              <Button variant="destructive" onClick={handleDeleteTask}>
+                Delete Task
+              </Button>
             </div>
           </DialogContent>
         </DialogPortal>
