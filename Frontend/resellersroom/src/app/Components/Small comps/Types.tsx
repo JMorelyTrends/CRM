@@ -46,6 +46,7 @@ export type additem={
  export type Custprop={
    
   _id:string,
+  soid?:string,
   first_name:string,
   last_name:string,
   shopifyid:string|null,
@@ -88,6 +89,7 @@ export interface StockXItem {
 export type Task = {
   _id: string;
   id: number;
+  soid?:string,
   Name: string;
   condition: string;
   size: string;

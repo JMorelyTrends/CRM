@@ -77,18 +77,15 @@ const getsuppliers=async()=>{
      let AcutalCog=0;
      dummyLinedata.map((d)=>{
         if(d.costprice){
-      AcutalCog+=d.costprice;}
+      AcutalCog+=d.costprice;
+    }
      })
-  // Build metadata array
-  const metadata = [
-    { name: "Shipping Fee", value: shipingfee },
-    { name: "Processing Fee", value: processingfee },
-    {name:'Custom',value:AcutalCog},
-  ];
+  
 
   // Final payload for updating MongoDB and using in metadata
   const payload = {
-    _id: order._id, // MongoDB document ID
+    _id: order._id,// MongoDB document ID
+    soid:order.soid, 
     shipingfee,
     processingfee,
     Revenue:order.Revenue,
@@ -97,7 +94,7 @@ const getsuppliers=async()=>{
     Supplier_Name: Supplier,
     linedata: dummyLinedata,
     AcutalCog,
-    metadata,
+
   };
 
   //console.log("🛠 Final payload to send:", payload);
@@ -185,12 +182,12 @@ close()
                     className="w-32"
                     defaultValue={item.costprice}
                     onChange={(e)=>{
-                        const updateline=[...order?.linedata??[]];
+                        const updateline=[...(dummyLinedata ?? [])];
                         updateline[i]={
                             ...updateline[i],
                             costprice:parseFloat(e.target.value)
                         }
-                       setDummyLinedata(updateline)
+                        setDummyLinedata(updateline)
                     }}
                   />
                 </div>

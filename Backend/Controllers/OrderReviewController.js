@@ -5,12 +5,37 @@ const updateorders=async(req,res)=>{
     
     const{payload}=req.body;
     try{
+      console.log(payload)
+     
     const shippingfee=parseFloat(payload.shipingfee)||0
     const processingfee=parseFloat(payload.processingfee)||0
 
-    const profit=payload.Revenue- payload.AcutalCog-shippingfee-processingfee;
+     const profit=payload.Revenue- payload.AcutalCog-shippingfee-processingfee;
+     const url = 'https://api.triplewhale.com/api/v2/data-in/orders-enrichment';
+     const k=payload?.soid.split('/')[4]
+     const options = {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-api-key': '23aff3aa-c7e8-4e4f-b79f-1dc681b2c7b6'
+        },
+        body: JSON.stringify({
+          custom_expenses: payload.AcutalCog,             //cogs
+          custom_number: processingfee,            //processing fee
+          order_id: k,
+          shipping_costs: shippingfee,
+          shop: process.env.SHOPIFY_STORE_DOMAIN,
+        })
+    };
+
+    await  fetch(url, options)
+        // .then(res => res.json())
+        // .then(json => console.dir(json, { depth: null, colors: true }))
+        // .catch(err => console.error(err));
+
  
-const order=await     Orderreview.findOneAndUpdate({_id:payload._id},{$set:{
+     const order=await     Orderreview.findOneAndUpdate({_id:payload._id},{$set:{
       shipingfee:shippingfee,
       processingfee:processingfee,
       linedata:payload.linedata,
@@ -21,6 +46,7 @@ const order=await     Orderreview.findOneAndUpdate({_id:payload._id},{$set:{
      }})
   
      res.status(201).json({data:order})
+
     }
     catch(err)
     {
