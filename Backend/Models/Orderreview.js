@@ -41,6 +41,9 @@ const OrderreviewSchema = new mongoose.Schema(
     },
     linedata: [
       {
+        id:{
+         type:Number
+        },
         title: {
           type: String,
         },
@@ -105,7 +108,7 @@ const OrderreviewSchema = new mongoose.Schema(
   },
   statusupdate:{
     type:Date,
-    
+   
   }
   },
   { timestamps: true }
