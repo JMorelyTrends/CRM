@@ -38,11 +38,11 @@ const StatCard = ({ label, value }: { label: string; value: number }) => (
 const StatsGrid = () => {
   // Placeholder data - you can replace this with your actual data
   const statsData = [
-    { label: "Total Revenue", value: 45231 },
-    { label: "Total Profit", value: 12532 },
-    { label: "Ad Spend", value: 5400 },
-    { label: "New Clients", value: 89 },
-    { label: "Avg. Order Value", value: 508 },
+    { label: "Average ROAS", value: 45231 },
+    { label: "Total Ad Spend", value: 12532 },
+    { label: "Conversion Revenue", value: 5400 },
+    { label: "Conversion Profit", value: 89 },
+    { label: "True Profit", value: 508 },
   ];
 
   return (
