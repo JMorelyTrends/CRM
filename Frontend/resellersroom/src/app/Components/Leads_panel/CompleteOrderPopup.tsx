@@ -638,9 +638,10 @@ export function CompleteOrderPopup({
       <select className="w-full border rounded px-3 py-2 mt-1"
         value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
         <option value="">Select Deal Owner</option>
-        <option value="Owner A">ALFIE</option>
-        <option value="Owner B">FRAN</option>
-      
+        <option value="ALFIE">ALFIE</option>
+        <option value="FRAN">FRAN</option>
+        <option value="Lauren">Lauren</option>
+        <option value="Shania">Shania</option>
       </select>
     </div>
   </div>
