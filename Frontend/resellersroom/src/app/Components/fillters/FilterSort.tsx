@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpNarrowWide, Funnel, X, ChevronDown } from 'lucide-react';
+import { ArrowUpNarrowWide, Funnel, ChevronDown } from 'lucide-react';
 
 interface FilterOption {
   label: string;

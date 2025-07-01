@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import AddBrandpopup from './AddBrandpopup';
 import { X } from 'lucide-react';
+import {  OptionProps } from 'react-select';
 
 type selector = {
   selectedBrands: string[],
@@ -19,7 +20,18 @@ const BrandSelector = ({ selectedBrands, setSelectedBrands }: selector) => {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    getBrands();
+    const fetchBrands = async () => {
+      try {
+        const b = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Brands/getBrands`, {
+          userid
+        });
+        const brandList = b.data.data;
+        setBrands(brandList);
+      } catch {
+        setBrands([]);
+      }
+    };
+    fetchBrands();
   }, [userid]);
 
   const getBrands = async () => {
@@ -27,11 +39,9 @@ const BrandSelector = ({ selectedBrands, setSelectedBrands }: selector) => {
       const b = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Brands/getBrands`, {
         userid
       });
-      // If backend returns array of objects, map to names. If array of strings, use directly.
-      let brandList = b.data.data;
-     
+      const brandList = b.data.data;
       setBrands(brandList);
-    } catch (e) {
+    } catch {
       setBrands([]);
     }
   };
@@ -45,7 +55,7 @@ const BrandSelector = ({ selectedBrands, setSelectedBrands }: selector) => {
       getBrands();
       // Optionally, remove from selectedBrands if deleted
       setSelectedBrands(selectedBrands.filter(b => b !== brand));
-    } catch (e) {
+    } catch {
       // Optionally show error toast
     } finally {
       setDeleting(null);
@@ -53,7 +63,7 @@ const BrandSelector = ({ selectedBrands, setSelectedBrands }: selector) => {
   };
 
   // Custom Option component for react-select
-  const CustomOption = (props: any) => {
+  const CustomOption = (props: OptionProps<{ value: string; label: string }, true>) => {
     const { innerProps, innerRef, data } = props;
     return (
       <div
