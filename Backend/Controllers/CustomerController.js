@@ -645,12 +645,13 @@ try{
   if (isValid(Cust.email)) {
     searchConditions.push({ email: Cust.email.trim() });
   }
-  if (isValid(Cust.phone)) {
-    const normalizedPhone = normalizePhoneNumber(Cust.phone);
-    searchConditions.push({ Number: normalizedPhone });
+  if (isValid(Cust.Number)) {
+    const normalizedPhone = normalizePhoneNumber(Cust.Number);
+    searchConditions.push({ Number: Cust.Number });
   }
 
   const t = searchConditions.length > 0 ? await Customer.findOne({ $or: searchConditions }) : null;
+ 
   const order= await Order.findOne({_id:orderid})
   if(t)
   {
@@ -699,9 +700,9 @@ try{
         Number:d.customers[0].phone,
         userid:order.userid,
         emailMarketingConsent:{
-          consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
-          marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
-          marketingState:d.customers[0].email_marketing_consent.state
+         consentUpdatedAt:d.customers[0]?.email_marketing_consent?.consent_updated_at||new Date(),
+    marketingOptInLevel:d.customers[0]?.email_marketing_consent?.opt_in_level|| 'SINGLE_OPT_IN',
+    marketingState:d.customers[0].email_marketing_consent?.state||'unsubscribed'
         }
       }
     })

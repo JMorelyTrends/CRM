@@ -11,7 +11,11 @@ import { Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice
 import FilterSort from "../Components/fillters/FilterSort";
 
 type pageProps = object;
-
+type b={
+  name:string,
+  label:string,
+  value:string,
+}
 type hprops = {
   search: string;
   setsearch: React.Dispatch<React.SetStateAction<string>>;
@@ -124,7 +128,7 @@ const Page: React.FC<pageProps> = () => {
     })
     let brandList = b.data.data;
     if (Array.isArray(brandList) && brandList.length > 0 && typeof brandList[0] === 'object') {
-      brandList = brandList.map((brand: any) => brand.name || brand.label || brand.value || "");
+      brandList = brandList.map((brand: b) => brand.name || brand.label || brand.value || "");
     }
     setbrands(brandList)
   };

@@ -115,6 +115,7 @@ export function TaskPanel({
       });
 
       fetchallorders();
+      setOpen(false);
     } catch (err) {
       console.error("Failed to update labels", err);
     }
@@ -187,6 +188,7 @@ export function TaskPanel({
           data: { id:task._id }
         })
         fetchallorders();
+        
      }
      catch{
       toast.error("error occur while deleting a lead")
