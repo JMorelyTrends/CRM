@@ -680,7 +680,7 @@ try{
     queryParts.push(`phone:${normalizedPhone}`);
   }
   const query = Cust._id?Cust._id:queryParts.join(" OR ");
-  const E=Cust.email.trim();
+  
   const d = await shopify.rest.Customer.search({ session, query });
   
   if(d && d.customers.length>0)
@@ -699,9 +699,9 @@ try{
         Number:d.customers[0].phone,
         userid:order.userid,
         emailMarketingConsent:{
-          consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
-          marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
-          marketingState:d.customers[0].email_marketing_consent.state
+          consentUpdatedAt:d.customers[0]?.email_marketing_consent?.consent_updated_at||new Date(),
+    marketingOptInLevel:d.customers[0]?.email_marketing_consent?.opt_in_level|| 'SINGLE_OPT_IN',
+    marketingState:d.customers[0].email_marketing_consent?.state||'unsubscribed'
         }
       }
     })
