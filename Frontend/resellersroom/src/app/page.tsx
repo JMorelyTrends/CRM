@@ -26,55 +26,35 @@ useEffect(() => setIsClient(true), []);
 
     <>
     {isClient&&(
-    <div className="w-full h-full">
+    <div className="w-[80vw] h-full">
       {!isSmallScreen && <Dashboardheader />}
 
       {/* Top Section: Buttons + Cards */}
       <div className="w-full h-[20vh] mt-3 flex flex-col gap-2">
         {/* Buttons */}
-        <div className="w-full h-[40%]  flex items-center  overflow-hidden text-black gap-3 px-3 font-semibold">
-          <CustomDateRangePicker
+        <div className="w-full h-[40%]   flex items-center  overflow-hidden text-black gap-3 px-3 font-semibold">
+         
+          <select
+            className="h-[80%] w-[20%] cursor-pointer rounded-2xl shadow-md border px-2"
+            value={active}
+            onChange={e => {
+              const val = e.target.value;
+              setactive(val);
+              setinternval(val);
+            }}
+          >
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7">Last 7 days</option>
+            <option value="last30">Last 30 days</option>
+            <option value="year">This year</option>
+          </select>
+           <CustomDateRangePicker
            active={active}
            setactive={setactive}
             range={range}
             setRange={setRange}
           />
-          <button
-            onClick={() => {
-              setactive("year");
-              setinternval("year");
-            }}
-            className={`h-[80%] w-[10%] cursor-pointer rounded-2xl shadow-md border border-black ${
-              active === "year" ? "bg-black text-white" : ""
-            }`}
-          >
-            This Year
-          </button>
-
-          {/* <button
-            onClick={() => {
-              setactive("week");
-              setinternval("week");
-            }}
-            className={`h-[80%] w-[10%] cursor-pointer rounded-2xl shadow-md border border-black ${
-              active === "week" ? "bg-black text-white" : ""
-            }`}
-          >
-            This Month
-          </button> */}
-
-          <button
-            onClick={() => {
-              setactive("day");
-              setinternval("day");
-            }}
-            className={`h-[80%] w-[10%] cursor-pointer rounded-2xl shadow-md border border-black ${
-              active === "day" ? "bg-black text-white" : ""
-            }`}
-          >
-            This Day
-          </button>
-          {/* <button onClick={()=>setinternval("year")} className="h-[80%] w-[10%] rounded-2xl shadow-md border border-black">Last Quarter</button> */}
         </div>
 
         {/* Info Cards */}
