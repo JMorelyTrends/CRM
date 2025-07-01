@@ -257,7 +257,7 @@ const Page = () => {
           </div>
 
           {/**customer tabel */}
-          <div className="w-full h-[50vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
+          <div className="w-full h-[75vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700

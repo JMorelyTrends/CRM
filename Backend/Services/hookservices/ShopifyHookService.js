@@ -6,7 +6,7 @@ const Orderreview = require("../../Models/Orderreview");
 class ShopifyHookService{
     static async processEvent(eventType,data)
     {
-    
+       
         switch (eventType) {
             
             case 'orders/create':
@@ -26,12 +26,11 @@ class ShopifyHookService{
 
     static async handleOrderCreate(orderData) 
     {
+      try{  
         //------problem here to fix later down the line ---------//
 
-
         // Manually entring the user id need to find a way to get the user id based on the shopify webhook session
-
-
+        
         //-----------------------------------------------------//
         //Step 1 check if that order was in the our db
         const d=await Order.findOne({shopifyorderid:orderData.id});
@@ -52,29 +51,87 @@ class ShopifyHookService{
 
             }
         }
+       
         // here add the order in the orderreview.js
-        const check = await Orderreview.findOne({ soid: orderData.id });
+        const check = await Orderreview.findOne({ soid: orderData.admin_graphql_api_id.split('/')[4] });
       
-        if (!check&&!d) {
+
+        if (!check&&!d) {  
+            
+            const client = new shopify.clients.Graphql({ session });
             // Prepare line items if available
             let lineItems = [];
-            if (orderData.line_items && Array.isArray(orderData.line_items)) {
-                lineItems = orderData.line_items.map(item => ({
-                    title: item.title,
-                    quantity: item.quantity ? item.quantity.toString() : '',
-                    costprice: parseFloat(item.price || 0),
-                }));
+            let updatedLineItems=[];
+            let variantids=[];
+            const costMap=new Map();
+           
+            if (orderData.line_items && Array.isArray(orderData.line_items))
+                 {
+                    lineItems = orderData.line_items.map(item => ({
+                        id:item.variant_id,
+                        title: item.title,
+                        quantity: item.quantity ? item.quantity.toString() : '',
+                        costprice: parseFloat(item.price || 0),
+                    }));
+                variantids=orderData.line_items.map(item=>
+                    `gid://shopify/ProductVariant/${item.variant_id}`
+                );
+             
+                const query = `
+                    query getVariantCosts($ids: [ID!]!) {
+                      nodes(ids: $ids) {
+                        ... on ProductVariant {
+                          id
+                          inventoryItem {
+                            unitCost {
+                              amount
+                              currencyCode
+                            }
+                          }
+                        }
+                      }
+                    }
+                  `;
+                  
+                  const variables = { ids: variantids };
+                  const response = await client.query({
+                    data: {
+                      query,
+                      variables
+                    }
+                  });
+               
+               if(response.body.data )   {
+                  response.body.data.nodes.forEach(node=>{
+                    const cost = parseFloat(node?.inventoryItem?.unitCost?.amount||0);
+                    costMap.set(parseInt(node?.id?.split('/')[4], 10), cost);
+                  })
+                
+                }
+                  updatedLineItems = lineItems.map(item => {
+                 
+                    const newCostPrice = costMap.get(item.id);
+                  
+                    
+                    if (newCostPrice !== undefined) {
+                      
+                      return { ...item, costprice: newCostPrice };
+                    }
+                    return item;
+                  });
+                
+               
             }
             const shipfee = parseFloat(orderData.shipping_lines && orderData.shipping_lines[0] && orderData.shipping_lines[0].price || 0);
             const dbOrder = new Orderreview({
-                soid: orderData.id,
+                soid: orderData.admin_graphql_api_id,
                 name: orderData.name || '',
                 firstName: orderData.customer?.first_name || '',
                 lastName: orderData.customer?.last_name || '',
                 phone: orderData.customer?.phone || '',
                 Revenue: parseFloat(orderData.total_price || 0),
                 shipingfee: shipfee,
-                linedata: lineItems,
+                linedata: updatedLineItems,
                 shopifycreatedat: orderData.created_at || new Date(),
                 customer: orderData.customer || {},
                 subtotal: parseFloat(orderData.subtotal_price || 0),
@@ -85,6 +142,11 @@ class ShopifyHookService{
                  statusupdate:new Date(),  
             });
             await dbOrder.save();
+        }}
+
+        catch(e)
+        {
+            console.log("Error on order creation Webhook :",e)
         }
     } 
 
@@ -97,21 +159,21 @@ class ShopifyHookService{
         
         
       // Step 1: check if that order was in our db
-      
+       const i=`gid://shopify/Order/${orderData.id}`;
         const [d, k] = await Promise.all([
-            Orderreview.findOne({ soid: orderData.id }),
+            Orderreview.findOne({ soid: i}),
             Order.findOne({ shopifyorderid: orderData.id }).populate("cusid")
         ]);
         const status = (d && d.status) || (k && k.status) || null;
 
+      
         //--------------------------1 Refund to delete( which will just )----------------------------------//
         if(status=="Refunded")
         {
             if(d&&!k)
             {
                 
-              return  await Orderreview.deleteOne({ soid: orderData.id });
-
+              return  await Orderreview.deleteOne({ soid: i });
             }
             else if (!d && k)
             {
@@ -149,7 +211,7 @@ class ShopifyHookService{
             }
 
             //Step 4 delete the order from orderreview
-            await Orderreview.deleteOne({ soid: orderData.id });
+            await Orderreview.deleteOne({ soid: i });
         }
         else if(k)
         {

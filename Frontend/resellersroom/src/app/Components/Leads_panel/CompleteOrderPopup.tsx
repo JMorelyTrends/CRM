@@ -149,7 +149,7 @@ export function CompleteOrderPopup({
 
       getsuppliers();
     }
-    console.log(userid)
+ 
   }, [userid])
 
   useEffect(() => {
@@ -163,8 +163,12 @@ export function CompleteOrderPopup({
         setCostPrice(task.price ? task.price?.toString() : "undefined")
       }
 
+      let p=Number(task?.processingfee);
+      let s=Number(task?.sellprice);
+      let k=((p/s)*100).toFixed(2).toString();
+
       setShippingFee(task.Shippingfee ? task.Shippingfee : '');
-      setProcessingFee(task.processingfee ? task.processingfee : '');
+      setProcessingFee(k || '');
       setSupplierUsed((task.Supplierid && task.Supplierid?._id) ? task.Supplierid._id : '');
       setShippingAddress(task.shippingaddress ? task.shippingaddress : '');
       setDealOwner(task.DealOwner ? task.DealOwner : '');
@@ -331,7 +335,7 @@ export function CompleteOrderPopup({
           userid
         })
       ])
-      console.log("Source :", sou.data.data)
+   
       setsources(sou.data.data)
       setpaymentmethods(pay.data.data)
       setavailsuppliers(sup.data.supps)
@@ -375,7 +379,7 @@ export function CompleteOrderPopup({
   const Labeltoggle = async (label: labeltype) => {
     if (!task?._id) return;
    
-    console.log(selectedLabels)
+   
     
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
@@ -411,7 +415,7 @@ export function CompleteOrderPopup({
 
     }
     catch {
-      console.log("error del label")
+      console.log("error deleting label")
     }
   }
   // Delete payment method
@@ -425,7 +429,7 @@ export function CompleteOrderPopup({
       const pay = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/PaymentMethods/getpaymentmethods`, {
         userid
       })
-      console.log(pay.data.data)
+    
       setpaymentmethods([...pay.data.data])
       // If the deleted method was selected, clear selection
       if (paymentMethod === method) setPaymentMethod("");
@@ -478,6 +482,10 @@ export function CompleteOrderPopup({
   const Submit = async () => {
     if (productName && size && costPrice && shippingFee && processingFee && supplierUsed && selectedAddress && dealOwner && sourceOfTruth && paymentMethod) {
       setIsSubmitting(true);
+      const p= (Number(processingFee)/100)
+      const s=Number(sell)
+      const pro=p*s;
+      const fee=pro.toString()
       try {
         await axios.post(
           `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
@@ -489,7 +497,7 @@ export function CompleteOrderPopup({
             size: size,
             Supplierid: supplierUsed,
             Shippingfee: shippingFee,
-            processingfee: processingFee,
+            processingfee: fee,
             shippingaddress: shippingAddressObj,
             Sourceofthruth: sourceOfTruth,
             paymentmethod: paymentMethod,
@@ -580,7 +588,7 @@ export function CompleteOrderPopup({
                     value={sell}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (/^\d*$/.test(val)) {
+                      if (/^\d*\.?\d*$/.test(val)) {
                         setsell(val);
                       }
                     }}
@@ -599,7 +607,7 @@ export function CompleteOrderPopup({
                     value={costPrice}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (/^\d*$/.test(val)) {
+                      if (/^\d*\.?\d*$/.test(val)) {
                         setCostPrice(val);
                       }
                     }}
@@ -648,7 +656,7 @@ export function CompleteOrderPopup({
                     value={shippingFee}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (/^\d*$/.test(val)) {
+                      if (/^\d*\.?\d*$/.test(val)) {
                         setShippingFee(val);
                       }
                     }}
@@ -659,14 +667,14 @@ export function CompleteOrderPopup({
               <div className="relative">
                 <label className="block text-sm font-medium">Processing Fee</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
                   <input
                     type="text"
                     className="w-full border rounded px-8 py-2 mt-1"
                     value={processingFee}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (/^\d*$/.test(val)) {
+                      if (/^\d*\.?\d*$/.test(val)) {
                         setProcessingFee(val);
                       }
                     }}

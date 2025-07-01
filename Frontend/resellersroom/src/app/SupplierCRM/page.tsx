@@ -62,6 +62,7 @@ const Header = (props: hprops) => {
 const Page: React.FC<pageProps> = () => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const showBrandDropdown = true;
   const [suppliers, setsuppliers] = useState<Sup[]>();
   const [userid, setuserid] = useState<string | null>("");
   const [search, setsearch] = useState<string>("");
@@ -69,7 +70,8 @@ const Page: React.FC<pageProps> = () => {
   const isSmallScreen = useIsSmallScreen();
   const [sortBy, setSortBy] = useState<string>("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-
+  const [Brands,setbrands]=useState<string[]>([])
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
   const filterOptions = [
     { label: "Has Email", value: "hasEmail" },
     { label: "Has Website", value: "hasWebsite" },
@@ -115,7 +117,16 @@ const Page: React.FC<pageProps> = () => {
       `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`,
       { userid }
     );
+    
     setsuppliers(all.data.supps);
+    const b=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Brands/getBrands`,{
+      userid
+    })
+    let brandList = b.data.data;
+    if (Array.isArray(brandList) && brandList.length > 0 && typeof brandList[0] === 'object') {
+      brandList = brandList.map((brand: any) => brand.name || brand.label || brand.value || "");
+    }
+    setbrands(brandList)
   };
 
   const fillterdata = suppliers?.filter((data: Sup) => {
@@ -142,7 +153,9 @@ const Page: React.FC<pageProps> = () => {
       }
     });
 
-    return matchesSearch && matchesFilters;
+    const matchesBrand = !selectedBrand || (data.Brand && data.Brand.includes(selectedBrand));
+
+    return matchesSearch && matchesFilters && matchesBrand;
   });
 
   const sortedData = fillterdata?.sort((a, b) => {
@@ -194,6 +207,9 @@ const Page: React.FC<pageProps> = () => {
           sortOptions={sortOptions}
           onFilterChange={handleFilterChange}
           onSortChange={handleSortChange}
+          brandOptions={Brands}
+          onBrandChange={setSelectedBrand}
+          showBrandDropdown={showBrandDropdown}
         />
 
         {/* Cards Container */}

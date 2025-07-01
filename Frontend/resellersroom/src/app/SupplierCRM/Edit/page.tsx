@@ -125,9 +125,15 @@ function Page() {
                 </p>
               )}
               {supplier&&supplier.Website && (
-                <p className="text-sm font-semibold text-[#4774B1] truncate">
-                  {supplier&&supplier.Website}
-                </p>
+                <a
+                  href={supplier.Website.startsWith('http') ? supplier.Website : `https://${supplier.Website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-[#4774B1] truncate max-w-[160px] overflow-hidden whitespace-nowrap block"
+                  title={supplier.Website}
+                >
+                  {supplier.Website}
+                </a>
               )}
               <button
               onClick={()=>setNewopen(true)}
