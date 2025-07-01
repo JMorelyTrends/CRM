@@ -1217,9 +1217,9 @@ const getshopifybyid_store=async(id,userid)=>{
   Number:d.customers[0].phone,
   userid:userid,
   emailMarketingConsent:{
-    consentUpdatedAt:d.customers[0].email_marketing_consent.consent_updated_at,
-    marketingOptInLevel:d.customers[0].email_marketing_consent.opt_in_level,
-    marketingState:d.customers[0].email_marketing_consent.state
+    consentUpdatedAt:d.customers[0]?.email_marketing_consent?.consent_updated_at||new Date(),
+    marketingOptInLevel:d.customers[0]?.email_marketing_consent?.opt_in_level|| 'SINGLE_OPT_IN',
+    marketingState:d.customers[0].email_marketing_consent?.state||'unsubscribed'
   }
  })
  return iid._id;
