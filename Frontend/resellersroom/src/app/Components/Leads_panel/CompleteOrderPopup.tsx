@@ -163,9 +163,9 @@ export function CompleteOrderPopup({
         setCostPrice(task.price ? task.price?.toString() : "undefined")
       }
 
-      let p=Number(task?.processingfee);
-      let s=Number(task?.sellprice);
-      let k=((p/s)*100).toFixed(2).toString();
+      const p=Number(task?.processingfee);
+      const s=Number(task?.sellprice);
+      const k=((p/s)*100).toFixed(2).toString();
 
       setShippingFee(task.Shippingfee ? task.Shippingfee : '');
       setProcessingFee(k || '');
