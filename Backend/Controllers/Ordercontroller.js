@@ -212,7 +212,7 @@ exports.getOrderofCustomer=async(req,res)=>{
   try{
     const {id}=req.body;
    if(id){
-    const n=await Order.find({cusid:id,stage:"Won"}).populate("items").populate("stockxitem").populate("labels").populate("Team");
+    const n=await Order.find({cusid:id,stage:"Won"}).populate("items").populate("stockxitem").populate("labels");
     let price=0;
     n.map((d)=>{
       price+=d.sellprice
@@ -582,7 +582,7 @@ getOrderofCustomer
 exports.Wonorders=async(req,res)=>{
  try{
           const {userid}=req.body;
-          const d=await Order.find({userid:userid,stage:'Won',confirm:true}).populate("items").populate("stockxitem").populate("Team");
+          const d=await Order.find({userid:userid,stage:'Won',confirm:true}).populate("items").populate("stockxitem");
           
           res.status(201).json({won:d})
  }
