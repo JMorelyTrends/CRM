@@ -104,7 +104,10 @@ export type Task = {
   email?: string;
   phone?: string;
   shopifyorderid?:string,
-
+  DealOwnerid?:{
+    _id:string,
+    name:string,
+  },
   // New fields from OrderSchema (all optional)
   Orderrecived?: string;
   ordersend?: string;

@@ -16,7 +16,7 @@ const shopifyhookRoutes=require("./Routes/shopifyhooksRoute");
 const paymentRoutes=require("./Routes/PaymentMethodRoute")
 const SourceoftruthRoutes=require("./Routes/SourceoftruthRoute")
 const BrandsRoutes=require("./Routes/BrandsRoutes")
-
+const TeamRoutes=require("./Routes/TeamRoutes")
 app.use(cors({ origin: "*" }));
 const DB_ConnectDB = require("./utils/DBconnect"); 
 
@@ -43,6 +43,7 @@ app.use("/api/shcustomer",shcustomerRoutes);
 app.use("/api/PaymentMethods",paymentRoutes);
 app.use("/api/Sourceoftruth",SourceoftruthRoutes)
 app.use("/api/Brands",BrandsRoutes)
+app.use("/api/Team",TeamRoutes)
 
 const Port = process.env.PORT;
 app.listen(Port, () => {
