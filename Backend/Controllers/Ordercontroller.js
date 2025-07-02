@@ -54,7 +54,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate('cusid').sort({createdAt:-1});
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate('cusid').populate("DealOwnerid").sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",
@@ -131,6 +131,7 @@ if (data.shippingaddress != null)  tasks[counter].shippingaddress = data.shippin
 if (data.Sourceofthruth != null)  tasks[counter].Sourceofthruth = data.Sourceofthruth;
 if (data.paymentmethod != null)  tasks[counter].paymentmethod = data.paymentmethod;
 if (data.DealOwner != null)  tasks[counter].DealOwner = data.DealOwner;
+if (data.DealOwnerid != null)  tasks[counter].DealOwnerid = data.DealOwnerid;
 if (data.confirm != null)  tasks[counter].confirm = data.confirm;
     
       const stage=data.stage || "NewLead";
@@ -151,6 +152,7 @@ if (data.confirm != null)  tasks[counter].confirm = data.confirm;
 
     res.status(200).json(maporderdata);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
@@ -195,7 +197,7 @@ exports.getOrderofCustomer=async(req,res)=>{
 catch(err)
 {
   
-  res.json(500).json({message:"error in getting the numbers of leads"})
+  res.status(500).json({message:"error in getting the numbers of leads"})
 }
 }
 
@@ -332,9 +334,11 @@ getOrderofCustomer
     const cog=parseFloat(price)||0;
     const pp=parseFloat(processingfee)||0;
     const sh=parseFloat(Shippingfee)||0
+
     const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress.address1,
-    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("Supplierid").populate("cusid");
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwnerid:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("Supplierid").populate("cusid");
    
+
     let customerid;
     let product;
     let tags=[];
