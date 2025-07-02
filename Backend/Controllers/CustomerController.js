@@ -681,7 +681,7 @@ try{
     queryParts.push(`phone:${normalizedPhone}`);
   }
   const query = Cust._id?Cust._id:queryParts.join(" OR ");
-  const E=Cust.email.trim();
+ 
   const d = await shopify.rest.Customer.search({ session, query });
   
   if(d && d.customers.length>0)
