@@ -32,7 +32,10 @@ function getDateRangeLabel(start: Date, end: Date): string {
   return `${start.toLocaleDateString('en-GB')} - ${end.toLocaleDateString('en-GB')}`;
 }
 
-
+// Utility to convert a date to UTC midnight
+function toUTCMidnight(date: Date): Date {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+}
 
 export default function CustomDateRangePicker({
   active,
@@ -58,14 +61,15 @@ export default function CustomDateRangePicker({
   const handleChange = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates;
     setLocalRange(dates);
-    setRange({ from: start ?? undefined, to: end ?? undefined });
+    setRange({
+      from: start ? toUTCMidnight(start) : undefined,
+      to: end ? toUTCMidnight(end) : undefined,
+    });
   };
 
   let displayValue = "Select a date range";
   if (localRange[0] && localRange[1]) {
    displayValue=getDateRangeLabel(localRange[0],localRange[1])
-    
-   
   } 
   else if (localRange[0]) {
     displayValue = format(localRange[0], "PPP");
@@ -73,7 +77,7 @@ export default function CustomDateRangePicker({
 
   const CustomInput = React.forwardRef<HTMLButtonElement, { label?: string; onClick?: () => void }>(
     ({ label, onClick }, ref) => {
-      console.log("🧪 CustomInput value:", label); // ✅ This will log every time it renders
+    
   
       return (
         <button

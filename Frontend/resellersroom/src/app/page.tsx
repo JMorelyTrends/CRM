@@ -6,6 +6,7 @@ import DashboardCharts from "./Components/Dashboard/DashboardCharts";
 import CustomDateRangePicker from "./Components/Dashboard/CustomDateRangePicker";
 import { DateRange } from "react-day-picker";
 import { Dashstats } from "./Components/Small comps/Types";
+import { subDays,startOfYear } from "date-fns";
 
 // A small component for the info cards to reduce repetition
 const InfoCard = ({ title, value }: { title: string; value: string | number }) => (
@@ -37,14 +38,46 @@ const Page: React.FC = () => {
     const val = e.target.value;
     setActive(val);
     setInternval(val);
-    setRange(undefined); // Clear custom range when a preset is selected
+    const r={
+      from:new Date(),
+      to:new Date(),
+    }
+    if(val==="today")
+    {
+      r.from=new Date();
+      r.to=new Date()
+    }
+    else if(val=="yesterday")
+    {
+      var d=new Date();
+      d.setDate(d.getDate()-1)
+      r.from=d;
+      r.to=d;
+    }
+    else if(val=="last7")
+    {
+        r.to=new Date();
+        r.from = subDays(new Date(), 6);
+
+    }
+    else if(val=="last30")
+    {
+      r.to=new Date();
+      r.from = subDays(new Date(), 29);
+    }
+    else{
+      r.from=startOfYear(new Date());
+      r.to=new Date()
+    }
+  
+    setRange(r)
   };
 
   const cardData = [
-    { title: "Revenue This Week", value: otherdetails.liveRequests },
-    { title: "Profit This Week", value: otherdetails.needToSource },
-    { title: "Revenue This Month", value: otherdetails.newOrders },
-    { title: "Profit This Month", value: `${otherdetails.liveRequests}:${otherdetails.wonOrders}` },
+    { title: "Revenue This Week", value: 0 },
+    { title: "Profit This Week", value: 0 },
+    { title: "Revenue This Month", value: 0},
+    { title: "Profit This Month", value: `${0}:${0}` },
   ];
 
   if (!isClient) {
@@ -89,7 +122,7 @@ const Page: React.FC = () => {
           </div>
         </div>
 
-        <DashboardCharts internval={internval} range={range} setotherdetails={setOtherdetails} />
+        <DashboardCharts  range={range} setotherdetails={setOtherdetails} />
       </div>
     </div>
   );

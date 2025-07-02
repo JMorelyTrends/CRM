@@ -13,10 +13,10 @@ import {
 } from "recharts";
 import { DateRange } from "react-day-picker";
 import { Dashstats } from "../Small comps/Types";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/Resellerstore";
 
-// --- Helper Components ---
 
-// A reusable wrapper for each chart to standardize titles and spacing
 const ChartWrapper = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="w-full bg-white rounded-xl p-4 flex flex-col items-center">
     <h2 className="text-lg font-bold text-gray-800 mb-4">{title}</h2>
@@ -24,7 +24,7 @@ const ChartWrapper = ({ title, children }: { title: string; children: React.Reac
   </div>
 );
 
-// New component for the "Y" divs to display a label and a value
+
 const StatCard = ({ label, value }: { label: string; value: number }) => (
   <div className="bg-gray-100 p-4 rounded-lg w-full">
     {/* "up" div for the label */}
@@ -34,9 +34,9 @@ const StatCard = ({ label, value }: { label: string; value: number }) => (
   </div>
 );
 
-// New component for the "X" div which contains the 5 "Y" divs (StatCards)
+
 const StatsGrid = () => {
-  // Placeholder data - you can replace this with your actual data
+
   const statsData = [
     { label: "Average ROAS", value: 45231 },
     { label: "Total Ad Spend", value: 12532 },
@@ -66,10 +66,18 @@ const StatsGrid = () => {
   );
 };
 
+// Utility to convert a date to UTC midnight
+function toUTCMidnight(date: Date): Date {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+}
+function toUTCEndOfDay(date: Date): Date {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999));
+}
 // --- Main Component ---
 
-const DashboardCharts = ({ internval, range, setotherdetails }: { internval: string; range: DateRange | undefined; setotherdetails: React.Dispatch<React.SetStateAction<Dashstats>> }) => {
-  // --- State Management ---
+const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | undefined; setotherdetails: React.Dispatch<React.SetStateAction<Dashstats>> }) => {
+  
+  const userId=useSelector((state:RootState)=>state.Main.userid)
   const [splitPerShopperData, setSplitPerShopperData] = useState([
     { name: "Alfie", revenue: 500, profit: 3200 },
     { name: "Fran", revenue: 5200, profit: 3800 },
@@ -90,12 +98,13 @@ const DashboardCharts = ({ internval, range, setotherdetails }: { internval: str
     { name: "Google", Conversion_Revenue: 8500, True_Profit: 3200, Conversion_Profit: 2000, total_adspend: 1000 },
     { name: "meta", Conversion_Revenue: 5200, True_Profit: 3800, Conversion_Profit: 2000, total_adspend: 1000 },
   ]);
-  const [userId, setUserId] = useState<string | null>(null);
+ 
 
   // --- Data Fetching ---
   const fetchChartData = async (endpoint: string, params: object) => {
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/${endpoint}`, params);
+  
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Dash/${endpoint}`, params);
       return response.data.data;
     } catch (error) {
       console.error(`Error fetching data for ${endpoint}:`, error);
@@ -103,38 +112,39 @@ const DashboardCharts = ({ internval, range, setotherdetails }: { internval: str
     }
   };
 
-  // --- Effects ---
-  useEffect(() => {
-    const id = localStorage.getItem("tempcred");
-    setUserId(id);
-  }, []);
 
   useEffect(() => {
     if (!userId) return;
-
+    
     const fetchAllData = async () => {
-      let params: any = { userid: userId };
+     
+      let params: {
+        userid:string,
+        start?:string,
+        end?:string,
+      } = { userid: userId };
 
       if (range?.from) {
-        params.startdate = range.from;
-        params.enddate = range.to || range.from;
-      } else {
-        params.interval = internval || "year";
-      }
+        params.start = toUTCMidnight(range.from).toISOString();
+        params.end = range.to ? toUTCEndOfDay(range.to).toISOString() : toUTCEndOfDay(range.from).toISOString();
+      } 
 
       const [shopperData, wonLost, other, reqWon] = await Promise.all([
-        fetchChartData("splitPerShopper", params),
-        fetchChartData("wonloastdata", params),
-        fetchChartData("otherdetails", params),
-        fetchChartData("reqwondata", params),
+        fetchChartData("Pershopper", params),
+        fetchChartData("Perchannel", params),
+        fetchChartData("Marketingspend", params),
+        fetchChartData("Sourceoftruth", params),
       ]);
-      setSplitPerShopperData(shopperData);
-      setMarketingS(wonLost);
-      setotherdetails(other);
-      setsourceoftruth(reqWon);
+      if(shopperData.length>1){
+      setSplitPerShopperData(shopperData);}
+      // setMarketingS(wonLost);
+      // setotherdetails(other);
+      // setsourceoftruth(reqWon);
     };
-    // fetchAllData(); // You can uncomment this when you want to fetch data
-  }, [userId, internval, range, setotherdetails]);
+   
+     fetchAllData(); 
+  }, [userId, range?.from?.getTime(),
+    range?.to?.getTime(), ]);
 
   // --- Render Logic ---
   return (
