@@ -296,7 +296,7 @@ try
         const options = {
             method: 'GET',
             headers: {
-            'Authorization':"sd_XPMjxL4xaeLp3QlWXPCzkWgKqAKCVueI"
+            'Authorization':process.env.RETAIL_API_KEY
             }
         };
         const searchTerm = search;
