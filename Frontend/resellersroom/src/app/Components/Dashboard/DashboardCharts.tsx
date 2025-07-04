@@ -79,20 +79,21 @@ const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | unde
   
   const userId=useSelector((state:RootState)=>state.Main.userid)
   const [splitPerShopperData, setSplitPerShopperData] = useState([
-    { name: "Alfie", revenue: 500, profit: 3200 },
-    { name: "Fran", revenue: 5200, profit: 3800 },
-    { name: "Lauren", revenue: 3400, profit: 2100 },
-    { name: "Shania", revenue: 600, profit: 4500 },
+    { name: "Alfie", revenue: 0, profit: 0 },
+    { name: "Fran", revenue: 0, profit: 0 },
+    { name: "Lauren", revenue: 0, profit: 0 },
+    { name: "Shania", revenue: 0, profit: 0 },
   ]);
   const [sourceoftruth, setsourceoftruth] = useState([
-    { name: "Returing client", revenue: 8500, profit: 3200 },
-    { name: "B2B", revenue: 5200, profit: 3800 },
-    { name: "Word of Mouth", revenue: 3400, profit: 2100 },
-    { name: "Organic", revenue: 6100, profit: 4500 },
+    { name: " client", revenue: 0, profit: 0 },
+    { name: "B2B", revenue: 0, profit: 0 },
+    { name: "Word of Mouth", revenue: 0, profit: 0 },
+    { name: "Organic", revenue:0, profit: 0 },
+
   ]);
   const [splitPerChannelData, setSplitPerChannelData] = useState([
-    { name: "Shopify", revenue: 8500, profit: 3200 },
-    { name: "Shoppers", revenue: 5200, profit: 3800 },
+    { name: "Shopify", revenue: 0, profit: 0 },
+    { name: "Shoppers", revenue: 0, profit: 0 },
   ]);
   const [MarketingS, setMarketingS] = useState([
     { name: "Google", Conversion_Revenue: 8500, True_Profit: 3200, Conversion_Profit: 2000, total_adspend: 1000 },
@@ -129,18 +130,45 @@ const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | unde
         params.end = range.to ? toUTCEndOfDay(range.to).toISOString() : toUTCEndOfDay(range.from).toISOString();
       } 
 
-      const [shopperData, wonLost, other, reqWon] = await Promise.all([
+      const [shopperData, Channel, other, source] = await Promise.all([
         fetchChartData("Pershopper", params),
         fetchChartData("Perchannel", params),
         fetchChartData("Marketingspend", params),
         fetchChartData("Sourceoftruth", params),
       ]);
-      if(shopperData.length>1){
-      setSplitPerShopperData(shopperData);}
-      // setMarketingS(wonLost);
-      // setotherdetails(other);
-      // setsourceoftruth(reqWon);
-    };
+      if(shopperData&&shopperData.length>1)
+        {
+        setSplitPerShopperData(shopperData);
+       }
+
+      if(Channel && Channel.length>0)
+       {
+         setSplitPerChannelData(Channel)
+       }
+       else{
+        const k=[
+          { name: "Shopify", revenue: 0, profit: 0 },
+          { name: "Shoppers", revenue: 0, profit: 0 },
+        ]
+        setSplitPerChannelData(k)
+       }
+       console.log(source)
+       if(source && source.length>0)
+       {
+        setsourceoftruth(source)
+       }
+       else{
+        const k=[
+          { name: " client", revenue: 0, profit: 0 },
+          { name: "B2B", revenue: 0, profit: 0 },
+          { name: "Word of Mouth", revenue: 0, profit: 0 },
+          { name: "Organic", revenue:0, profit: 0 },
+      
+        ]
+        setsourceoftruth(k)
+       }
+       };
+    
    
      fetchAllData(); 
   }, [userId, range?.from?.getTime(),

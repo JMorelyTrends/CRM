@@ -215,7 +215,7 @@ const OrdersPage = () => {
       <div className="w-full h-[10vh]  flex items-center  overflow-hidden text-black gap-3 px-3 font-semibold">
             <CustomDateRangePicker
              active={active}
-             setactive={setactive}
+             setActive={setactive}
               range={range}
               setRange={setRange}
             />

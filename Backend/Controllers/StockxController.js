@@ -296,47 +296,56 @@ try
         const options = {
             method: 'GET',
             headers: {
-            'x-api-key':process.env.RETAIL_API_KEY 
+            'Authorization':"sd_XPMjxL4xaeLp3QlWXPCzkWgKqAKCVueI"
             }
         };
         const searchTerm = search;
-        const url = `https://app.retailed.io/api/v1/scraper/stockx/search?query=${encodeURIComponent(searchTerm)}`;
+        const url = `https://api.kicks.dev/v3/stockx/products?query=${encodeURIComponent(searchTerm)}`;
         
         const data = await fetch(url, options)
         .then(res => res.json())
-        .then(async(d) =>{
-            const newproduct = [];
-           // console.log("from api ",d)
-            d.length>0&&
-            await Promise.all(
-            d.map(async (item) => {
-                const exists = await StockxDatabase.findOne({ Stockxid: item.id });
-            
-                if (!exists) {
-                 //   console.log("not getting in database", item)
-                const created = await StockxDatabase.create({
-                    Stockxid: item.id,
-                    sku: item.sku,
-                    name: item.name,
-                    slug: item.slug,
-                    brand: item.brand,
-                    image: item.image, 
-                    category: item.category,
-                    colorway: item.colorway,
-                });
+        .then(async (apiResponse) => {
+         
+         console.log(apiResponse)
+          // The actual product results are in the 'data' array
+          if (!apiResponse || !apiResponse.data || apiResponse.data.length === 0) {
+              return res.status(200).json({ message: [] }); // Return empty if API finds nothing
+          }
+ 
+          const newProductsToSave = [];
 
-                newproduct.push(created); 
-            
-                }
-                else{
-                    newproduct.push(exists)
-                }
-            
-            })
-            );
-            //console.log(newproduct)
-            
-            res.status(201).json({ message: newproduct });
+          
+          await Promise.all(
+              apiResponse.data.map(async (item) => {
+                  
+                  const exists = await StockxDatabase.findOne({ Stockxid: item.id });
+
+                  if (!exists) {
+                    
+                      const colorwayTrait = Array.isArray(item.traits) ? item.traits.find(trait => trait.trait === 'Colorway') : null;
+                      const colorway = colorwayTrait ? colorwayTrait.value : 'Not Available';
+
+                      const created = await StockxDatabase.create({
+                          Stockxid: item.id,                // Mapped from 'id'
+                          sku: item.sku,                    // Mapped from 'sku'
+                          name: item.title,                 // Mapped from 'title'
+                          slug: item.slug,                  // Mapped from 'slug'
+                          brand: item.brand,                // Mapped from 'brand'
+                          image: item.image,                // Mapped from 'image'
+                          category: item.product_type, 
+                          last_sale_price:parseInt(item.avg_price) ,    // Mapped from 'product_type'
+                          colorway: colorway,               // Extracted from the 'traits' array
+                      });
+                      newProductsToSave.push(created);
+                  } else {
+                      newProductsToSave.push(exists);
+                  }
+              })
+          );
+
+          // --- MODIFICATION ENDS HERE ---
+
+          res.status(200).json({ message: newProductsToSave });
         })
         .catch(err =>{ console.error('Fetch error:', err)
             return null
@@ -350,7 +359,8 @@ try
 }
 catch(err)
 {
-    res.status(500).json({ message: error.message });
+  console.log(err)
+    res.status(500).json({ message: err.message });
 
 }
 }

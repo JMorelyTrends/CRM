@@ -6,8 +6,10 @@ import DashboardCharts from "./Components/Dashboard/DashboardCharts";
 import CustomDateRangePicker from "./Components/Dashboard/CustomDateRangePicker";
 import { DateRange } from "react-day-picker";
 import { Dashstats } from "./Components/Small comps/Types";
-import { subDays,startOfYear } from "date-fns";
-
+import { subDays,startOfYear, set } from "date-fns";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/Resellerstore";
+import axios from "axios";
 // A small component for the info cards to reduce repetition
 const InfoCard = ({ title, value }: { title: string; value: string | number }) => (
   <div className="flex-1 min-w-[150px] h-[90px] bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center p-2 shadow-sm hover:shadow-md transition-shadow">
@@ -18,21 +20,60 @@ const InfoCard = ({ title, value }: { title: string; value: string | number }) =
 );
 
 const Page: React.FC = () => {
+  const userid=useSelector((state:RootState)=>state.Main.userid)
   const isSmallScreen = useIsSmallScreen();
   const [internval, setInternval] = useState<string>("year");
   const [active, setActive] = useState<string>("year");
   const [range, setRange] = React.useState<DateRange | undefined>();
   const [otherdetails, setOtherdetails] = useState<Dashstats>({
-    newOrders: 0,
-    needToSource: 0,
-    liveRequests: 0,
-    wonOrders: 0,
-    wonRevenue: 0,
-    wonProfit: 0,
+    week:null,
+    month:null
   });
   
   const [isClient, setIsClient] = useState(false);
-  useEffect(() => setIsClient(true), []);
+  // Card data state for info cards
+  const [cardData, setCardData] = useState([
+    { title: "Revenue This Week", value: 0 },
+    { title: "Profit This Week", value: 0 },
+    { title: "Revenue This Month", value: 0 },
+    { title: "Profit This Month", value: 0 },
+  ]);
+
+
+  useEffect(()=>{
+    const r={
+      from:new Date(),
+      to:new Date(),
+    };
+    r.from=startOfYear(new Date());
+    r.to=new Date();
+    setRange(r) 
+  },[])
+  useEffect(() => {setIsClient(true)
+    const fetchpr=async()=>{
+     try{
+         const k=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Dash/ProRev`,{
+          userid
+         })
+         
+         // Update cardData state with API values
+         setCardData([
+           { title: "Revenue This Week", value: k.data.week?.rev ?? 0 },
+           { title: "Profit This Week", value: k.data.week?.pro ?? 0 },
+           { title: "Revenue This Month", value: k.data.month?.rev ?? 0 },
+           { title: "Profit This Month", value: k.data.month?.pro ?? 0 },
+         ]);
+     }
+     catch
+     {
+      console.log("something wrong with getting reveneue and profit")
+     }
+    }
+    if(userid){
+    fetchpr()
+  
+  }
+  }, [userid, ]);
 
   const handleIntervalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -69,16 +110,8 @@ const Page: React.FC = () => {
       r.from=startOfYear(new Date());
       r.to=new Date()
     }
-  
-    setRange(r)
+    setRange(r) 
   };
-
-  const cardData = [
-    { title: "Revenue This Week", value: 0 },
-    { title: "Profit This Week", value: 0 },
-    { title: "Revenue This Month", value: 0},
-    { title: "Profit This Month", value: `${0}:${0}` },
-  ];
 
   if (!isClient) {
     return null;

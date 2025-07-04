@@ -9,7 +9,7 @@ const DB_ConnectDB = require("./utils/DBconnect");
 
 DB_ConnectDB();
 
-// Raw body parsing for webhooks (must come before JSON parsing)
+
 app.use("/api/webhooks/shopify", express.raw({ type: 'application/json' }));
 
 //routes for hooks
@@ -31,6 +31,11 @@ app.use("/api/PaymentMethods",Routes.paymentRoutes);
 app.use("/api/Sourceoftruth",Routes.SourceoftruthRoutes)
 app.use("/api/Brands",Routes.BrandsRoutes)
 app.use("/api/Dash",Routes.DashRoutes)
+app.use("/api/Team",Routes.TeamRoutes)
+
+
+
+
 
 const Port = process.env.PORT;
 app.listen(Port, () => {
