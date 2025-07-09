@@ -82,7 +82,7 @@ export function CompleteOrderPopup({
     postcode: string;
     country: string;
   } | null>(null);
-  console.log(task)
+  
   const [dealOwner, setDealOwner] = useState<string>( '');
   const [sourceOfTruth, setSourceOfTruth] = useState<string>(task?.Sourceofthruth ?? '');
   const [paymentMethod, setPaymentMethod] = useState<string>(task?.paymentmethod ?? '');
@@ -183,10 +183,13 @@ export function CompleteOrderPopup({
 
       const p=Number(task?.processingfee);
       const s=Number(task?.sellprice);
-      const k=((p/s)*100).toFixed(2).toString();
 
+      let k = '';
+      if (!isNaN(p) && !isNaN(s) && s !== 0) {
+        k = ((p / s) * 100).toFixed(2).toString();
+      }
       setShippingFee(task.Shippingfee ? task.Shippingfee : '');
-      setProcessingFee(k || '');
+      setProcessingFee(task.processingfee?task.processingfee:'');
       setSupplierUsed((task.Supplierid && task.Supplierid?._id) ? task.Supplierid._id : '');
       setShippingAddress(task.shippingaddress ? task.shippingaddress : '');
         setDealOwner(task.DealOwnerid ? task.DealOwnerid?._id  : task.DealOwner?task.DealOwner:"");
@@ -426,8 +429,6 @@ export function CompleteOrderPopup({
 
   //-----------------label function ends-------------------------------//
 
-
-
   const handleDeleteLabel = async (id: string) => {
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/features/dellabel`, {
@@ -439,7 +440,8 @@ export function CompleteOrderPopup({
     catch {
       console.log("error deleting label")
     }
-  }
+  };
+
   // Delete payment method
   const handleDeletePaymentMethod = async (method: string) => {
     try {
@@ -499,10 +501,10 @@ export function CompleteOrderPopup({
   const Orderreview = () => {
 
     router.push('/Leads/OrderReview')
-  }
+  };
 
   const Submit = async () => {
-    if (productName && size && costPrice && shippingFee && processingFee && supplierUsed && selectedAddress && dealOwner && sourceOfTruth && paymentMethod) {
+    if (productName && size && costPrice && shippingFee && processingFee && supplierUsed && selectedAddress && dealOwner && sourceOfTruth && paymentMethod && sell) {
       setIsSubmitting(true);
       const p= (Number(processingFee)/100)
       const s=Number(sell)
@@ -519,7 +521,7 @@ export function CompleteOrderPopup({
             size: size,
             Supplierid: supplierUsed,
             Shippingfee: shippingFee,
-            processingfee: fee,
+            processingfee: processingFee,
             shippingaddress: shippingAddressObj,
             Sourceofthruth: sourceOfTruth,
             paymentmethod: paymentMethod,
@@ -694,7 +696,7 @@ export function CompleteOrderPopup({
               <div className="relative">
                 <label className="block text-sm font-medium">Processing Fee</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
                   <input
                     type="text"
                     className="w-full border rounded px-8 py-2 mt-1"

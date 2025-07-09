@@ -43,7 +43,7 @@ export function TaskPanel({
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [availableLabels, setavailableLabels] = useState<labeltype[]>([]);
   const [costPrice, setCostPrice] = useState<string>(task?.price?.toString()||"");
-  
+  const [deleting,setdeleting]=useState<boolean>(false)
 
   useEffect(()=>{
     if(task)
@@ -142,7 +142,7 @@ export function TaskPanel({
   }, [createLabelOpen, labelDialogOpen]);
 
   const SupmitDesription = async () => {
-    if (!task?._id) return;
+    if (!task?._id || deleting) return;
     setOpen(false);
     
     try {
@@ -182,13 +182,24 @@ export function TaskPanel({
 
   // Add this function for deleting the task
   const handleDeleteTask = async () => {
-    if (!task?._id) return;
+    if (!task?._id || deleting) return;
+    if(task.confirm){
+      toast.error("can not delete confirmed orders")
+      return
+    }
      try{
+       setdeleting(true)
         await axios.delete(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/deleteorders`,{
           data: { id:task._id }
         })
-        fetchallorders();
-        
+     
+        setTimeout(() => {
+          
+          setdeleting(false)
+          fetchallorders()
+          setOpen(false)
+        }, 2000);
+       
      }
      catch{
       toast.error("error occur while deleting a lead")
@@ -311,8 +322,18 @@ export function TaskPanel({
             </div>
             {/* Delete Task Button */}
             <div className="flex justify-center my-4">
-              <Button variant="destructive" onClick={handleDeleteTask}>
-                Delete Task
+              <Button variant="destructive" onClick={handleDeleteTask} disabled={deleting}>
+                {deleting ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    Deleting...
+                  </span>
+                ) : (
+                  'Delete'
+                )}
               </Button>
             </div>
           </DialogContent>
