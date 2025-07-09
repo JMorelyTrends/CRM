@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState,useCallback } from 'react'
 import axios from 'axios'
 import Requestserch from './Requestserch'
 import Requestresult from './Requestresult'
@@ -23,21 +23,29 @@ function Requestpanle({sideopen,suggesteddata,setsuggesteddata}:
    setsuggesteddata(data.data.message)
    setspin(false)
   }
-  const prepopulate=async(msg:string)=>{
-   
+  const debounce = <T extends unknown[]>( func: (...args: T) => void,delay: number ) => {
+    let timer: ReturnType< typeof setTimeout>;
+    return (...args: T) => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => { func.call(null, ...args) }, delay);
+    };
+}
+  const prepopulate= debounce(async (msg: string)=> {
+   const query = msg.trim();
+    if (!query) return;
     const data= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getprepopulate`,{
       q:msg
      });
      
       setsuggesteddata(data.data.message)
      
-  }
- // const [mcom,setmcom]=useState<boolean>(false)
+  },700)
+  
+  // const [mcom,setmcom]=useState<boolean>(false)
   // const Requestmade=()=>{
   // console.log("hello")
   // }
   // const variants ={
-    
   // }
   return (
     <div

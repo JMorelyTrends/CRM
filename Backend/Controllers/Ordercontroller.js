@@ -326,7 +326,7 @@ shippingaddress,
 Sourceofthruth,
 paymentmethod,
 DealOwner,
-getOrderofCustomer
+
 }=req.body;
   
   try{
@@ -359,7 +359,6 @@ getOrderofCustomer
     }
     if(order.stockxitem.length>0)
     {
-      
       const productPromises = order.stockxitem.map(async (item) => {
         const productData = {
           title: item.name,
@@ -456,6 +455,7 @@ getOrderofCustomer
     const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
       orders_count:(order.cusid.orders_count+1)
      })
+
   res.status(201).json({data:"orderupdated"});  
   }
   catch(err)

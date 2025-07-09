@@ -76,7 +76,7 @@ const getshopifyorders = async (req, res) => {
       }
        
       const shopifyOrders = totalorders.flat();
-      console.log(shopifyOrders)
+    
       // Populate into DB
       const savePromises = shopifyOrders.map(async (order) => {
         const check=await Orderreview.find({name:order.name});

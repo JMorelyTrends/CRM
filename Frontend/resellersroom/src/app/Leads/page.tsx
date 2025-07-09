@@ -82,7 +82,7 @@ export default function Page({}: Props) {
       ).data;
      console.log(mongodata) 
       setstate(mongodata);
-      getprices(mongodata); // pass fresh state to getprices
+    
     }
   };
 
@@ -131,7 +131,7 @@ export default function Page({}: Props) {
           // 🕐 Wait then call getprices again with fresh state
           setTimeout(() => {
             lockRef.current = false; // 🔓 Unlock before next call
-            getprices(mongodata); // Call recursively with new state
+          // Call recursively with new state
           }, 1000); // delay 1s
 
         } catch (err) {
@@ -177,11 +177,20 @@ function timeout(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+  const confirmorder=(id:number|string)=>
+  {
+    const n=Number(id);
+    return state?.tasks[n]?.confirm
+
+  }
+
+
 
   const DragEnd = async(event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over) return setActiveCard(null);
+   
     if (state) {
       const taskid = parseInt(active.id as string);
       const currenttask = findTaskById(state, taskid);
@@ -191,7 +200,14 @@ function timeout(ms: number) {
       const sourceColId = findColumnByTaskId(state, taskid);
       // CASE 1: over.id is a column → dropped into empty space in column
       const isOverAColumn = state.columns.hasOwnProperty(overId);
-      const destinationColId = isOverAColumn
+      const isconfirmorder=confirmorder(active?.id);
+     
+      if(isconfirmorder)
+        {
+         setActiveCard(null)
+         return
+        }
+      const destinationColId = isOverAColumn 
         ? overId
         : findColumnByTaskId(state, parseInt(overId as string));
 
@@ -227,6 +243,7 @@ function timeout(ms: number) {
             },
           },
         };
+        
         setstate(newState);
         setActiveCard(null);
  
@@ -268,7 +285,7 @@ function timeout(ms: number) {
           },
         },
       };
-
+    
       setstate(newState);
       setActiveCard(null);
       try{await axios.post(
@@ -285,7 +302,7 @@ function timeout(ms: number) {
         if(currenttask.cusid&& currenttask.cusid?.email!="" && currenttask?.phone!="")
         {
           setwontask(currenttask)
-        dispatch(Addcurrentorder(currenttask))
+          dispatch(Addcurrentorder(currenttask))
           setwonpopup(true)
           dispatch(ToogleCompleteorder())
           dispatch(AddSelectedOrder(currenttask))

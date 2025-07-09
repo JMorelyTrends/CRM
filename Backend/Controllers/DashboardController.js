@@ -511,12 +511,12 @@ exports.ProRev = async (req, res) => {
     ])
 
     const week = {
-      rev: r[0]?.revenue || 0 + k[0]?.revenue || 0,
-      pro: r[0]?.profit || 0 + k[0]?.profit || 0
+      rev:( Number(((r[0]?.revenue || 0) + (k[0]?.revenue || 0)).toFixed(2))).toString(),
+      pro: (Number(((r[0]?.profit || 0) + (k[0]?.profit || 0)).toFixed(2))).toString()
     }
     const month = {
-      rev: u[0].revenue || 0 + t[0]?.revenue || 0,
-      pro: u[0]?.profit || 0 + t[0]?.profit || 0
+      rev:( Number(((u[0]?.revenue || 0) + (t[0]?.revenue || 0)).toFixed(2))).toString(),
+      pro: (Number(((u[0]?.profit || 0) + (t[0]?.profit || 0)).toFixed(2))).toString()
     }
 
     res.status(200).json({ week: week, month: month })

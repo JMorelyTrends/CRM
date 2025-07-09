@@ -96,11 +96,8 @@ catch(err)
 exports.Getprepopulate=async(req,res)=>{
   
         const { q } = req.body; 
-        const safeQ = escapeRegex(q);
-       
-        
+        const safeQ = escapeRegex(q); 
         const regex = new RegExp(safeQ, 'i'); 
-      
         try {
           const results = await StockxDatabase.find({
             $or: [
@@ -110,21 +107,12 @@ exports.Getprepopulate=async(req,res)=>{
               { Colorway: { $regex: regex } }
             ]
           }); 
-      
-         
                     res.status(201).json({ message: results });
-          //       for (const item of results) {
-          //   if (!item.enriched) {
-          //     await enrichProduct(item._id, item.slug); // Wait for enrichment
-          //     await delay(2000); // Wait for 2 seconds before next iteration
-          //   }
-          // }
         } 
      
     catch(err)
     {
         return res.status(500).json({ message: err.message });
-    
     }
 }
 
@@ -306,7 +294,7 @@ try
         .then(res => res.json())
         .then(async (apiResponse) => {
          
-         console.log(apiResponse)
+        
           // The actual product results are in the 'data' array
           if (!apiResponse || !apiResponse.data || apiResponse.data.length === 0) {
               return res.status(200).json({ message: [] }); // Return empty if API finds nothing
