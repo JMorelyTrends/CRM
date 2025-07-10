@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { DateRange } from "react-day-picker";
-import { Dashstats } from "../Small comps/Types";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 
@@ -75,7 +74,7 @@ function toUTCEndOfDay(date: Date): Date {
 }
 // --- Main Component ---
 
-const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | undefined; setotherdetails: React.Dispatch<React.SetStateAction<Dashstats>> }) => {
+const DashboardCharts = ({  range }: {  range: DateRange | undefined;  }) => {
   
   const userId=useSelector((state:RootState)=>state.Main.userid)
   const [splitPerShopperData, setSplitPerShopperData] = useState([
@@ -95,10 +94,10 @@ const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | unde
     { name: "Shopify", revenue: 0, profit: 0 },
     { name: "Shoppers", revenue: 0, profit: 0 },
   ]);
-  const [MarketingS, setMarketingS] = useState([
+  const MarketingS=[
     { name: "Google", Conversion_Revenue: 8500, True_Profit: 3200, Conversion_Profit: 2000, total_adspend: 1000 },
     { name: "meta", Conversion_Revenue: 5200, True_Profit: 3800, Conversion_Profit: 2000, total_adspend: 1000 },
-  ]);
+  ];
  
 
   // --- Data Fetching ---
@@ -119,7 +118,7 @@ const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | unde
     
     const fetchAllData = async () => {
      
-      let params: {
+      const params: {
         userid:string,
         start?:string,
         end?:string,
@@ -130,10 +129,10 @@ const DashboardCharts = ({  range, setotherdetails }: {  range: DateRange | unde
         params.end = range.to ? toUTCEndOfDay(range.to).toISOString() : toUTCEndOfDay(range.from).toISOString();
       } 
 
-      const [shopperData, Channel, other, source] = await Promise.all([
+      const [shopperData, Channel, source] = await Promise.all([
         fetchChartData("Pershopper", params),
         fetchChartData("Perchannel", params),
-        fetchChartData("Marketingspend", params),
+        // fetchChartData("Marketingspend", params),
         fetchChartData("Sourceoftruth", params),
       ]);
       if(shopperData&&shopperData.length>1)

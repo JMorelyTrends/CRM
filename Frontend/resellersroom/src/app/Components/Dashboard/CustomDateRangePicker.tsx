@@ -9,20 +9,10 @@ import { CalendarIcon } from "lucide-react"; // Assuming you use lucide-react fo
 import { 
   isToday, 
   isYesterday, 
-  subDays, 
-  startOfWeek, 
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-  subMonths,
-  isEqual,
+
 } from "date-fns";
 
 function getDateRangeLabel(start: Date, end: Date): string {
-  const now = new Date();
-
   if (start > end) [start, end] = [end, start];
 
   if (isToday(start) && isToday(end)) return "Today";
@@ -38,12 +28,10 @@ function toUTCMidnight(date: Date): Date {
 }
 
 export default function CustomDateRangePicker({
-  active,
   setActive,
   range,
   setRange,
 }: {
-  active: string;
   setActive: React.Dispatch<React.SetStateAction<string>>;
   range: DateRange | undefined;
   setRange: React.Dispatch<React.SetStateAction<DateRange | undefined>>;

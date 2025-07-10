@@ -5,8 +5,7 @@ import Dashboardheader from "./Components/Small comps/Dashboardheader";
 import DashboardCharts from "./Components/Dashboard/DashboardCharts";
 import CustomDateRangePicker from "./Components/Dashboard/CustomDateRangePicker";
 import { DateRange } from "react-day-picker";
-import { Dashstats } from "./Components/Small comps/Types";
-import { subDays,startOfYear, set } from "date-fns";
+import { subDays,startOfYear } from "date-fns";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/Resellerstore";
 import axios from "axios";
@@ -22,13 +21,10 @@ const InfoCard = ({ title, value }: { title: string; value: string | number }) =
 const Page: React.FC = () => {
   const userid=useSelector((state:RootState)=>state.Main.userid)
   const isSmallScreen = useIsSmallScreen();
-  const [internval, setInternval] = useState<string>("year");
+ 
   const [active, setActive] = useState<string>("year");
   const [range, setRange] = React.useState<DateRange | undefined>();
-  const [otherdetails, setOtherdetails] = useState<Dashstats>({
-    week:null,
-    month:null
-  });
+  
   
   const [isClient, setIsClient] = useState(false);
   // Card data state for info cards
@@ -78,7 +74,7 @@ const Page: React.FC = () => {
   const handleIntervalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setActive(val);
-    setInternval(val);
+   
     const r={
       from:new Date(),
       to:new Date(),
@@ -90,7 +86,7 @@ const Page: React.FC = () => {
     }
     else if(val=="yesterday")
     {
-      var d=new Date();
+      const d=new Date();
       d.setDate(d.getDate()-1)
       r.from=d;
       r.to=d;
@@ -128,7 +124,6 @@ const Page: React.FC = () => {
           {/* Filter Controls - Combined into one component */}
           <div className="flex items-center bg-white border border-gray-300 rounded-lg shadow-sm w-full max-w-lg">
             <CustomDateRangePicker
-              active={active}
               setActive={setActive}
               range={range}
               setRange={setRange}
@@ -155,7 +150,7 @@ const Page: React.FC = () => {
           </div>
         </div>
 
-        <DashboardCharts  range={range} setotherdetails={setOtherdetails} />
+        <DashboardCharts  range={range}/>
       </div>
     </div>
   );

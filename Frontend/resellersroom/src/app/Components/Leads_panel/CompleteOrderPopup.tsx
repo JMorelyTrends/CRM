@@ -181,13 +181,11 @@ export function CompleteOrderPopup({
         setCostPrice(task.price ? task.price?.toString() : "undefined")
       }
 
-      const p=Number(task?.processingfee);
-      const s=Number(task?.sellprice);
+    
+      
+   
 
-      let k = '';
-      if (!isNaN(p) && !isNaN(s) && s !== 0) {
-        k = ((p / s) * 100).toFixed(2).toString();
-      }
+     
       setShippingFee(task.Shippingfee ? task.Shippingfee : '');
       setProcessingFee(task.processingfee?task.processingfee:'');
       setSupplierUsed((task.Supplierid && task.Supplierid?._id) ? task.Supplierid._id : '');
@@ -360,7 +358,7 @@ export function CompleteOrderPopup({
       setpaymentmethods(pay.data.data)
       setavailsuppliers(sup.data.supps)
       if (Array.isArray(tea.data.data)) {
-        setDealOwners(tea.data.data.map((obj: any) => ({ _id: obj._id, name: obj.name })));
+        setDealOwners(tea.data.data.map((obj: {_id:string,name:string}) => ({ _id: obj._id, name: obj.name })));
       } else {
         setDealOwners([]);
       }
@@ -506,10 +504,8 @@ export function CompleteOrderPopup({
   const Submit = async () => {
     if (productName && size && costPrice && shippingFee && processingFee && supplierUsed && selectedAddress && dealOwner && sourceOfTruth && paymentMethod && sell) {
       setIsSubmitting(true);
-      const p= (Number(processingFee)/100)
-      const s=Number(sell)
-      const pro=p*s;
-      const fee=pro.toString()
+
+
       try {
         await axios.post(
           `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,

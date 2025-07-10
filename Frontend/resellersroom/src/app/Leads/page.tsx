@@ -44,10 +44,7 @@ export default function Page({}: Props) {
   const [wontask,setwontask]=useState<Task|null>(null)
   const [leadFilter, setLeadFilter] = useState<"" | "complete" | "incomplete">("");
 
-  const lockRef = useRef(false);
-
   
-
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -93,58 +90,58 @@ export default function Page({}: Props) {
   }, [userid]);
 
 
-  const getprices = async (currentState: statetype) => {
-  if (!currentState || lockRef.current) return;
+  // const getprices = async (currentState: statetype) => {
+  // if (!currentState || lockRef.current) return;
 
-  const stateCopy = { ...currentState };
-  const columnOrder = stateCopy.columnOrder;
+  // const stateCopy = { ...currentState };
+  // const columnOrder = stateCopy.columnOrder;
 
-  for (const ColumnId of columnOrder) {
-    const column = stateCopy.columns[ColumnId];
-    const tasks = column.taskIds.map((taskId) => stateCopy.tasks[taskId]);
+  // for (const ColumnId of columnOrder) {
+  //   const column = stateCopy.columns[ColumnId];
+  //   const tasks = column.taskIds.map((taskId) => stateCopy.tasks[taskId]);
 
-    for (const task of tasks) {
-      const item = task?.stockxitem?.[0];
-      if (item && item.last_sale_price === 0 && !lockRef.current) {
-        lockRef.current = true; // 🔒 Lock
+  //   for (const task of tasks) {
+  //     const item = task?.stockxitem?.[0];
+  //     if (item && item.last_sale_price === 0 && !lockRef.current) {
+  //       lockRef.current = true; // 🔒 Lock
 
-        try {
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
-            {
-              itemid: item._id,
-              search: item.slug,
-            }
-          );
+  //       try {
+  //         await axios.post(
+  //           `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Stockx/Getproductprice`,
+  //           {
+  //             itemid: item._id,
+  //             search: item.slug,
+  //           }
+  //         );
 
-          const mongodata = (
-            await axios.post(
-              `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`,
-              {
-                id: userid,
-              }
-            )
-          ).data;
+  //         const mongodata = (
+  //           await axios.post(
+  //             `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getAllOrders`,
+  //             {
+  //               id: userid,
+  //             }
+  //           )
+  //         ).data;
 
-          setstate(mongodata);
+  //         setstate(mongodata);
 
-          // 🕐 Wait then call getprices again with fresh state
-          setTimeout(() => {
-            lockRef.current = false; // 🔓 Unlock before next call
-          // Call recursively with new state
-          }, 1000); // delay 1s
+  //         // 🕐 Wait then call getprices again with fresh state
+  //         setTimeout(() => {
+  //           lockRef.current = false; // 🔓 Unlock before next call
+  //         // Call recursively with new state
+  //         }, 1000); // delay 1s
 
-        } catch (err) {
-          console.error("Error fetching price or orders:", err);
-          lockRef.current = false; // Always release lock
-          return;
-        }
-      }
-    }
-  }
+  //       } catch (err) {
+  //         console.error("Error fetching price or orders:", err);
+  //         lockRef.current = false; // Always release lock
+  //         return;
+  //       }
+  //     }
+  //   }
+  // }
 
-  console.log("No more items needing price updates.");
-  };
+  // console.log("No more items needing price updates.");
+  // };
   const isSmallScreen = useIsSmallScreen();
 
   const DragStart = (event: DragStartEvent) => {
