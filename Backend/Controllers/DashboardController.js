@@ -129,7 +129,7 @@ exports.Pershopper = async (req, res) => {
     }));
 
     formatted.sort((a, b) => a.name.localeCompare(b.name));
-     console.log(formatted)
+    
     res.status(200).json({ data: formatted });
   }
   catch (e) {

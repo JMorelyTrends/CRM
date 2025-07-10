@@ -71,7 +71,7 @@ const OrdersPage = () => {
             userid: userid,
       });
       
-    console.log(re.data.data)
+
       setOrders(re.data.data)
       setUnfulfilled(re.data.unfulfilled)
       settprofit(re.data.profit)

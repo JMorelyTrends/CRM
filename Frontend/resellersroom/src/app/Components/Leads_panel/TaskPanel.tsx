@@ -99,7 +99,7 @@ export function TaskPanel({
   const toggleLabel = async (label: labeltype) => {
     if (!task?._id) return;
   
-     console.log(selectedLabels)
+    
     const isAlreadySelected = selectedLabels.some((l) => l._id === label._id);
     const updatedLabels = isAlreadySelected
       ? selectedLabels.filter((l) => l._id !== label._id)

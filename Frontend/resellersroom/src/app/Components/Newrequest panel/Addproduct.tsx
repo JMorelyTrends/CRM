@@ -49,7 +49,7 @@ const Addproduct = (props: Props) => {
           });
       
           if(uploadre.config.url){
-       console.log(uploadre.config.url.split('?')[0] )
+   
      
        const newitem=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/item/createItem`,{
         Name:Name

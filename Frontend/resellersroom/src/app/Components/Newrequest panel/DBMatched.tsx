@@ -260,7 +260,7 @@ const DBMatched = () => {
                                          dispatch(Addselectedcusotmer(customer))
                                       
                                          dispatch(Toggleleadsrenderstep(2));
-                                        console.log('Update button clicked');
+                                     
                                     }}
                                 >
                                     Use

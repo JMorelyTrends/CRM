@@ -77,7 +77,7 @@ export default function Page({}: Props) {
           }
         )
       ).data;
-     console.log(mongodata) 
+     
       setstate(mongodata);
     
     }
@@ -140,7 +140,7 @@ export default function Page({}: Props) {
   //   }
   // }
 
-  // console.log("No more items needing price updates.");
+  
   // };
   const isSmallScreen = useIsSmallScreen();
 

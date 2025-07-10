@@ -151,7 +151,7 @@ const DashboardCharts = ({  range }: {  range: DateRange | undefined;  }) => {
         ]
         setSplitPerChannelData(k)
        }
-       console.log(source)
+   
        if(source && source.length>0)
        {
         setsourceoftruth(source)
