@@ -106,7 +106,10 @@ export type Task = {
   email?: string;
   phone?: string;
   shopifyorderid?:string,
-
+  DealOwnerid?:{
+    _id:string,
+    name:string,
+  },
   // New fields from OrderSchema (all optional)
   Orderrecived?: string;
   ordersend?: string;
@@ -206,14 +209,17 @@ export type Supplier ={
 }
 
 export type Dashstats={
-  newOrders: number,
-  needToSource: number,
-  liveRequests: number,
-  wonOrders: number,
-  wonRevenue: number,
-  wonProfit: number
+week:w|null,
+month:m|null
 }
-
+type w={
+  revenue:number,
+  profit:number
+}
+type m={
+  revenue:number,
+  profit:number
+}
 //Customer Crm
 
 export type Customerprop={

@@ -1,240 +1,260 @@
 "use client";
-import React,{useEffect,useState} from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-
 import {
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
-
-import {  DateRange } from "react-day-picker";
-import { Dashstats } from "../Small comps/Types";
-const COLORS =["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28EFF", "#FF6699"];
-
+import { DateRange } from "react-day-picker";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/Resellerstore";
 
 
-const DashboardCharts = ({internval,range,setotherdetails}:{internval:string,range:DateRange|undefined,setotherdetails:React.Dispatch<React.SetStateAction<Dashstats>>}) => {
-   
-
-//states
- const [pieData, setPieData] = useState([]);
- const [userid,setuserid]= useState<string | null>("");
- const [reqwon,setreqwon]=useState( [
-           { name: "Jan", Won: 400, Requst: 240 },
-           { name: "Feb", Won: 300, Requst: 139 },
-           { name: "Mar", Won: 200, Requst: 980 },
-           { name: "Apr", Won: 278, Requst: 390 },
-      ])
-
- 
-  const [wonlost,setwonlost]=useState(      [
-           { name: "Jan", Won: 400, Lost: 240 },
-           { name: "Feb", Won: 300, Lost: 139 },
-           { name: "Mar", Won: 200, Lost: 980 },
-           { name: "Apr", Won: 278, Lost: 390 },
-      ])
+const ChartWrapper = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="w-full bg-white rounded-xl p-4 flex flex-col items-center">
+    <h2 className="text-lg font-bold text-gray-800 mb-4">{title}</h2>
+    <div className="w-full h-[300px]">{children}</div>
+  </div>
+);
 
 
-
-const getpidata = async () => {
-  try {
-    let response;
-
-    if (range && range.from === range.to) {
-      // Same day selected
-      response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`, {
-        internval: internval ? internval : "today",
-        userid: userid,
-      });
-    } else if (range) {
-      // Custom date range selected
-      response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`, {
-        startdate: range.from,
-        enddate: range.to,
-        userid: userid,
-      });
-    } else {
-      // Default fallback (e.g. whole year)
-      response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/PieData`, {
-        internval: internval ? internval : "year",
-        userid: userid,
-      });
-    }
-    console.log(response.data.data)
-    setPieData(response.data.data);
-  } catch (error) {
-    console.error("Error fetching pie chart data:", error);
-  }
-};
+const StatCard = ({ label, value }: { label: string; value: number }) => (
+  <div className="bg-gray-100 p-4 rounded-lg w-full">
+    {/* "up" div for the label */}
+    <div className="text-sm text-gray-600">{label}</div>
+    {/* "down" div for the value */}
+    <div className="text-2xl font-bold text-gray-900">£{value.toLocaleString()}</div>
+  </div>
+);
 
 
-  const getreqwon=async()=>{
-    if(range &&range?.from===range?.to)
-    {
-        const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
-        interval:internval?internval:"today",
-         userid:userid
-    })
-      setreqwon(d.data.data)
-    }
-    else if(range){
-    const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
-       startdate:range.from,
-       enddate:range.to,
-        userid:userid
-    })
-      setreqwon(d.data.data)
-    }
-    else{
- const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/reqwondata`,{
-        interval:internval?internval:"year",
-         userid:userid
-    })
-    console.log(d.data.data)
-      setreqwon(d.data.data)
-    }
-  
-  }
+const StatsGrid = () => {
 
-  const getwonlost=async()=>{
-     if(range &&range?.from===range?.to)
-    {
-        const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/wonloastdata`,{
-        interval:internval?internval:"today",
-         userid:userid
-    })
-      setwonlost(d.data.data)
-    }
-    else if(range){
-    const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/wonloastdata`,{
-       startdate:range.from,
-       enddate:range.to,
-        userid:userid
-    })
-      setwonlost(d.data.data)
-    }
-    else{
- const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/wonloastdata`,{
-        interval:internval?internval:"year",
-         userid:userid
-    })
-      setwonlost(d.data.data)
-    }
-  }
-
-  const otherdetail=async()=>{
-     if(range &&range?.from===range?.to)
-    {
-        const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/otherdetails`,{
-        interval:internval?internval:"today",
-         userid:userid
-    })
-      setotherdetails(d.data.data)
-    }
-    else if(range){
-    const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/otherdetails`,{
-       startdate:range.from,
-       enddate:range.to,
-        userid:userid
-    })
-      setotherdetails(d.data.data)
-    }
-    else{
-     const d=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/otherdetails`,{
-        internval:internval?internval:"year",
-         userid:userid
-    })
-       setotherdetails(d.data.data)
-    }
-  }
-
-
-  
-     useEffect(() => {
-      
-        if (typeof window !== "undefined") {
-          const id = localStorage.getItem("tempcred");
-          setuserid(id);
-        }
-      }, []);
-
-  useEffect(()=>{
-  
-    if(userid!=""){
- 
-    getpidata()
-    getreqwon()
-    getwonlost()
-    otherdetail()
-  }
-  },[userid,internval,range])
-
+  const statsData = [
+    { label: "Average ROAS", value: 45231 },
+    { label: "Total Ad Spend", value: 12532 },
+    { label: "Conversion Revenue", value: 5400 },
+    { label: "Conversion Profit", value: 89 },
+    { label: "True Profit", value: 508 },
+  ];
 
   return (
-    <div className="w-full h-[76vh] flex gap-4">
-      <div className="w-[35%] h-full p-2 rounded-2xl flex flex-col justify-center items-center overflow-auto bg-white shadow-md">
-        <h1 className="text-sm font-bold mb-2 text-black">Order Distribution</h1>
-        {pieData && pieData.length > 0 && (
-          <PieChart width={300} height={300}>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-            
-              outerRadius={90}
-              dataKey="value"
-            >
-              {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-           
-            <Legend 
-              layout="vertical" 
-              verticalAlign="middle" 
-              align="right"
-              wrapperStyle={{
-                paddingLeft: '10px',
-                fontSize: '12px'
-              }}
-            />
-          </PieChart>
-        )}
+    <div className="p-4">
+      <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Key Metrics</h2>
+      <div className="flex flex-wrap justify-center gap-4">
+        {/* The first 4 "Y" divs in a 2x2 grid */}
+        {statsData.slice(0, 4).map((stat, index) => (
+          <div key={index} className="w-full sm:w-[calc(50%-0.5rem)]">
+            <StatCard label={stat.label} value={stat.value} />
+          </div>
+        ))}
+      </div>
+      {/* The 5th "Y" div, centered below */}
+      <div className="flex justify-center mt-4">
+        <div className="w-full sm:w-[calc(50%-0.5rem)]">
+          <StatCard label={statsData[4].label} value={statsData[4].value} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Utility to convert a date to UTC midnight
+function toUTCMidnight(date: Date): Date {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+}
+function toUTCEndOfDay(date: Date): Date {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999));
+}
+// --- Main Component ---
+
+const DashboardCharts = ({  range }: {  range: DateRange | undefined;  }) => {
+  
+  const userId=useSelector((state:RootState)=>state.Main.userid)
+  const [splitPerShopperData, setSplitPerShopperData] = useState([
+    { name: "Alfie", revenue: 0, profit: 0 },
+    { name: "Fran", revenue: 0, profit: 0 },
+    { name: "Lauren", revenue: 0, profit: 0 },
+    { name: "Shania", revenue: 0, profit: 0 },
+  ]);
+  const [sourceoftruth, setsourceoftruth] = useState([
+    { name: " client", revenue: 0, profit: 0 },
+    { name: "B2B", revenue: 0, profit: 0 },
+    { name: "Word of Mouth", revenue: 0, profit: 0 },
+    { name: "Organic", revenue:0, profit: 0 },
+
+  ]);
+  const [splitPerChannelData, setSplitPerChannelData] = useState([
+    { name: "Shopify", revenue: 0, profit: 0 },
+    { name: "Shoppers", revenue: 0, profit: 0 },
+  ]);
+  const MarketingS=[
+    { name: "Google", Conversion_Revenue: 8500, True_Profit: 3200, Conversion_Profit: 2000, total_adspend: 1000 },
+    { name: "meta", Conversion_Revenue: 5200, True_Profit: 3800, Conversion_Profit: 2000, total_adspend: 1000 },
+  ];
+ 
+
+  // --- Data Fetching ---
+  const fetchChartData = async (endpoint: string, params: object) => {
+    try {
+  
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Dash/${endpoint}`, params);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Error fetching data for ${endpoint}:`, error);
+      return [];
+    }
+  };
+
+
+  useEffect(() => {
+    if (!userId) return;
+    
+    const fetchAllData = async () => {
+     
+      const params: {
+        userid:string,
+        start?:string,
+        end?:string,
+      } = { userid: userId };
+
+      if (range?.from) {
+        params.start = toUTCMidnight(range.from).toISOString();
+        params.end = range.to ? toUTCEndOfDay(range.to).toISOString() : toUTCEndOfDay(range.from).toISOString();
+      } 
+
+      const [shopperData, Channel, source] = await Promise.all([
+        fetchChartData("Pershopper", params),
+        fetchChartData("Perchannel", params),
+        // fetchChartData("Marketingspend", params),
+        fetchChartData("Sourceoftruth", params),
+      ]);
+      if(shopperData&&shopperData.length>1)
+        {
+        setSplitPerShopperData(shopperData);
+       }
+
+      if(Channel && Channel.length>0)
+       {
+         setSplitPerChannelData(Channel)
+       }
+       else{
+        const k=[
+          { name: "Shopify", revenue: 0, profit: 0 },
+          { name: "Shoppers", revenue: 0, profit: 0 },
+        ]
+        setSplitPerChannelData(k)
+       }
+   
+       if(source && source.length>0)
+       {
+        setsourceoftruth(source)
+       }
+       else{
+        const k=[
+          { name: " client", revenue: 0, profit: 0 },
+          { name: "B2B", revenue: 0, profit: 0 },
+          { name: "Word of Mouth", revenue: 0, profit: 0 },
+          { name: "Organic", revenue:0, profit: 0 },
+      
+        ]
+        setsourceoftruth(k)
+       }
+       };
+    
+   
+     fetchAllData(); 
+  }, [userId, range?.from?.getTime(),
+    range?.to?.getTime(), ]);
+
+  // --- Render Logic ---
+  return (
+    <div className="w-full h-auto flex flex-col lg:flex-row gap-0">
+      {/* Left Column */}
+      <div
+        className={`w-full lg:w-1/2 h-[85vh] bg-white rounded-2xl shadow-lg overflow-y-auto 
+          [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300
+          dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500`}
+      >
+        <div className="px-1 pb-12 lg:pb-24 xl:pb-45 flex flex-col gap-8">
+          <ChartWrapper title="Split per shopper">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={splitPerShopperData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(value) => `£${value}`} />
+                <Tooltip formatter={(value: number) => `£${value}`} />
+                <Legend />
+                <Bar dataKey="revenue" name="Revenue" fill="#D9D9D9" />
+                <Bar dataKey="profit" name="Profit" fill="#3798A1" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartWrapper>
+
+          <ChartWrapper title="Source of Truth">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={sourceoftruth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="revenue" name="Revenue" fill="#D9D9D9" />
+                <Bar dataKey="profit" name="Profit" fill="#3798A1" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartWrapper>
+
+          {/* This is the "X" div with the 5 "Y" divs inside */}
+          <StatsGrid />
+        </div>
       </div>
 
-      <div className="w-[65%] h-full bg-white rounded-2xl overflow-y-auto p-4 py-9 text-center">
-      <h1 className=" text-lg font-bold mb-3 text-black">Requests vs Won Deals</h1>
-        <div className="mb-6">
-        { reqwon&& reqwon.length>0&&  <LineChart width={550} height={300} data={reqwon}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="Won" stroke="#82ca9d" />
-            <Line type="monotone" dataKey="Request" stroke="#8884d8" />
-          </LineChart>}
-        </div>
-        <div className="mb-6">
-                  <h1 className=" text-lg font-bold mb-3 text-black">Won vs lost Deals</h1>
-        {wonlost&&wonlost.length>0&&  <LineChart width={550} height={300} data={wonlost}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="Won" stroke="#ff7300" />
-            <Line type="monotone" dataKey="Lost" stroke="#387908" />
-          </LineChart>}
+      {/* Right Column */}
+      <div
+        className={`w-full lg:w-1/2 h-[85vh] bg-white rounded-2xl shadow-lg overflow-y-auto
+          [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300
+          dark:[&::-webkit-scrollbar-track]:bg-neutral-700 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500`}
+      >
+        <div className="px-1 pb-12 lg:pb-24 xl:pb-45 flex flex-col gap-8">
+          <ChartWrapper title="Split per Channel">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={splitPerChannelData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="revenue" name="Revenue" fill="#D9D9D9" />
+                <Bar dataKey="profit" name="Profit" fill="#3798A1" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartWrapper>
+
+          <ChartWrapper title="Marketing Spend">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={MarketingS} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="Conversion_Revenue" fill="#D9D9D9" />
+                <Bar dataKey="True_Profit" fill="#3798A1" />
+                <Bar dataKey="Conversion_Profit" fill="#073C41" />
+                <Bar dataKey="total_adspend" fill="#5A8C90" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartWrapper>
+
+          {/* This is the "X" div with the 5 "Y" divs inside */}
+          <StatsGrid />
         </div>
       </div>
     </div>

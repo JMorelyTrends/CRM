@@ -92,7 +92,7 @@ const UpSup = (props: Props) => {
             id:supplier._id,
             newSupplier
          })
-         console.log(newupsup.data.data)
+       
          dispatch(AddselectedSup(newupsup.data.data))
           if (newupsup.data.message)
              {

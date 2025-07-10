@@ -3,34 +3,6 @@ const Customer = require("../Models/Custormer");
 const Supplier=require("../Models/Supplier")
 const mongoose = require("mongoose");
 const {get_shopify_byid,Get_mongo_byid,createShoOrder,getshopifybyid_store,manageShopifyProduct}=require("./CustomerController");
-// Import Shopify session from CustomerController
-const { shopifyApi, ApiVersion, Session } = require("@shopify/shopify-api");
-const { restResources } = require("@shopify/shopify-api/rest/admin/2025-04");
-
-const customLogger = {
-  log: (severity, message) => {
-    if (severity === "error") {
-      //console.error(`[${severity}] ${message}`);
-    }
-  },
-};
-
-const shopify = shopifyApi({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET,
-  apiVersion: ApiVersion.April25,
-  isCustomStoreApp: true,
-  adminApiAccessToken: process.env.SHOPIFY_ACCESS_TOKEN,
-  isEmbeddedApp: false,
-  hostName: process.env.SHOPIFY_STORE_DOMAIN,
-  scopes: ["read_customers", "write_draft_orders", "write_orders"],
-  logger: customLogger,
-  restResources,
-});
-
-const session = shopify.session.customAppSession(
-  process.env.SHOPIFY_STORE_DOMAIN
-);
 
 exports.createOrder = async (req, res) => {
   try {
@@ -82,7 +54,7 @@ exports.getAllOrders = async (req, res) => {
   try {
     const {id}=req.body;
   
-    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate('cusid').sort({createdAt:-1});
+    const orders = await Order.find({userid:id}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid").populate('cusid').populate("DealOwnerid").sort({createdAt:-1});
    
     const columnOrder = [
       "New Lead",
@@ -159,6 +131,7 @@ if (data.shippingaddress != null)  tasks[counter].shippingaddress = data.shippin
 if (data.Sourceofthruth != null)  tasks[counter].Sourceofthruth = data.Sourceofthruth;
 if (data.paymentmethod != null)  tasks[counter].paymentmethod = data.paymentmethod;
 if (data.DealOwner != null)  tasks[counter].DealOwner = data.DealOwner;
+if (data.DealOwnerid != null)  tasks[counter].DealOwnerid = data.DealOwnerid;
 if (data.confirm != null)  tasks[counter].confirm = data.confirm;
     
       const stage=data.stage || "NewLead";
@@ -179,6 +152,7 @@ if (data.confirm != null)  tasks[counter].confirm = data.confirm;
 
     res.status(200).json(maporderdata);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: error.message });
   }
 };
@@ -223,7 +197,7 @@ exports.getOrderofCustomer=async(req,res)=>{
 catch(err)
 {
   
-  res.json(500).json({message:"error in getting the numbers of leads"})
+  res.status(500).json({message:"error in getting the numbers of leads"})
 }
 }
 
@@ -269,8 +243,6 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 //different
 
@@ -324,10 +296,8 @@ exports.Getorderofsuppliers=async(req,res)=>{
    const {name}=req.body;
   try
   {
-
       const o=await Order.find({Supplierid:name}).populate("items").populate("stockxitem").populate("labels").populate("items").populate("Supplierid");
-      let spend=0;
-      
+      let spend=0;   
       if(o?.length>0)
       {
         o.map((or)=>{
@@ -356,17 +326,17 @@ shippingaddress,
 Sourceofthruth,
 paymentmethod,
 DealOwner,
-getOrderofCustomer
+
 }=req.body;
   
   try{
-   
     const rev=parseFloat(sell)||0;
     const cog=parseFloat(price)||0;
     const pp=parseFloat(processingfee)||0;
     const sh=parseFloat(Shippingfee)||0
+
     const order=  await Order.findOneAndUpdate({_id:_id},{$set:{Shippingfee:sh,processingfee:pp,shippingaddress:shippingaddress.address1,
-    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwner:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("Supplierid").populate("cusid");
+    Sourceofthruth:Sourceofthruth,paymentmethod:paymentmethod,DealOwnerid:DealOwner,price:cog,sellprice:rev,Supplierid:Supplierid,size:size,Name:Name,confirm:true,status:"active",statusupdate:new Date()}}).populate("items").populate("stockxitem").populate("labels").populate("Supplierid").populate("cusid");
    
 
     let customerid;
@@ -374,8 +344,7 @@ getOrderofCustomer
     let tags=[];
     let shiping;
     let brand=""
-    
-    //customer 
+
     if(order?.cusid?.shopifyid!=null)
     {
       customerid={id:order.cusid.shopifyid}
@@ -388,11 +357,8 @@ getOrderofCustomer
       phone: order.cusid?.Number?order.cusid?.Number:""
     }
     }
-
-    // Manage products in Shopify and get line items
     if(order.stockxitem.length>0)
     {
-      // Handle StockX items
       const productPromises = order.stockxitem.map(async (item) => {
         const productData = {
           title: item.name,
@@ -402,7 +368,6 @@ getOrderofCustomer
           image: item.image,
           tags: 'StockX Product'
         };
-        
         const shopifyProduct = await manageShopifyProduct(productData);
         brand=item.brand
         return {
@@ -410,7 +375,6 @@ getOrderofCustomer
           quantity: 1
         };
       });
-      
       product = await Promise.all(productPromises);
     }
     else{
@@ -423,14 +387,11 @@ getOrderofCustomer
         image: order.items[0].itempics[0],
         tags: 'CRM Product'
       };
-      
       const shopifyProduct = await manageShopifyProduct(productData);
-      
       product = [{
         variant_id: shopifyProduct.variantId,
         quantity: 1
       }];
-     
     }
  
    //labels
@@ -452,9 +413,7 @@ getOrderofCustomer
       country:shippingaddress.country,
       postcode:shippingaddress.postcode
     }
-   
-    
-
+  
     if(order.confirm==false)
     {
       const d = await createShoOrder(customerid.id, product, tags, shiping, rev);
@@ -490,83 +449,13 @@ getOrderofCustomer
       
       const [o, cus, k] = await Promise.all(ops);
      
-
-      // const d=await createShoOrder(customerid.id,product,tags,shiping,rev)
-      // const o=await Order.findOneAndUpdate({_id:_id},{$set:{confirm:true,shopifyorderid:d}})
-    
-      // const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
-      //   orders_count:(order.cusid.orders_count+1)
-      //  })
       return res.status(201).json({data:o})
     }
-   //if they say they wanted to update the order then do it 
-
-    // else
-    // {
-    //   // Update existing Shopify order
-    //   const client = new shopify.clients.Rest({ session });
-      
-    //   try {
-    //     // First, get the current order to get line item IDs
-    //     const currentOrder = await client.get({
-    //       path: `orders/${order.shopifyorderid}`
-    //     });
-
-    //     // Update the existing order in Shopify with new line item prices
-    //     const orderUpdateData = {
-    //       order: {
-    //         id: order.shopifyorderid,
-    //         line_items: currentOrder.body.order.line_items.map((lineItem, index) => ({
-    //           id: lineItem.id,
-    //           variant_id: lineItem.variant_id,
-    //           quantity: lineItem.quantity,
-    //           price: rev.toString() // Update the price in the line item
-    //         })),
-    //         tags: tags.join(', ')
-    //       }
-    //     };
-
-    //     await client.put({
-    //       path: `orders/${order.shopifyorderid}`,
-    //       data: orderUpdateData,
-    //       type: 'application/json'
-    //     });
-
-    //     // Update the order in our database
-    //     const o = await Order.findOneAndUpdate(
-    //       { _id: _id },
-    //       { 
-    //         $set: {
-    //           Shippingfee: sh,
-    //           processingfee: pp,
-    //           shippingaddress: shippingaddress,
-    //           Sourceofthruth: Sourceofthruth,
-    //           paymentmethod: paymentmethod,
-    //           DealOwner: DealOwner,
-    //           price: cog,
-    //           sellprice: rev,
-    //           Supplierid: Supplierid,
-    //           size: size,
-    //           Name: Name
-    //         }
-    //       },
-    //       { new: true }
-    //     );
-
-        
-    //   } catch (error) {
-    //     console.error('Error updating Shopify order:', error);
-      
-    //   }
-    // }   
-
-
-    //
-    
-    //
+  
     const cus=await Customer.findOneAndUpdate({_id:order.cusid._id},{total_spend:(order.cusid.total_spend+rev),
       orders_count:(order.cusid.orders_count+1)
      })
+
   res.status(201).json({data:"orderupdated"});  
   }
   catch(err)
@@ -588,309 +477,6 @@ exports.Wonorders=async(req,res)=>{
        res.status(500).json({message:"error on updating Description"})
  }
 }
-
-
-//for dashboard
-
-exports.PieData=async(req,res)=>{
-
-try {
-    const { internval, startdate, enddate, userid } = req.body;
-    const userIdObj = new mongoose.Types.ObjectId(userid);
-    let detectedInterval = internval;
-    let start = startdate;
-    let end = enddate;
-
-    if (!internval && startdate && enddate) {
-      detectedInterval = giveinterval(internval, startdate, enddate);
-    } else {
-      const range = calculateDateRange(internval, startdate, enddate);
-     
-      start = range.start;
-      end = range.end;
-    }
-   
-    
-    // 3. List all stages you want to count
-    const stages = [
-      "New Lead",
-      "Need To Source",
-      "Offered",
-      "Warm Lead",
-      "Won",
-      "Lost",
-    ];
-
-    // 4. Aggregate total counts per stage filtered by userid and date range
-    const data = await Order.aggregate([
-      {
-        $match: {
-             userid: { $in: [userIdObj] }, 
-          createdAt: { $gte: new Date(start), $lte: new Date(end) },
-          stage: { $in: stages }
-        }
-      },
-      {
-        $group: {
-          _id: "$stage",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-  
-
-
-    // 5. Initialize response array with all stages and zero counts
-    const pieData = stages.map(stage => ({
-      name: stage,
-      value: 0,
-    }));
-
-    // 6. Fill counts from aggregation results
-    data.forEach(item => {
-      const index = pieData.findIndex(p => p.name === item._id);
-      if (index !== -1) {
-        pieData[index].value = item.count;
-      }
-    });
-
-    res.status(200).json({ data: pieData });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error getting stage counts" });
-  }
-}
-
-exports.reqwondata = async (req, res) => {
-  try {
-    const { interval, startdate, enddate, userid } = req.body;
-    const userIdObj = new mongoose.Types.ObjectId(userid);
-    let detectedInterval = interval;
-    let start = startdate;
-    let end = enddate;
-
-    if (!interval && startdate && enddate) {
-      detectedInterval = giveinterval(interval, startdate, enddate);
-    } else {
-      const range = calculateDateRange(interval || "month", startdate, enddate);
-      start = range.start;
-      end = range.end;
-    }
-
-    let groupFormat, labels;
-    const groupResult = getGroupFormatlabel(detectedInterval || "month");
-    groupFormat = groupResult.groupFormat;
-    labels = groupResult.labels;
-
-    if (!labels || labels.length === 0) {
-      return res.status(400).json({ message: "Invalid interval specified" });
-    }
-
-    // For month interval, we need to get the raw data without date truncation
-    const data = await Order.aggregate([
-      {
-        $match: {
-          userid: { $in: [userIdObj] },
-          createdAt: { $gte: new Date(start), $lte: new Date(end) }
-        }
-      },
-      {
-        $project: {
-          day: { $dayOfMonth: "$createdAt" },
-          stage: 1,
-          createdAt: 1
-        }
-      }
-    ]);
-
-    let formatted = labels.map(label => ({
-      name: label,
-      Won: 0,
-      Request: 0
-    }));
-
-    if (detectedInterval === "day") {
-      data.forEach(entry => {
-        const hour = new Date(entry.createdAt).getUTCHours();
-        const bucket = Math.floor(hour / 3);
-        if (bucket >= 0 && bucket < 8) {
-          if (entry.stage === "Won") {
-            formatted[bucket].Won += 1;
-          } else if (!["Won", "Lost"].includes(entry.stage)) {
-            formatted[bucket].Request += 1;
-          }
-        }
-      });
-    } else if (detectedInterval === "month") {
-      data.forEach(entry => {
-        const day = entry.day;
-        // Find which 5-day interval this day belongs to
-        const labelIndex = labels.findIndex(label => {
-          const [startDay, endDay] = label.split('-').map(Number);
-          return day >= startDay && day <= endDay;
-        });
-        
-        if (labelIndex !== -1) {
-          if (entry.stage === "Won") {
-            formatted[labelIndex].Won += 1;
-          } else if (!["Won", "Lost"].includes(entry.stage)) {
-            formatted[labelIndex].Request += 1;
-          }
-        }
-      });
-    } else if (detectedInterval === "year") {
-      data.forEach(entry => {
-        const monthIndex = new Date(entry.createdAt).getMonth();
-        if (monthIndex >= 0 && monthIndex < 12) {
-          if (entry.stage === "Won") {
-            formatted[monthIndex].Won += 1;
-          } else if (!["Won", "Lost"].includes(entry.stage)) {
-            formatted[monthIndex].Request += 1;
-          }
-        }
-      });
-    }
-
-    res.status(200).json({ data: formatted });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "error getting request vs won data" });
-  }
-};
-
-exports.wonloastdata = async (req, res) => {
-  try {
-    const { interval, startdate, enddate, userid } = req.body;
-    const userIdObj = new mongoose.Types.ObjectId(userid);
-    let detectedInterval = interval;
-    let start = startdate;
-    let end = enddate;
-
-    if (!interval && startdate && enddate) {
-      detectedInterval = giveinterval(interval, startdate, enddate);
-    } else {
-      const range = calculateDateRange(interval || "month", startdate, enddate);
-      start = range.start;
-      end = range.end;
-    }
-
-    let groupFormat, labels;
-    const groupResult = getGroupFormatlabel(detectedInterval || "month");
-    groupFormat = groupResult.groupFormat;
-    labels = groupResult.labels;
-
-    if (!labels || labels.length === 0) {
-      return res.status(400).json({ message: "Invalid interval specified" });
-    }
-
-    // For month interval, we need to get the raw data without date truncation
-    const data = await Order.aggregate([
-      {
-        $match: {
-          userid: { $in: [userIdObj] },
-          createdAt: { $gte: new Date(start), $lte: new Date(end) }
-        }
-      },
-      {
-        $project: {
-          day: { $dayOfMonth: "$createdAt" },
-          stage: 1,
-          createdAt: 1
-        }
-      }
-    ]);
-
-    let formatted = labels.map(label => ({
-      name: label,
-      Won: 0,
-      Lost: 0
-    }));
-
-    if (detectedInterval === "day") {
-      data.forEach(entry => {
-        const hour = new Date(entry.createdAt).getUTCHours();
-        const bucket = Math.floor(hour / 3);
-        if (bucket >= 0 && bucket < 8) {
-          if (entry.stage === "Won") {
-            formatted[bucket].Won += 1;
-          } else if (entry.stage === "Lost") {
-            formatted[bucket].Lost += 1;
-          }
-        }
-      });
-    } else if (detectedInterval === "month") {
-      data.forEach(entry => {
-        const day = entry.day;
-        // Find which 5-day interval this day belongs to
-        const labelIndex = labels.findIndex(label => {
-          const [startDay, endDay] = label.split('-').map(Number);
-          return day >= startDay && day <= endDay;
-        });
-        
-        if (labelIndex !== -1) {
-          if (entry.stage === "Won") {
-            formatted[labelIndex].Won += 1;
-          } else if (entry.stage === "Lost") {
-            formatted[labelIndex].Lost += 1;
-          }
-        }
-      });
-    } else if (detectedInterval === "year") {
-      data.forEach(entry => {
-        const monthIndex = new Date(entry.createdAt).getMonth();
-        if (monthIndex >= 0 && monthIndex < 12) {
-          if (entry.stage === "Won") {
-            formatted[monthIndex].Won += 1;
-          } else if (entry.stage === "Lost") {
-            formatted[monthIndex].Lost += 1;
-          }
-        }
-      });
-    }
-
-    res.status(200).json({ data: formatted });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "error getting won vs lost data" });
-  }
-};
-
-exports.otherdetails=async(req,res)=>{
-  try
-  {
-   const { internval, startdate, enddate, userid } = req.body;
-    const userIdObj = new mongoose.Types.ObjectId(userid);
-    let detectedInterval = internval;
-    let start = startdate;
-    let end = enddate;
-
-    if (!internval && startdate && enddate) {
-      detectedInterval = giveinterval(internval, startdate, enddate);
-    } else {
-      const range = calculateDateRange(internval, startdate, enddate);
-      start = range.start;
-      end = range.end;
-    }
- 
-  
-     const stats = {
-       newOrders: await countOrdersByStage("New Lead", userid, start, end),
-       needToSource: await countOrdersByStage("Need To Source", userid, start, end),
-       liveRequests: await countOrdersByStage("Offered", userid, start, end),
-       wonOrders: await countOrdersByStage("Won", userid, start, end),
-       wonRevenue: await getWonRevenue(userid, start, end),
-       wonProfit: await getWonProfit(userid, start, end)
-     };
-
-    res.status(200).json({data:stats})
-  }
-  catch(err)
-  {
-    res.status(500).json({ message: "error getting won vs lost data" });
-  }
-}
-
 
 //for the order overview
 exports.getordersfortabel=async(req,res)=>{
@@ -973,48 +559,6 @@ try {
 
 }
 
-
-function getLast24HourLabels(step = 3) {
-  const now = new Date();
-  const labels = [];
-  const formatted = [];
-
-  // Go 24 hours back in step size
-  for (let i = 7; i >= 0; i--) {
-    let hour = (now.getUTCHours() - i * step + 24) % 24;
-    let label = `${hour.toString().padStart(2, '0')}:00`;
-    labels.push(label);
-    formatted.push({ name: label, Won: 0, Request: 0 });
-  }
-
-  return { labels, formatted };
-}
-
-function getdaystilldate(arr,detectedInterval){
-  let array=[];
-if(detectedInterval==="week")
-{
-   const todayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
-  const result = [];
-
-  for (let i = 6; i >= 0; i--) {
-    const index = (todayIndex - i + 7) % 7;
-    result.push(arr[index]);
-  }
-
-  return result;
-}
-else if(detectedInterval==="year")
-{
-  
-   let cd=new Date().getMonth();
-   cd=cd+1;
-  array=arr.slice(0,cd);
-  return array
-}
-
-}
-
 function giveinterval(interval, startdate, enddate) {
   if (!interval && startdate && enddate) {
     const diffMillis = new Date(enddate) - new Date(startdate);
@@ -1051,175 +595,4 @@ function calculateDateRange(interval, startdate, enddate) {
 
   end.setHours(23, 59, 59, 999);
   return { start, end };
-}
-
-function getGroupFormatlabel(detectedInterval) {
-  let groupFormat, labels;
-
-  switch (detectedInterval) {
-    case "year":
-      groupFormat = { $month: "$createdAt" };
-      labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      break;
-    case "month":
-      groupFormat = { $dayOfMonth: "$createdAt" };
-      const today = new Date();
-      const currentDay = today.getDate();
-      labels = [];
-      for (let i = 1; i <= currentDay; i += 5) {
-        const endDay = Math.min(i + 4, currentDay);
-        labels.push(`${i}-${endDay}`);
-      }
-      break;
-    case "day":
-      groupFormat = { $hour: "$createdAt" };
-      labels = Array.from({ length: 8 }, (_, i) => {
-        const hour = i * 3;
-        return `${hour.toString().padStart(2, '0')}:00`;
-      });
-      break;
-    default:
-      // Default to month view if interval is not recognized
-      groupFormat = { $dayOfMonth: "$createdAt" };
-      const defaultToday = new Date();
-      const defaultCurrentDay = defaultToday.getDate();
-      labels = [];
-      for (let i = 1; i <= defaultCurrentDay; i += 5) {
-        const endDay = Math.min(i + 4, defaultCurrentDay);
-        labels.push(`${i}-${endDay}`);
-      }
-  }
-  return { groupFormat, labels };
-}
-
-async function getRevenueBetweenDates(start, end, userid = null, stages = null) {
-  const matchQuery = {
-    createdAt: {
-      $gte: new Date(start),
-      $lte: new Date(end)
-    },
-    stage:"Won"
-  };
-
-  // Handle userid if provided (your schema has userid as an array)
-  if (userid) {
-    matchQuery.userid = { $in: [new mongoose.Types.ObjectId(userid)] };
-  }
-
-
-  const result = await Order.aggregate([
-    { $match: matchQuery },
-    {
-      $group: {
-        _id: null,
-        totalRevenue: { $sum: "$price" }
-      }
-    }
-  ]);
-
-  return result.length > 0 ? result[0].totalRevenue : 0;
-}
-
-async function getNewLeadOrderCount(userid, start, end ) {
-  const matchQuery = {
-    stage: "New Lead"
-  };
- 
-
-  // Filter by userid if provided (remember it's stored as array)
-  if (userid) {
-    matchQuery.userid = { $in: [ new mongoose.Types.ObjectId(userid)] };
-  }
-
-  // Filter by date range if provided
-  if (start && end) {
-    matchQuery.createdAt = {
-      $gte: new Date(start),
-      $lte: new Date(end)
-    };
-  }
-
-  const count = await Order.countDocuments(matchQuery);
-  
-  return count;
-}
-
-function buildMatchQuery(stage, userid, start, end) {
-  const query = { stage };
-
-  
-  if (userid) {
-    query.userid = { $in: [new mongoose.Types.ObjectId(userid)] };
-  }
-
-  if (start && end) {
-    query.createdAt = {
-      $gte: new Date(start),
-      $lte: new Date(end)
-    };
-  }
-
-  return query;
-}
-
-async function countOrdersByStage(stage, userid = null, start = null, end = null) {
-  const match = buildMatchQuery(stage, userid, start, end);
-
-  return await Order.countDocuments(match);
-}
-
-async function getWonRevenue(userid = null, start = null, end = null) {
-  const match = buildMatchQuery("Won", userid, start, end);
-
-  const result = await Order.aggregate([
-    { $match: match },
-    {
-      $group: {
-        _id: null,
-        total:{$sum:"$sellprice"},
-      
-      }
-    }
-  ]);
-  
-  
-  return result[0]?.total || 0;
-}
-
-async function getWonProfit(userid = null, start = null, end = null) {
-  const match = {
-    ...buildMatchQuery("Won", userid, start, end),
-    confirm: true  // Add condition for confirmed orders
-  };
-
- const result = await Order.aggregate([
-    { $match: match },
-    {
-      $addFields: {
-        processingFeeNum: { $toDouble: { $ifNull: ["$processingfee", "0"] } },
-        shippingFeeNum: { $toDouble: { $ifNull: ["$Shippingfee", "0"] } },
-        sellPriceNum: { $toDouble: { $ifNull: ["$sellprice", "0"] } },
-        priceNum: { $toDouble: { $ifNull: ["$price", "0"] } }
-      }
-    },
-    {
-      $project: {
-        profit: {
-          $subtract: [
-            { $subtract: ["$sellPriceNum", "$priceNum"] },
-            { $add: ["$shippingFeeNum", "$processingFeeNum"] }
-          ]
-        }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalProfit: { $sum: "$profit" }
-      }
-    }
-  ]);
-
-  // Return totalProfit or 0 if no result
-  return result.length > 0 ? result[0].totalProfit : 0;
 }

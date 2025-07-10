@@ -52,7 +52,6 @@ const dispatch=useDispatch()
     if(task.items&&task.items?.length>0)
     {
        setimage(task.items[0].itempics[0])
-       //console.log(task.items[0].itempics[0])
     }
     else{
       setimage(task?.stockxitem[0]?.image)

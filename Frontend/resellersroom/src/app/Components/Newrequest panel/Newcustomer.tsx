@@ -48,7 +48,7 @@ const Newcustomer = (props: Props) => {
       toast("Number should be 11 character long");
       return;
     }
-    console.log(userid)
+ 
     
     if (name =='' && number=='' && email=='' && social=='' ) {
       toast.error('Please fill any one fields.');
