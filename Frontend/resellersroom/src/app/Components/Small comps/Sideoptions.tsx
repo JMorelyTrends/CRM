@@ -14,7 +14,7 @@ const Slide = ({img, name, link, number}: {img: string, link: string, name: stri
     useEffect(()=>{
        const fetchleadsnumber=async()=>{
         const n=(await axios.get(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getnumberofleads`)).data;
-        console.log(n.data)
+       
         setnleads(n.data)
        }
        fetchleadsnumber()

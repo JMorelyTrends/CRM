@@ -100,7 +100,6 @@ const getsuppliers=async()=>{
     metadata,
   };
 
-  //console.log("🛠 Final payload to send:", payload);
 try
  {await axios.post( `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/UpdateReview`,{
     payload

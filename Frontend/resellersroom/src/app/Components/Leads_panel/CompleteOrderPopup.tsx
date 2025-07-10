@@ -18,6 +18,7 @@ import SupplierDropdown from "./SupplierDropdown";
 import { ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
 import AddPaymentPopup from "./Addpaymentpopup";
 import AddSourceOfTruthPopup from "./Addsourceoftruthpopup";
+import AddDealOwnerPopup from "./AddDealOwnerPopup";
 
 
 
@@ -44,6 +45,11 @@ interface AddressSuggestion {
   city: string;
   country: string;
   postcode: string;
+}
+
+interface DealOwnerType {
+  _id: string;
+  name: string;
 }
 
 export function CompleteOrderPopup({
@@ -76,7 +82,8 @@ export function CompleteOrderPopup({
     postcode: string;
     country: string;
   } | null>(null);
-  const [dealOwner, setDealOwner] = useState<string>(task?.DealOwner ?? '');
+  
+  const [dealOwner, setDealOwner] = useState<string>( '');
   const [sourceOfTruth, setSourceOfTruth] = useState<string>(task?.Sourceofthruth ?? '');
   const [paymentMethod, setPaymentMethod] = useState<string>(task?.paymentmethod ?? '');
   const [sell, setsell] = useState<string>(task?.sellprice?.toString() ?? '')
@@ -120,7 +127,18 @@ export function CompleteOrderPopup({
   //------------here i am getting uerid front he redux which will get chagned once we start working on the multiple users-------------//
   const userid = useSelector((state: RootState) => state.Main.userid);
 
-
+  const [dealOwnerPopupOpen, setDealOwnerPopupOpen] = useState<boolean>(false);
+  const [dealOwners, setDealOwners] = useState<DealOwnerType[]>([]);
+  const getDealOwners = async () => {
+    try {
+     
+    } catch {
+      toast.error("Failed to fetch deal owners");
+    }
+  };
+  useEffect(() => {
+    if (userid) getDealOwners();
+  }, [userid, dealOwnerPopupOpen]);
 
   // Hide dropdown when clicking outside
   useEffect(() => {
@@ -163,15 +181,16 @@ export function CompleteOrderPopup({
         setCostPrice(task.price ? task.price?.toString() : "undefined")
       }
 
-      const p=Number(task?.processingfee);
-      const s=Number(task?.sellprice);
-      const k=((p/s)*100).toFixed(2).toString();
+    
+      
+   
 
+     
       setShippingFee(task.Shippingfee ? task.Shippingfee : '');
-      setProcessingFee(k || '');
+      setProcessingFee(task.processingfee?task.processingfee:'');
       setSupplierUsed((task.Supplierid && task.Supplierid?._id) ? task.Supplierid._id : '');
       setShippingAddress(task.shippingaddress ? task.shippingaddress : '');
-      setDealOwner(task.DealOwner ? task.DealOwner : '');
+        setDealOwner(task.DealOwnerid ? task.DealOwnerid?._id  : task.DealOwner?task.DealOwner:"");
       setSourceOfTruth(task.Sourceofthruth ? task.Sourceofthruth : '');
       setPaymentMethod(task.paymentmethod ? task.paymentmethod : '');
       setSelectedLabels(task.labels ?? []);
@@ -323,8 +342,7 @@ export function CompleteOrderPopup({
   //------------------------get all suppliers payment methods Brands anad sources of truths
   const getsuppliers = async () => {
     try {
-
-      const [sup, pay, sou] = await Promise.all([
+      const [sup, pay, sou, tea] = await Promise.all([
         axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/supplier/getallsuppliers`, {
           userid
         }),
@@ -333,12 +351,17 @@ export function CompleteOrderPopup({
         }),
         axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Sourceoftruth/getsources`, {
           userid
-        })
+        }),
+        axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Team/getTeams`, { userid })
       ])
-   
       setsources(sou.data.data)
       setpaymentmethods(pay.data.data)
       setavailsuppliers(sup.data.supps)
+      if (Array.isArray(tea.data.data)) {
+        setDealOwners(tea.data.data.map((obj: {_id:string,name:string}) => ({ _id: obj._id, name: obj.name })));
+      } else {
+        setDealOwners([]);
+      }
     }
     catch {
       toast.error("something wrong when fetching suppliers")
@@ -404,8 +427,6 @@ export function CompleteOrderPopup({
 
   //-----------------label function ends-------------------------------//
 
-
-
   const handleDeleteLabel = async (id: string) => {
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/features/dellabel`, {
@@ -417,7 +438,8 @@ export function CompleteOrderPopup({
     catch {
       console.log("error deleting label")
     }
-  }
+  };
+
   // Delete payment method
   const handleDeletePaymentMethod = async (method: string) => {
     try {
@@ -477,15 +499,13 @@ export function CompleteOrderPopup({
   const Orderreview = () => {
 
     router.push('/Leads/OrderReview')
-  }
+  };
 
   const Submit = async () => {
-    if (productName && size && costPrice && shippingFee && processingFee && supplierUsed && selectedAddress && dealOwner && sourceOfTruth && paymentMethod) {
+    if (productName && size && costPrice && shippingFee && processingFee && supplierUsed && selectedAddress && dealOwner && sourceOfTruth && paymentMethod && sell) {
       setIsSubmitting(true);
-      const p= (Number(processingFee)/100)
-      const s=Number(sell)
-      const pro=p*s;
-      const fee=pro.toString()
+
+
       try {
         await axios.post(
           `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/Confrimorder`,
@@ -497,7 +517,7 @@ export function CompleteOrderPopup({
             size: size,
             Supplierid: supplierUsed,
             Shippingfee: shippingFee,
-            processingfee: fee,
+            processingfee: processingFee,
             shippingaddress: shippingAddressObj,
             Sourceofthruth: sourceOfTruth,
             paymentmethod: paymentMethod,
@@ -635,13 +655,18 @@ export function CompleteOrderPopup({
 </div> */}
     <div>
       <label className="block text-sm font-medium">Deal Owner</label>
-      <select className="w-full border rounded px-3 py-2 mt-1"
-        value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
-        <option value="">Select Deal Owner</option>
-        <option value="Owner A">ALFIE</option>
-        <option value="Owner B">FRAN</option>
-      
-      </select>
+      <div className="flex gap-2 items-center relative">
+        <select className="w-full border rounded px-3 py-2 mt-1"
+          value={dealOwner} onChange={(e) => setDealOwner(e.target.value)}>
+          <option value="">Select Deal Owner</option>
+          {dealOwners && dealOwners.map((owner) => (
+            <option key={owner._id} value={owner._id}>{owner.name}</option>
+          ))}
+        </select>
+        <Button type="button" size="icon" variant="default" className="mt-1 bg-black text-white" onClick={() => setDealOwnerPopupOpen(true)}>
+          <Plus size={16} color="white" />
+        </Button>
+      </div>
     </div>
   </div>
 
@@ -667,7 +692,7 @@ export function CompleteOrderPopup({
               <div className="relative">
                 <label className="block text-sm font-medium">Processing Fee</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">£</span>
                   <input
                     type="text"
                     className="w-full border rounded px-8 py-2 mt-1"
@@ -1017,6 +1042,7 @@ export function CompleteOrderPopup({
 
       <AddPaymentPopup open={paymentPopupOpen} setOpen={setPaymentPopupOpen} onSuccess={getsuppliers} />
       <AddSourceOfTruthPopup open={brandopen} setOpen={setbrandopen} onSuccess={getsuppliers} />
+      <AddDealOwnerPopup open={dealOwnerPopupOpen} setOpen={setDealOwnerPopupOpen} onSuccess={getsuppliers} />
     </>
   );
 

@@ -29,7 +29,7 @@ const CompleteCustomerpopup = ( ) => {
 
 
     useEffect(()=>{
-        console.log(customer)
+      
       
         if(customer)
         {

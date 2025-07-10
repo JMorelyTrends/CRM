@@ -71,7 +71,7 @@ const OrdersPage = () => {
             userid: userid,
       });
       
-    console.log(re.data.data)
+
       setOrders(re.data.data)
       setUnfulfilled(re.data.unfulfilled)
       settprofit(re.data.profit)
@@ -214,8 +214,8 @@ const OrdersPage = () => {
         </div>
       <div className="w-full h-[10vh]  flex items-center  overflow-hidden text-black gap-3 px-3 font-semibold">
             <CustomDateRangePicker
-             active={active}
-             setactive={setactive}
+           
+             setActive={setactive}
               range={range}
               setRange={setRange}
             />

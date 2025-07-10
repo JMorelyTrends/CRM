@@ -95,7 +95,7 @@ export default function NewCustomerFormUI({getcustomers}:{getcustomers:()=>Promi
   }
 
   useEffect(()=>{
-    console.log(customer)
+   
    if(customer)
    {
     setfirstname(customer.first_name);
