@@ -10,15 +10,12 @@ router.post("/getAllOrders", orderController.getAllOrders);
 router.get("/getnumberofleads", orderController.getnumberofleads);
 router.get("/orders/:id", orderController.getOrderById);
 router.put("/orders/:id", orderController.updateOrder);
-router.delete("/orders/:id", orderController.deleteOrder);
+router.delete("/deleteorders", orderController.deleteOrder);
 router.post("/updatelabels",orderController.updatelabels)
 router.post("/UpdateDescription",orderController.UpdateDescription)
 router.post("/Getorderofsuppliers",orderController.Getorderofsuppliers)
 router.post("/Confrimorder",orderController.Confrimorder);
-router.post("/PieData", orderController.PieData);
-router.post("/reqwondata",orderController.reqwondata);
-router.post("/wonloastdata",orderController.wonloastdata);
-router.post("/otherdetails",orderController.otherdetails);
+
 
 router.post("/Wonorders",orderController.Wonorders);
 router.post("/getordersfortabel",orderController.getordersfortabel)

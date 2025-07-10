@@ -47,10 +47,10 @@ const OrdersPage = () => {
 
     //functions
     const getwons=async()=>{
-      const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getshopifyorders`,{
+      const re=await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/Review/getshopifyorders`,{
         userid:userid,
       });
-      console.log(re.data.data)
+     
       setOrders(re.data.data)
     }
    

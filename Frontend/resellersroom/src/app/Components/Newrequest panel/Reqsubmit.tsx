@@ -56,7 +56,7 @@ const Firsthalf = ({
         search: query,
         id: userId,
       });
-      console.log(data.d)
+   
       setMongoCustomers(data.dm);
       setShopifyCustomers(data.d);
       dispatch(Addshopifycustomer(data.d));
@@ -359,8 +359,7 @@ export default function Reqsubmit({ sideopen }: { sideopen: boolean }) {
       toast("please Select Product Condition")
       return
     }
-    // console.log("size             :",size)
-    // console.log("condition        : ",Selectcondition)
+
     let Name;
     if(customer?.customerfrom=='shopify')
     {

@@ -93,9 +93,11 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    DealOwner: {
-      type: String,
-      default: null,
+    
+    DealOwnerid:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+    
     },
     confirm: {
       type: Boolean,
