@@ -1,14 +1,11 @@
 const express = require('express');
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const {  PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const crypto=require("crypto")
-const s3 = new S3Client({
-    region: 'eu-north-1', 
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    },
-  });
+const { execSync } = require("child_process");
+const fs = require("fs");
+const pathModule = require("path");
+const s3 = require("../utils/s3_connect")
 
 exports.presignedurl=async(req,res)=>{
  
@@ -35,3 +32,43 @@ exports.presignedurl=async(req,res)=>{
         res.status(400).json({ message: err.message });
     }
 }
+
+exports.backupDatabase = async (req, res) => {
+    const filename = "CRM_Dump";
+    const BUCKET = "morleytrends";
+    const backupDir = pathModule.join(__dirname, '../backups');
+    const filePath = pathModule.join(backupDir, filename);
+  
+    try {
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir);
+        console.log(`✅ [Backup] Created backup directory at: ${backupDir}`);
+      }
+  
+      console.log(`⏳ [Backup] Starting mongodump to: ${filePath}`);
+      execSync(`mongodump --uri="${process.env.MONGO_URI}" --archive=${filePath} --gzip`);
+      console.log(`✅ [Backup] mongodump completed successfully.`);
+  
+      const content = fs.createReadStream(filePath);
+      const key = `DB_backup/${filename}`;
+      const params = {
+        Bucket: BUCKET,
+        Key: key,
+        Body: content,
+        ContentType: "application/gzip",
+      };
+  
+      console.log(`☁️  [Backup] Uploading backup to s3://${BUCKET}/${key}`);
+      await s3.send(new PutObjectCommand(params));
+      console.log(`✅ [Backup] Uploaded backup to s3://${BUCKET}/${key}`);
+  
+      fs.unlinkSync(filePath);
+      console.log(`🧹 [Backup] Deleted local backup file: ${filePath}`);
+  
+      res.status(200).json({ message: `✅ Backup uploaded to s3://${BUCKET}/${key} and local file deleted.` });
+    } catch (err) {
+      console.error(`❌ [Backup] Failed to upload to S3:`, err);
+      res.status(500).json({ message: "❌ Failed to upload to S3", error: err.message });
+    }
+  };
+  
