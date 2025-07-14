@@ -26,10 +26,30 @@ const Header = () => {
 const Page = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const selectedCustomer = useSelector((state: RootState) => state.Cus.Selected_customer);
+  let selectedCustomer = useSelector((state: RootState) => state.Cus.Selected_customer);
   const [search, setSearch] = useState("");
   const [order, setorder] = useState<Task[]|null>(null);
   const [tp,settp]=useState<number>(0)
+  const [lostOrders, setLostOrders] = useState<Task[]|null>(null);
+  const [lostSearch, setLostSearch] = useState("");
+
+  // Load customer from localStorage if not in Redux
+  useEffect(() => {
+    if (selectedCustomer._id === '') {
+      const id = typeof window !== 'undefined' ? localStorage.getItem('selectedCustomerId') : null;
+      if (id) {
+        axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getCustomerById`, { id })
+          .then(res => {
+            if (res.data.data) {
+              dispatch(AddSelectedCustomer(res.data.data));
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch customer by ID", err);
+          });
+      }
+    }
+  }, [dispatch, selectedCustomer._id]);
 
   const getorders = async () => {
     try {
@@ -41,6 +61,18 @@ const Page = () => {
       settp(k.data.p)
     } catch  {
       toast.error("Something wrong with getting order for this customer");
+    }
+  };
+
+  // Fetch lost orders for this customer
+  const getLostOrders = async () => {
+    try {
+      const k = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/getLostOrderofCustomer`, {
+        id: selectedCustomer._id,
+      });
+      setLostOrders(k.data.data);
+    } catch {
+      toast.error("Something wrong with getting lost orders for this customer");
     }
   };
 
@@ -78,6 +110,7 @@ const Page = () => {
   useEffect(() => {
     if (selectedCustomer) {
       getorders();
+      getLostOrders();
     }
   }, [selectedCustomer]);
 
@@ -112,11 +145,11 @@ const Page = () => {
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="w-[95%] ml-6 h-[82vh] mt-[2vh] p-4 flex flex-col">
-        {/* Customer Info Section - Reduced height */}
+    
+      <div className="w-[95%] ml-6 h-[82vh] mt-[2vh] p-4 flex flex-col overflow-y-auto gap-8">
+    
         <div className="w-full h-[14%] flex justify-between mb-4">
-          {/* Left Side - Customer Info */}
+       
           <div className="w-[60%] flex gap-3">
             <div className="w-[80px] h-[80px] rounded-full bg-gray-200 flex items-center justify-center">
               <User size={40} className="text-gray-400" />
@@ -136,15 +169,15 @@ const Page = () => {
             </div>
           </div>
 
-          {/* Right Side - Stats */}
+         
           <div className="w-[40%] flex gap-4">
-            {/* Orders Card */}
+        
             <div className="flex-1 bg-[#F3F3F3] rounded-xl p-3">
               <div className="text-sm font-semibold mb-1">Total Orders</div>
               <div className="text-xl font-bold">{order?.length || 0}</div>
             </div>
 
-            {/* Spend Card */}
+
             <div className="flex-1 bg-[#F3F3F3] rounded-xl p-3">
               <div className="text-sm font-semibold mb-1">Total Spend</div>
               <div className="text-xl font-bold">£{tp|| 0}</div>
@@ -152,8 +185,8 @@ const Page = () => {
           </div>
         </div>
 
-        {/* Orders Section - Increased height */}
-        <div className="w-full h-[92%]">
+        
+        <div className="w-full">
           {/* Orders Header */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
@@ -171,17 +204,24 @@ const Page = () => {
             />
           </div>
 
-          {/* Orders Split Layout */}
-          <div className="w-full h-[calc(100%-60px)] flex gap-4">
-            {/* Left Side - Orders List */}
-            <div className="w-[70%] h-[90%] border-r-2 border-gray-700 pr-4 overflow-y-auto [&::-webkit-scrollbar]:w-2
+         
+          <div className="w-full flex gap-4">
+
+            <div className="w-[70%] max-h-[350px] border-r-2 border-gray-700 pr-4 overflow-y-auto [&::-webkit-scrollbar]:w-2
               [&::-webkit-scrollbar-track]:bg-gray-100
               [&::-webkit-scrollbar-thumb]:bg-gray-300
               dark:[&::-webkit-scrollbar-track]:bg-neutral-700
               dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-10 w-full">
                 {order && order.length > 0 ? (
-                  order.map((orderItem) => (
+                  order.filter(orderItem => {
+                    const s = search.toLowerCase();
+                    return (
+                      orderItem.Name?.toLowerCase().includes(s) ||
+                      orderItem.shippingaddress?.toLowerCase().includes(s)
+                    );
+                  })
+                  .map((orderItem) => (
                     <div
                       key={orderItem._id}
                       className="bg-white shadow-md rounded-lg border border-gray-200 flex flex-col gap-2"
@@ -266,18 +306,7 @@ const Page = () => {
                     <p className="text-sm text-gray-500">Social Handle</p>
                     <p className="text-sm font-medium">{selectedCustomer.socialhandel || 'N/A'}</p>
                   </div>
-                  {/* <div>
-                    <p className="text-sm text-gray-500">Address</p>
-                    <p className="text-sm font-medium">
-                      {selectedCustomer.address?.adress1 ? (
-                        <>
-                          {selectedCustomer.address.adress1}<br />
-                          {selectedCustomer.address.city}, {selectedCustomer.address.zip}<br />
-                          {selectedCustomer.address.country}
-                        </>
-                      ) : 'N/A'}
-                    </p>
-                  </div> */}
+
                   <div>
                     <p className="text-sm text-gray-500">Marketing Status</p>
                     <p className="text-sm font-medium">
@@ -303,6 +332,98 @@ const Page = () => {
                   </div> */}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        {/* Lost Orders Section */}
+        <div className="w-full mt-8">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold text-black">Past Sourcing Requests</h3>
+              <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                {lostOrders?.length || 0}
+              </span>
+            </div>
+            <input
+              type="text"
+              value={lostSearch}
+              onChange={(e) => setLostSearch(e.target.value)}
+              placeholder="Search lost orders..."
+              className="px-4 py-2 border-2 border-gray-300 rounded-lg w-64"
+            />
+          </div>
+          <div className="w-full flex gap-4">
+            <div className="w-[70%] max-h-[350px] border-r-2 border-gray-700 pr-4 overflow-y-auto [&::-webkit-scrollbar]:w-2
+              [&::-webkit-scrollbar-track]:bg-gray-100
+              [&::-webkit-scrollbar-thumb]:bg-gray-300
+              dark:[&::-webkit-scrollbar-track]:bg-neutral-700
+              dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-10 w-full">
+                {lostOrders && lostOrders.length > 0 ? (
+                  lostOrders.filter(orderItem => {
+                    const s = lostSearch.toLowerCase();
+                    return (
+                      orderItem.Name?.toLowerCase().includes(s) ||
+                      orderItem.shippingaddress?.toLowerCase().includes(s)
+                    );
+                  })
+                  .map((orderItem) => (
+                    <div
+                      key={orderItem._id}
+                      className="bg-white shadow-md rounded-lg border border-gray-200 flex flex-col gap-2"
+                      style={{ width: "100%", height: "200px" }}
+                    >
+                      <div className="text-black px-4 py-2.5 text-sm flex items-center justify-between border-b border-gray-100">
+                        <div className="text-gray-600 whitespace-nowrap">
+                          {new Date(orderItem.createdAt).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-gray-600 whitespace-nowrap">
+                          from <Store size={14} strokeWidth={0.75} /> online store
+                        </div>
+                      </div>
+
+                      <div className="flex px-4 gap-4 flex-1 overflow-hidden">
+                        <div className="w-[120px] h-[120px] shrink-0">
+                          <img
+                            src={
+                              orderItem?.stockxitem?.[0]?.image ??
+                              orderItem?.items?.[0]?.itempics ??
+                              "/images/Logo.png"
+                            }
+                            alt=""
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-around min-w-0 overflow-hidden">
+                          <div className="text-xl font-bold text-black line-clamp-2 break-words">
+                            {orderItem.Name ? orderItem.Name : "N/A"}
+                          </div>
+                          <div className="text-sm text-gray-600 line-clamp-2">
+                            {
+                            orderItem?.stockxitem?.[0]?.name ??
+                            orderItem?.items?.[0]?.Name ??
+                            "N/A"
+                          }
+                          </div>
+                          <div className="font-bold text-lg text-[#4774B1]">
+                            £ {orderItem.price 
+                              ?  orderItem.price
+                              : "N/A"} costprice
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-2 h-[90%] flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">No lost orders available.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Right Side - Customer Details (reuse) */}
+            <div className="w-[30%] h-full overflow-auto">
+              {/* Optionally, you can show some summary or info here, or leave blank */}
             </div>
           </div>
         </div>

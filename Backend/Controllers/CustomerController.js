@@ -185,8 +185,6 @@ const createCustomer = async (req, res) => {
 };
 
 
-
-
 //-------------------------------------------CUSTOMER CRM---------------------------------------------- 
 const getAllCustomers = async (req, res) => {
   try {
@@ -227,7 +225,7 @@ const getCustomerById = async (req, res) => {
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
-    res.status(200).json(customer);
+    res.status(200).json({data:customer});
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -630,6 +628,8 @@ const updateshopifycustomer=async(req,res)=>{
 
 
 
+
+
 //--------------------------------------------WHERE WHERE IT SAYS USE THIS CUSTOMER IN CRM THIS IS THE FUNCTION--------------------
 
 const UseShopiyfcustomer=async(req,res)=>{  //when you entered the email to the  customer which dont have email hten this api hit when user press use
@@ -831,12 +831,22 @@ const getAllCustomerOrderStats = async (req, res) => {
 const deleteCustomer = async (req, res) => {
   try {
     const { id } = req.body;
+    // Check if there are any orders linked to this customer
+ if(!id){
+  return res.status(404).json({ message: "Customer not found" });
+ }
+    const linkedOrders = await Order.find({ cusid: id });
+    if (linkedOrders.length > 0) {
+      return res.status(400).json({ message: "Cannot delete customer: Please delete all orders attached to this customer first." });
+    }
+       
     const deletedCustomer = await Customer.findByIdAndDelete(id);
     if (!deletedCustomer) {
       return res.status(404).json({ message: "Customer not found" });
     }
     res.status(200).json({ message: "Customer deleted successfully" });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

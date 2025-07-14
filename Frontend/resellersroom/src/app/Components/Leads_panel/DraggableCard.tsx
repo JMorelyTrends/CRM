@@ -8,6 +8,7 @@ import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
 import { useDispatch } from 'react-redux';
 import { AddOrderid, ToogleCompleteorder,Addcurrentorder } from '@/lib/features/OrederReview/OrderReviewSlice';
 import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
+const { isAfter, sub } = require('date-fns');
 interface DraggableCardProps {
   task: Task;
   disableDrag?: boolean;
@@ -94,6 +95,18 @@ const dispatch=useDispatch()
     }
   };
 
+  const hasupdatedin24hours = () => {
+    if (!task?.stageUpdatedAt) return false;
+    else if(task.stage=="Won" || task.stage=="Lost") return true
+    const someDate = new Date(task.stageUpdatedAt);
+    if (isNaN(someDate.getTime())) return false; // Invalid date
+
+    const now = new Date();
+    const twentyFourHoursAgo = sub(now, { hours: 24 });
+
+    return isAfter(someDate, twentyFourHoursAgo);
+  };
+
   return (
  <>  
   {wonpopup  &&<CompleteOrderPopup fetchallorders={fetchallorders} open={wonpopup} setOpen={setwonpopup}  update={false} />}
@@ -147,7 +160,7 @@ const dispatch=useDispatch()
       <div className="h-[33%] flex justify-center items-center ">
         <div className="w-[80%] h-full rounded-2xl flex justify-center overflow-hidden">
           <img
-            src={image?image:"no image"}
+            src={image?image:"/images/Crm.png"}
             alt=""
             className="w-full h-full object-contain rounded-2xl p-1"
           />
@@ -197,7 +210,6 @@ const dispatch=useDispatch()
                 {
                   task.price
                   }
-
               </div>
               
             
@@ -212,8 +224,8 @@ const dispatch=useDispatch()
               
               {/* Created Date */}
               <div className="w-full flex justify-start items-start mt-auto">
-                <div className="rounded-2xl flex items-center gap-1 bg-[#374D71] text-white text-[10px] px-2 py-1">
-                  <Clock color="white" size={14} />
+                <div className={`rounded-2xl flex items-center gap-1  ${hasupdatedin24hours()? "bg-[#374D71]":"bg-[#B56060]"} text-white text-[10px] px-2 py-1`}>
+                  <Clock color={`white`} size={14} />
                   <span>{creationdate}</span>
                 </div>
               </div>
