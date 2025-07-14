@@ -35,25 +35,21 @@ const Page = () => {
 
   // Load customer from localStorage if not in Redux
   useEffect(() => {
-   
-    if (selectedCustomer._id=='') {
-      
+    if (selectedCustomer._id === '') {
       const id = typeof window !== 'undefined' ? localStorage.getItem('selectedCustomerId') : null;
       if (id) {
         axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/getCustomerById`, { id })
           .then(res => {
-            console.log(res)
             if (res.data.data) {
-           selectedCustomer=res.data.data   
-           dispatch(AddSelectedCustomer(res.data.data));
+              dispatch(AddSelectedCustomer(res.data.data));
             }
           })
-          .catch(() => {
-            // Optionally handle error
+          .catch((err) => {
+            console.error("Failed to fetch customer by ID", err);
           });
       }
     }
-  }, []);
+  }, [dispatch, selectedCustomer._id]);
 
   const getorders = async () => {
     try {

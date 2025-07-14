@@ -97,6 +97,7 @@ const dispatch=useDispatch()
 
   const hasupdatedin24hours = () => {
     if (!task?.stageUpdatedAt) return false;
+    else if(task.stage=="Won" || task.stage=="Lost") return true
     const someDate = new Date(task.stageUpdatedAt);
     if (isNaN(someDate.getTime())) return false; // Invalid date
 
