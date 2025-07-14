@@ -95,16 +95,16 @@ const dispatch=useDispatch()
     }
   };
 
-  const hasupdatedin24hours=()=>{
-    const someDate = task?.stageUpdatedAt
+  const hasupdatedin24hours = () => {
+    if (!task?.stageUpdatedAt) return false;
+    const someDate = new Date(task.stageUpdatedAt);
+    if (isNaN(someDate.getTime())) return false; // Invalid date
 
     const now = new Date();
-    
     const twentyFourHoursAgo = sub(now, { hours: 24 });
-    
-    return  isAfter(someDate, twentyFourHoursAgo);
-    
-  }
+
+    return isAfter(someDate, twentyFourHoursAgo);
+  };
 
   return (
  <>  

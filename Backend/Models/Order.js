@@ -110,7 +110,7 @@ const OrderSchema = new mongoose.Schema(
     },
     stageUpdatedAt:{
       type:Date,
-      default:new Date()
+      default:Date.now
     },
     statusupdate:{
       type:Date,
