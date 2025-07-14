@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import DraggableCard from "../Components/Leads_panel/DraggableCard";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import EditPopup from "../Components/Customer/Editpopup";
 //import { Reseller, RootState } from "@/lib/Resellerstore";
 import {  Toggleleadsrenderstep } from "@/lib/features/Newrequest/NewRequestSlice";
@@ -23,6 +23,9 @@ import {CompleteOrderPopup } from "../Components/Leads_panel/CompleteOrderPopup"
 import { useIsSmallScreen } from "../Components/Small comps/Issmall";
 import { Addcurrentorder, AddOrderid, AddSelectedOrder,ToogleCompleteorder } from "@/lib/features/OrederReview/OrderReviewSlice";
 import { Funnel, ChevronDown } from "lucide-react";
+import { MergeLeadsPopup, MergeConfirmPopup } from "../Components/Leads_panel/Merge_leads";
+import { openMergeConfirm, closeMergeConfirm, openMergePopup, closeMergePopup,Addtasks } from "@/lib/features/Leads/LeadsSlice";
+import { RootState } from "@/lib/Resellerstore";
 
 const LeadCols = dynamic(() => import("../Components/Leads_panel/LeadCols"), {
   ssr: false,
@@ -43,7 +46,7 @@ export default function Page({}: Props) {
   const [wonpopup,setwonpopup]=useState<boolean>(false)
   const [wontask,setwontask]=useState<Task|null>(null)
   const [leadFilter, setLeadFilter] = useState<"" | "complete" | "incomplete">("");
-
+  const [customerWonTasks, setCustomerWonTasks] = useState<Record<string, Task[]>>({});
   
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -77,9 +80,22 @@ export default function Page({}: Props) {
           }
         )
       ).data;
-     
       setstate(mongodata);
-    
+      
+    const wonMap :{[key: string]: Task[]}  = {};
+    Object.values(mongodata.tasks as {[key:string]:Task}).forEach((task:Task) => {
+      if (
+        task.stage === "Won" &&
+        !task.confirm &&
+        task.cusid && task.cusid._id
+      ) {
+        if (!wonMap[task.cusid._id]) wonMap[task.cusid._id] = [];
+        wonMap[task.cusid._id].push(task);
+      }
+    });
+  
+    setCustomerWonTasks(wonMap);
+
     }
   };
 
@@ -177,7 +193,7 @@ function timeout(ms: number) {
   const confirmorder=(id:number|string)=>
   {
     const n=Number(id);
-    console.log("hello",state?.tasks[n])
+ 
     return state?.tasks[n]?.confirm
 
   }
@@ -297,10 +313,22 @@ function timeout(ms: number) {
         }
       );
      
-      if(destinationCol.title=='Won')
-      {
-        await timeout(700);
-        if(currenttask.cusid&& currenttask.cusid?.email!="" && currenttask?.phone!="")
+      if(destinationCol.title === "Won") {
+        const customerId = currenttask.cusid?._id;
+        if (
+          customerId &&
+          customerWonTasks[customerId] &&
+          customerWonTasks[customerId].some(t => t._id !== currenttask._id)
+        ) {
+          dispatch(openMergeConfirm(currenttask));
+
+          const k = customerWonTasks[customerId]?.filter(t => t._id !== currenttask._id) || [];
+          const mt = [...k, currenttask];
+          console.log(mt);
+         dispatch(Addtasks(mt))
+          return;
+        }
+        else if(currenttask.cusid&& currenttask.cusid?.email!="" && currenttask?.phone!="")
         {
           setwontask(currenttask)
           dispatch(Addcurrentorder(currenttask))
@@ -381,6 +409,8 @@ function timeout(ms: number) {
       }
     }
   };
+
+  const mergeLeadsState = useSelector((state: RootState) => state.Merge);
 
   return (
     <DndContext onDragStart={DragStart} onDragEnd={DragEnd} sensors={sensors}>
@@ -512,6 +542,23 @@ function timeout(ms: number) {
           />
         ) : null}
       </DragOverlay>
+      <MergeConfirmPopup
+        open={mergeLeadsState.showMergeConfirm}
+        onCancel={() => dispatch(closeMergeConfirm())}
+        onMerge={() => {
+          dispatch(closeMergeConfirm());
+          dispatch(openMergePopup(mergeLeadsState.mergeTask?.linedata || []));
+        }}
+      />
+      <MergeLeadsPopup
+        open={mergeLeadsState.showMergePopup}
+        onClose={() => dispatch(closeMergePopup())}
+        lineData={mergeLeadsState.mergeLineData || []}
+        onSave={(data) => {
+          // handle save logic here
+          dispatch(closeMergePopup());
+        }}
+      />
     </DndContext>
   );
 }

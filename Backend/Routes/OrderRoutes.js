@@ -15,7 +15,7 @@ router.post("/updatelabels",orderController.updatelabels)
 router.post("/UpdateDescription",orderController.UpdateDescription)
 router.post("/Getorderofsuppliers",orderController.Getorderofsuppliers)
 router.post("/Confrimorder",orderController.Confrimorder);
-
+router.post("/Confirm_merge_order",orderController.Confirm_merge_order);
 
 router.post("/Wonorders",orderController.Wonorders);
 router.post("/getordersfortabel",orderController.getordersfortabel)

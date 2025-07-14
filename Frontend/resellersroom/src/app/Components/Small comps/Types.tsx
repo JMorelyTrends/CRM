@@ -150,8 +150,12 @@ export type statetype={
 
 export type Slinedata= {
     title?: string;
+    image?:string,
+    size?:string,
+    source?:string,
     quantity?: string;
     costprice?: number;
+    sellprice?:number
   }
 
 export type OrderRpr={

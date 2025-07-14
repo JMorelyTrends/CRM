@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { labeltype } from "@/app/Components/Small comps/Types";
+import { labeltype,Task } from "@/app/Components/Small comps/Types";
 
 interface LabelState {
   labels: labeltype[];
@@ -35,3 +35,47 @@ const labelSlice = createSlice({
 export const { setLabels, addLabel, updateLabel, deleteLabel } = labelSlice.actions;
 
 export default labelSlice.reducer;
+
+interface MergeState {
+  showMergeConfirm: boolean;
+  showMergePopup: boolean;
+  mergeTask: any | null;
+  mergeLineData: any[];
+  Mtasks:Task[]|null
+}
+
+const initialMergeState: MergeState = {
+  showMergeConfirm: false,
+  showMergePopup: false,
+  mergeTask: null,
+  mergeLineData: [],
+  Mtasks:null,
+};
+
+const mergeSlice = createSlice({
+  name: "mergeLeads",
+  initialState: initialMergeState,
+  reducers: {
+    openMergeConfirm: (state, action: PayloadAction<any>) => {
+      state.showMergeConfirm = true;
+      state.mergeTask = action.payload;
+    },
+    closeMergeConfirm: (state) => {
+      state.showMergeConfirm = false;
+    },
+    openMergePopup: (state, action: PayloadAction<any[]>) => {
+      state.showMergePopup = true;
+      state.mergeLineData = action.payload;
+    },
+    closeMergePopup: (state) => {
+      state.showMergePopup = false;
+      state.mergeLineData = [];
+    },
+    Addtasks:(state,action)=>{
+     state.Mtasks=action.payload
+    }
+  },
+});
+
+export const { openMergeConfirm, closeMergeConfirm, openMergePopup, closeMergePopup,Addtasks } = mergeSlice.actions;
+export const mergeLeadsReducer = mergeSlice.reducer;

@@ -5,10 +5,12 @@
  import CustomerCrmslice from "./features/CustomerCrm/CustomerCrmslice"
  import OrderReivewSlice from "./features/OrederReview/OrderReviewSlice"
  import Mainslice from "./features/Main/Mainslice"
+ import {mergeLeadsReducer} from "./features/Leads/LeadsSlice"
  export const makeStore=()=>{
     return configureStore({
         reducer:{
            NewReq : NewRequestSlice,
+           Merge:mergeLeadsReducer,
            Leads:leadsSlice,
            Sup:SupplierSlice,
            Cus:CustomerCrmslice,

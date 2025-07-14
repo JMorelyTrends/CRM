@@ -334,6 +334,7 @@ exports.Getorderofsuppliers=async(req,res)=>{
   }
 }
 
+//single order confirmation
 exports.Confrimorder=async(req,res)=>{
   const {
 _id,
@@ -483,6 +484,43 @@ DealOwner,
   catch(err)
   {
   console.log(err) 
+       res.status(500).json({message:"error on updating Description"})
+  }
+}
+
+// multiple order confirmation
+exports.Confirm_merge_order=async(req,res)=>{
+  try{
+  const {
+    idobj,
+    Name,
+    Supplierid,
+    Shippingfee,
+    processingfee,
+    shippingaddress,
+    Sourceofthruth,
+    paymentmethod,
+    DealOwner,
+    lineitems,
+  }=req.body
+
+  console.log("🧾 Order Details:");
+  console.log("ID:", idobj);
+  console.log("Customer Name:", Name);
+  console.log("Supplier ID:", Supplierid);
+  console.log("Shipping Fee:", Shippingfee);
+  console.log("Processing Fee:", processingfee);
+  console.log("Shipping Address:", shippingaddress);
+  console.log("Source of Truth:", Sourceofthruth);
+  console.log("Payment Method:", paymentmethod);
+  console.log("Deal Owner:", DealOwner);
+  console.log("Line Items:", lineitems);
+  res.status(201).json({message:"ok"})
+
+
+  }
+  catch(err)
+  {
        res.status(500).json({message:"error on updating Description"})
   }
 }
