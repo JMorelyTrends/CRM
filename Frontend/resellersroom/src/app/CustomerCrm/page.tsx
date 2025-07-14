@@ -9,6 +9,7 @@ import { Addselectedcusotmer, Toggleleadsrenderstep } from '@/lib/features/Newre
 import { AddOrderid } from '@/lib/features/OrederReview/OrderReviewSlice'
 import FilterSort from '../Components/fillters/FilterSort';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
   type hprops={
     search:string,
@@ -152,7 +153,23 @@ const Page = () => {
   if (userid !== "") {
     getcustomers();
   }
-}, []);
+      }, []);
+
+      const Delete=async(id:string)=>{
+         try{
+           const k= await axios.post(`${process.env.NEXT_PUBLIC_SERVER_HOST}/api/customers/deleteCustomer`,{
+              id:id
+             })
+             toast[k.data.message === "Customer deleted successfully" ? "success" : "error"](k.data.message)
+             if(k.data.message === "Customer deleted successfully") {
+               getcustomers()
+             }
+         }
+         catch(e:any){
+           const msg = e?.response?.data?.message || "Something went wrong with customer deletion"
+           toast.error(msg)
+         }
+      }
 
         const filteredAndSortedCustomers = custo?.filter((customer) => {
           const matchesFilters = activeFilters.every(filter => {
@@ -223,7 +240,7 @@ const Page = () => {
  
         
           {/*Fillters */}
-          <div className="w-full h-[15vh] mt-[3vh] gap-2 flex items-start text-black">
+          <div className="w-full h-[15vh] mt-[1vh] gap-2 flex items-start text-black">
             <div className="w-[30%] h-full flex flex-col justify-around items-start">
               <FilterSort
                 title="All Customers"
@@ -257,7 +274,7 @@ const Page = () => {
           </div>
 
           {/**customer tabel */}
-          <div className="w-full h-[75vh] overflow-auto mt-6    [&::-webkit-scrollbar]:w-3
+          <div className="w-full h-[62vh] overflow-auto mt-3    [&::-webkit-scrollbar]:w-3
     [&::-webkit-scrollbar-track]:bg-gray-100
     [&::-webkit-scrollbar-thumb]:bg-gray-300
     dark:[&::-webkit-scrollbar-track]:bg-neutral-700
@@ -274,6 +291,7 @@ const Page = () => {
                   <th className="px-4 py-2 text-center">Tier</th>
                   <th className="px-4 py-2 text-center">Klaviyo</th>
                   <th className="px-4 py-2 text-center">Edit</th>
+                  <th className="px-4 py-2 text-center">Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,10 +329,18 @@ const Page = () => {
                       <td className="px-4 py-2 text-center">
                         <button
                           onClick={() => {
+                            localStorage.setItem('selectedCustomerId', customer._id); // Store ID in localStorage
                             dispatch(AddSelectedCustomer(customer))
                             router.push('/CustomerCrm/Details')
                           }}
                           className="bg-blue-400 cursor-pointer text-white px-4 py-1 rounded-full">View</button>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          onClick={() => {
+                           Delete(customer._id)
+                          }}
+                          className="bg-red-400 cursor-pointer text-white px-4 py-1 rounded-full">Delete</button>
                       </td>
                     </tr>
                   ))}
