@@ -19,8 +19,6 @@ router.post("/Confrimorder",orderController.Confrimorder);
 
 router.post("/Wonorders",orderController.Wonorders);
 router.post("/getordersfortabel",orderController.getordersfortabel)
-
 router.post("/getOrderofCustomer",orderController.getOrderofCustomer)
-
+router.post("/getLostOrderofCustomer",orderController.getLostOrderofCustomer)
 module.exports=router;
-

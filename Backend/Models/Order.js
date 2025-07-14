@@ -108,6 +108,10 @@ const OrderSchema = new mongoose.Schema(
       enum:["CRM","active","Refunded","deleted"],
       default:"CRM"
     },
+    stageUpdatedAt:{
+      type:Date,
+      default:Date.now
+    },
     statusupdate:{
       type:Date,
     }
