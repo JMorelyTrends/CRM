@@ -165,8 +165,11 @@ const Page = () => {
                getcustomers()
              }
          }
-         catch(e:any){
-           const msg = e?.response?.data?.message || "Something went wrong with customer deletion"
+         catch(e: unknown){
+           let msg = "Something went wrong with customer deletion";
+           if (axios.isAxiosError(e)) {
+             msg = e.response?.data?.message || msg;
+           }
            toast.error(msg)
          }
       }

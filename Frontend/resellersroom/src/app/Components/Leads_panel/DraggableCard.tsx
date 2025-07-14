@@ -8,7 +8,7 @@ import {CompleteOrderPopup } from "../Leads_panel/CompleteOrderPopup"
 import { useDispatch } from 'react-redux';
 import { AddOrderid, ToogleCompleteorder,Addcurrentorder } from '@/lib/features/OrederReview/OrderReviewSlice';
 import { AddSelectedCustomer ,Toogle_Editopen } from "@/lib/features/CustomerCrm/CustomerCrmslice";
-const { isAfter, sub } = require('date-fns');
+import{ isAfter, sub }  from'date-fns';
 interface DraggableCardProps {
   task: Task;
   disableDrag?: boolean;

@@ -26,7 +26,7 @@ const Header = () => {
 const Page = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  let selectedCustomer = useSelector((state: RootState) => state.Cus.Selected_customer);
+  const selectedCustomer = useSelector((state: RootState) => state.Cus.Selected_customer);
   const [search, setSearch] = useState("");
   const [order, setorder] = useState<Task[]|null>(null);
   const [tp,settp]=useState<number>(0)
