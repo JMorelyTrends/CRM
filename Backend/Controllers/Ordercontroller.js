@@ -110,6 +110,7 @@ exports.getAllOrders = async (req, res) => {
         condition:data.condition,
         stage:data.stage,
         createdAt:data.createdAt,
+        updatedAt:data.updatedAt,
         labels:data.labels,
         Description:data.Description,
         items:data.items,
@@ -133,7 +134,7 @@ if (data.paymentmethod != null)  tasks[counter].paymentmethod = data.paymentmeth
 if (data.DealOwner != null)  tasks[counter].DealOwner = data.DealOwner;
 if (data.DealOwnerid != null)  tasks[counter].DealOwnerid = data.DealOwnerid;
 if (data.confirm != null)  tasks[counter].confirm = data.confirm;
-    
+if (data.stageUpdatedAt != null)  tasks[counter].stageUpdatedAt = data.stageUpdatedAt;    
       const stage=data.stage || "NewLead";
       if(columns[stage])
       {
@@ -183,6 +184,7 @@ exports.getOrderById = async (req, res) => {
 exports.getOrderofCustomer=async(req,res)=>{
   try{
     const {id}=req.body;
+    
    if(id){
     const n=await Order.find({cusid:id,stage:"Won"}).populate("items").populate("stockxitem").populate("labels");
     let price=0;
@@ -197,6 +199,25 @@ exports.getOrderofCustomer=async(req,res)=>{
 catch(err)
 {
   
+  res.status(500).json({message:"error in getting the numbers of leads"})
+}
+}
+exports.getLostOrderofCustomer=async(req,res)=>{
+  try{
+    const {id}=req.body;
+    
+   if(id){
+    const n=await Order.find({cusid:id,stage:{$ne:"Won"}}).populate("items").populate("stockxitem").populate("labels");
+   
+   
+   
+    return res.status(201).json({data:n})}
+    res.status(201).json({message:"no orders"})
+  
+}
+catch(err)
+{
+  console.log(err)
   res.status(500).json({message:"error in getting the numbers of leads"})
 }
 }
@@ -219,7 +240,8 @@ exports.UpdateStages=async(req,res)=>{
   const re=await  Order.updateOne({_id:taskid._id},
       {
         $set:{
-          stage:newstage
+          stage:newstage,
+          stageUpdatedAt:new Date()
         }
       }
     )

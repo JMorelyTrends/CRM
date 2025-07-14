@@ -93,6 +93,8 @@ export type Task = {
   size: string;
   stage: string;
   createdAt: string;
+  updatedAt:string,
+  stageUpdatedAt?:string,
   stockxitem: StockXItem[];
   labels: labeltype[];
   Description: string;
@@ -127,7 +129,8 @@ export type Task = {
   shipingfee:string,
   Source_of_truth?:string,
   Supplier_Name?:Supplier
-  Revenue?:string
+  Revenue?:string,
+
 };
 
 export type column={

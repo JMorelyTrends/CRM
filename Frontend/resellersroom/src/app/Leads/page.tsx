@@ -177,6 +177,7 @@ function timeout(ms: number) {
   const confirmorder=(id:number|string)=>
   {
     const n=Number(id);
+    console.log("hello",state?.tasks[n])
     return state?.tasks[n]?.confirm
 
   }
@@ -201,6 +202,7 @@ function timeout(ms: number) {
      
       if(isconfirmorder)
         {
+          
          setActiveCard(null)
          return
         }
@@ -279,11 +281,13 @@ function timeout(ms: number) {
           [active.id]: {
             ...state.tasks[Number(active.id)],
             stage: destinationCol.title,
+            stageUpdatedAt:new Date().toString(),
           },
         },
       };
     
       setstate(newState);
+      
       setActiveCard(null);
       try{await axios.post(
         `${process.env.NEXT_PUBLIC_SERVER_HOST}/api/orders/UpdateStages`,
